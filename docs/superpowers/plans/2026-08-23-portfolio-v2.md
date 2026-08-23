@@ -151,7 +151,7 @@ The script must start from a supplied preview URL, capture 1440×900, 1280×800 
 
 - [ ] **Step 2: Run production preview and QA**
 
-Run the production build, start `vite preview` on a local port, then run `npm run qa:visual -- http://127.0.0.1:<port>`.
+Run the production build, start `vite preview -- --host 127.0.0.1 --port 4173`, then run `npm run qa:visual -- http://127.0.0.1:4173`.
 
 Expected: three screenshots, no app console errors, no page errors, and horizontal overflow at most 1 CSS pixel.
 
