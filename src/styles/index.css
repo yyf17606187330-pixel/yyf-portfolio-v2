@@ -500,21 +500,26 @@ input:focus-visible,
 }
 
 .navigation-overlay__nav {
+  align-self: start;
   border-right: var(--line) solid var(--color-inverse-muted);
   display: flex;
   flex-direction: column;
+  height: 100svh;
   padding: clamp(2rem, 6vw, 6rem) var(--page-gutter);
+  position: sticky;
+  top: 0;
 }
 
 .navigation-overlay__nav a {
   border-bottom: var(--line) solid var(--color-inverse-muted);
   font-family: var(--font-display);
-  font-size: clamp(2.6rem, 5.8vw, 6.5rem);
+  font-size: clamp(2.6rem, 5vw, 5.8rem);
   font-weight: 630;
   letter-spacing: var(--tracking-tight);
   line-height: 0.9;
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
   padding: 0.18em 0;
+  white-space: nowrap;
 }
 
 .navigation-overlay__details {
@@ -804,6 +809,8 @@ input:focus-visible,
   .navigation-overlay__nav {
     border-bottom: var(--line) solid var(--color-inverse-muted);
     border-right: 0;
+    height: auto;
+    position: static;
   }
 }
 
@@ -837,7 +844,7 @@ input:focus-visible,
   }
 
   .identity-lead h1 {
-    font-size: clamp(3.5rem, 21vw, 5.2rem);
+    font-size: clamp(3.5rem, 19.5vw, 5.2rem);
     line-height: 0.82;
   }
 
@@ -935,7 +942,9 @@ input:focus-visible,
   }
 
   .navigation-overlay__nav a {
-    font-size: clamp(2.45rem, 14vw, 4rem);
+    font-size: clamp(2.25rem, 13vw, 3.5rem);
+    overflow-wrap: normal;
+    white-space: nowrap;
   }
 
   .navigation-overlay__capability {
