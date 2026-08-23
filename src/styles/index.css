@@ -483,6 +483,13 @@ input:focus-visible,
   padding: 0 var(--page-gutter);
 }
 
+.navigation-overlay > .navigation-overlay__topline {
+  background: var(--color-overlay);
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+
 .navigation-overlay__topline button,
 .player-overlay__topline button {
   background: none;

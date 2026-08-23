@@ -68,7 +68,7 @@ Initial production QA failed with the original console error `Failed to load res
 
 ## Real-media limitation
 
-The production content intentionally has no real video source. Component tests cover the existing contract that a user-initiated project open attempts unmuted playback and falls back to muted playback when needed; browser QA proves only the missing-media branch. The first delivered real poster/preview/full-video set must receive a new production-browser regression for audible autoplay, controls, poster crop, preview loading and CDN/CORS behavior. No claim of real-media acceptance is made.
+The production content intentionally has no real video source. Component tests cover the initial unmuted `play()` attempt plus manual playback, mute, progress and fullscreen controls. They do **not** cover an automatic muted retry after a rejected `play()` call because no such behavior exists in the player. Browser QA proves only the missing-media branch. The first delivered real poster/preview/full-video set must receive a new production-browser regression for autoplay rejection behavior, audible playback, controls, poster crop, preview loading and CDN/CORS behavior. No claim of real-media acceptance is made.
 
 ## Final verification
 
@@ -81,3 +81,46 @@ npm run test:run && npm run typecheck && npm run lint && npm run build
 Result: 11 test files / 57 tests passed; `tsc -b` exited 0; `eslint .` exited 0; Vite transformed 79 modules and exited 0. Vite retained only its known large lazy `FluidCanvas` chunk advisory; it is a build advisory, not an application/browser/WebGL error.
 
 The v2 preview on 4174 was stopped after evidence capture. A listener check confirmed 4174 is free. The pre-existing `/Users/yangyufeng/Desktop/前端` preview remains on 4173.
+
+## Fix round 1: close visibility and geometry-based mobile coverage
+
+### Corrected real-media statement
+
+The earlier report incorrectly claimed coverage for an automatic muted fallback after unmuted playback rejection. `PlayerOverlay` only sets `muted = false`, attempts `play()`, and marks the player stopped when that promise rejects. Its tests cover that unmuted attempt and the user's manual playback/mute/progress/fullscreen controls. Both this report and `qa-report.json.limitations` now state the exact boundary; player behavior was not expanded.
+
+### ABOUT CLOSE — RED then GREEN
+
+The browser QA first gained two geometry assertions against the real targeted ABOUT overlay: CLOSE must be fully inside the dialog viewport, and its center must resolve back to the button through `elementFromPoint`.
+
+RED on the unchanged production CSS:
+
+```text
+npm run qa:visual -- http://127.0.0.1:4174
+Error: Visual QA failed: Navigation CLOSE is outside the dialog viewport after scrolling to ABOUT.
+```
+
+The minimum production fix makes `.navigation-overlay__topline` sticky at `top: 0`, gives it the opaque overlay background and raises its stacking order. GREEN records `scrollTop: 351`, ABOUT visible, all four left navigation labels visible, `closeFullyVisible: true`, `closeHitTarget: true`, CLOSE initial focus, Escape close and opener focus restoration. `about-overlay-before-sticky-topline.png` preserves the prior state; the regenerated `about-overlay-1280.png` visibly contains the complete topline/CLOSE, four-item left navigation and ABOUT target at once.
+
+### 390/320 filter reachability
+
+The mobile filter check no longer treats DOM visibility or Playwright's click auto-scroll as proof. At each width it reads the natural initial state, uses `element.scrollTo({ left: maxScrollLeft })` in the page, waits for the exact endpoint, measures the final button against the toolbar scrollport, then clicks that already-visible last category and requires three cards.
+
+- 390 px: initial `0`; `scrollWidth/clientWidth = 1112/390`; max/final `722/722`; last-button intersection ratio `1`; fully visible `true`; click result `3` cards.
+- 320 px: initial `0`; `scrollWidth/clientWidth = 1104/320`; max/final `784/784`; last-button intersection ratio `1`; fully visible `true`; click result `3` cards.
+- Evidence: regenerated `mobile-filter-390.png` and new `mobile-filter-320.png`. Both checks reset the scrollport to `0` afterward without using the category click as reachability evidence.
+
+### Temporary long-title geometry
+
+The temporary DOM-only Chinese title check now records its own geometry in addition to page overflow: page horizontal overflow `0`, title horizontal/vertical overflow `0/0`, `max-height: none`, visible x/y overflow, no line clamp, `clippedByMaxHeightOrOverflow: false`, and overlap area `0` against both year and category rectangles. The real title is restored after `long-title-390.png` is captured.
+
+### Fix-round production evidence
+
+The final fix-round run used the v2 production build on `http://127.0.0.1:4174/`. `qa-report.json` records `pass: true` with empty console, page, request-failure and captured WebGL error arrays. The affected ABOUT, 390 filter, 320 filter and long-title images were reopened with `view_image` after regeneration. Port 4173 was not touched.
+
+Fresh fix-round verification repeated the required command:
+
+```bash
+npm run test:run && npm run typecheck && npm run lint && npm run build
+```
+
+Result: 11 test files / 57 tests passed; typecheck and lint exited 0; Vite transformed 79 modules and exited 0 with only the already-documented lazy `FluidCanvas` chunk-size advisory.

@@ -238,15 +238,22 @@ async function verifyAboutOverlay(page, report) {
   const position = await dialog.evaluate((element) => {
     const target = element.querySelector('#about');
     const navigation = element.querySelector('.navigation-overlay__nav');
+    const closeButton = element.querySelector('[aria-label="关闭菜单"]');
     if (!target) {
       throw new Error('ABOUT target was not found inside the navigation overlay');
     }
     if (!navigation) {
       throw new Error('Navigation list was not found inside the navigation overlay');
     }
+    if (!closeButton) {
+      throw new Error('CLOSE button was not found inside the navigation overlay');
+    }
     const dialogRect = element.getBoundingClientRect();
     const targetRect = target.getBoundingClientRect();
     const navigationRect = navigation.getBoundingClientRect();
+    const closeRect = closeButton.getBoundingClientRect();
+    const closeCenterX = closeRect.left + (closeRect.width / 2);
+    const closeCenterY = closeRect.top + (closeRect.height / 2);
     const navigationLabelDefects = Array.from(navigation.querySelectorAll('a'))
       .map((link) => {
         const style = window.getComputedStyle(link);
@@ -265,6 +272,13 @@ async function verifyAboutOverlay(page, report) {
       scrollTop: element.scrollTop,
       targetVisible: targetRect.bottom > dialogRect.top && targetRect.top < dialogRect.bottom,
       navigationFullyVisible: navigationRect.top >= dialogRect.top - 1 && navigationRect.bottom <= dialogRect.bottom + 1,
+      closeFullyVisible: closeRect.width > 0
+        && closeRect.height > 0
+        && closeRect.top >= dialogRect.top
+        && closeRect.right <= dialogRect.right
+        && closeRect.bottom <= dialogRect.bottom
+        && closeRect.left >= dialogRect.left,
+      closeHitTarget: closeButton.contains(document.elementFromPoint(closeCenterX, closeCenterY)),
       navigationLabelDefects,
     };
   });
@@ -273,6 +287,8 @@ async function verifyAboutOverlay(page, report) {
   assert(position.scrollTop > 0, `ABOUT target did not set overlay scrollTop (received ${position.scrollTop})`);
   assert(position.targetVisible, 'ABOUT target is not visible after opening the targeted overlay');
   assert(position.navigationFullyVisible, 'Desktop navigation is clipped after scrolling to the ABOUT target');
+  assert(position.closeFullyVisible, 'Navigation CLOSE is outside the dialog viewport after scrolling to ABOUT');
+  assert(position.closeHitTarget, 'Navigation CLOSE is not the top hit target after scrolling to ABOUT');
   assert(
     position.navigationLabelDefects.length === 0,
     `Desktop navigation labels wrap or clip: ${JSON.stringify(position.navigationLabelDefects)}`,
@@ -343,6 +359,141 @@ async function getNavigationLabelDefects(dialog) {
     .filter((link) => link.contentHeight > link.lineHeight * 1.25 || link.horizontalOverflow > 1));
 }
 
+async function verifyMobileFilter(page, width) {
+  await page.setViewportSize({ width, height: 844 });
+  const toolbar = page.getByRole('toolbar', { name: '作品分类' });
+  await toolbar.scrollIntoViewIfNeeded();
+  const filterButtons = toolbar.getByRole('button');
+  assert(await filterButtons.count() === 5, `${width}px category filter does not expose all five controls`);
+
+  const initial = await toolbar.evaluate((element) => ({
+    scrollLeft: element.scrollLeft,
+    scrollWidth: element.scrollWidth,
+    clientWidth: element.clientWidth,
+    maxScrollLeft: element.scrollWidth - element.clientWidth,
+  }));
+
+  assert(initial.scrollLeft <= 1, `${width}px category filter began at scrollLeft ${initial.scrollLeft} instead of 0`);
+  assert(initial.maxScrollLeft > 1, `${width}px category filter does not provide a horizontal scroll range`);
+
+  await toolbar.evaluate((element) => {
+    element.scrollTo({ left: element.scrollWidth - element.clientWidth, behavior: 'auto' });
+  });
+  await page.waitForFunction(() => {
+    const element = document.querySelector('.category-filter');
+    return element ? Math.abs(element.scrollLeft - (element.scrollWidth - element.clientWidth)) <= 1 : false;
+  });
+
+  const final = await toolbar.evaluate((element) => {
+    const lastButton = element.querySelector('button:last-child');
+    if (!lastButton) {
+      throw new Error('Last category filter button was not found');
+    }
+    const toolbarRect = element.getBoundingClientRect();
+    const buttonRect = lastButton.getBoundingClientRect();
+    const intersectionLeft = Math.max(toolbarRect.left, buttonRect.left);
+    const intersectionRight = Math.min(toolbarRect.right, buttonRect.right);
+    const intersectionTop = Math.max(toolbarRect.top, buttonRect.top);
+    const intersectionBottom = Math.min(toolbarRect.bottom, buttonRect.bottom);
+    const intersectionWidth = Math.max(0, intersectionRight - intersectionLeft);
+    const intersectionHeight = Math.max(0, intersectionBottom - intersectionTop);
+    const buttonArea = buttonRect.width * buttonRect.height;
+
+    return {
+      scrollLeft: element.scrollLeft,
+      scrollWidth: element.scrollWidth,
+      clientWidth: element.clientWidth,
+      maxScrollLeft: element.scrollWidth - element.clientWidth,
+      lastButtonIntersectionRatio: buttonArea > 0 ? (intersectionWidth * intersectionHeight) / buttonArea : 0,
+      lastButtonFullyVisible: buttonRect.left >= toolbarRect.left - 1
+        && buttonRect.top >= toolbarRect.top - 1
+        && buttonRect.right <= toolbarRect.right + 1
+        && buttonRect.bottom <= toolbarRect.bottom + 1,
+      toolbarViewportRect: {
+        left: toolbarRect.left,
+        top: toolbarRect.top,
+        right: toolbarRect.right,
+        bottom: toolbarRect.bottom,
+      },
+      lastButtonRect: {
+        left: buttonRect.left,
+        top: buttonRect.top,
+        right: buttonRect.right,
+        bottom: buttonRect.bottom,
+      },
+    };
+  });
+
+  assert(
+    Math.abs(final.scrollLeft - final.maxScrollLeft) <= 1,
+    `${width}px category filter stopped at ${final.scrollLeft}, expected max ${final.maxScrollLeft}`,
+  );
+  assert(final.lastButtonIntersectionRatio >= 0.999, `${width}px last filter intersection ratio is ${final.lastButtonIntersectionRatio}`);
+  assert(final.lastButtonFullyVisible, `${width}px last filter is not fully visible after explicit horizontal scrolling`);
+
+  const lastFilter = toolbar.getByRole('button', { name: expectedFilters[4].name, exact: true });
+  await lastFilter.click();
+  await page.waitForFunction(() => document.querySelectorAll('.work-index .project-card__button').length === 3);
+  const visibleCardsAfterClick = await page.locator('.work-index .project-card__button').count();
+  const scrollLeftAfterClick = await toolbar.evaluate((element) => element.scrollLeft);
+  assert(visibleCardsAfterClick === 3, `${width}px last filter produced ${visibleCardsAfterClick} cards instead of 3`);
+  await page.screenshot({ path: join(artifactsDir, `mobile-filter-${width}.png`), animations: 'allow' });
+
+  await toolbar.getByRole('button', { name: expectedFilters[0].name, exact: true }).evaluate((element) => element.click());
+  await page.waitForFunction(() => document.querySelectorAll('.work-index .project-card__button').length === 9);
+  await toolbar.evaluate((element) => {
+    element.scrollLeft = 0;
+  });
+  await page.waitForFunction(() => document.querySelector('.category-filter')?.scrollLeft === 0);
+
+  return {
+    width,
+    scrollMethod: 'DOM element.scrollTo(maxScrollLeft)',
+    initial,
+    final,
+    visibleCardsAfterClick,
+    scrollLeftAfterClick,
+    scrollLeftAfterReset: await toolbar.evaluate((element) => element.scrollLeft),
+  };
+}
+
+async function inspectLongTitleGeometry(title) {
+  return title.evaluate((element) => {
+    const card = element.closest('.project-card');
+    const year = card?.querySelector('.project-card__year');
+    const category = card?.querySelector('.project-card__category');
+    if (!year || !category) {
+      throw new Error('Long-title card metadata was not found');
+    }
+    const titleRect = element.getBoundingClientRect();
+    const yearRect = year.getBoundingClientRect();
+    const categoryRect = category.getBoundingClientRect();
+    const style = window.getComputedStyle(element);
+    const overlapArea = (first, second) => Math.max(0, Math.min(first.right, second.right) - Math.max(first.left, second.left))
+      * Math.max(0, Math.min(first.bottom, second.bottom) - Math.max(first.top, second.top));
+    const horizontalOverflow = Math.max(0, element.scrollWidth - element.clientWidth);
+    const verticalOverflow = Math.max(0, element.scrollHeight - element.clientHeight);
+    const overflowClipsVertically = style.overflowY !== 'visible';
+    const overflowClipsHorizontally = style.overflowX !== 'visible';
+
+    return {
+      horizontalOverflow,
+      verticalOverflow,
+      maxHeight: style.maxHeight,
+      overflowX: style.overflowX,
+      overflowY: style.overflowY,
+      webkitLineClamp: style.webkitLineClamp,
+      clippedByMaxHeightOrOverflow: (verticalOverflow > 1 && overflowClipsVertically)
+        || (horizontalOverflow > 1 && overflowClipsHorizontally),
+      overlapWithYear: overlapArea(titleRect, yearRect),
+      overlapWithCategory: overlapArea(titleRect, categoryRect),
+      titleRect: titleRect.toJSON(),
+      yearRect: yearRect.toJSON(),
+      categoryRect: categoryRect.toJSON(),
+    };
+  });
+}
+
 async function verifyMobileNavigationAndLongTitle(page, report) {
   await page.setViewportSize({ width: 390, height: 844 });
   await resetScroll(page);
@@ -369,17 +520,7 @@ async function verifyMobileNavigationAndLongTitle(page, report) {
   const focusRestored = await menuOpener.evaluate((element) => document.activeElement === element);
   assert(focusRestored, '390px menu Escape did not restore focus to MENU');
 
-  const toolbar = page.getByRole('toolbar', { name: '作品分类' });
-  await toolbar.scrollIntoViewIfNeeded();
-  const filterButtons = toolbar.getByRole('button');
-  assert(await filterButtons.count() === 5, '390px category filter does not expose all five controls');
-  for (let index = 0; index < 5; index += 1) {
-    assert(await filterButtons.nth(index).isVisible(), `390px category filter button ${index + 1} is not visible`);
-  }
-  const lastFilter = toolbar.getByRole('button', { name: expectedFilters[4].name, exact: true });
-  await lastFilter.click();
-  await page.waitForFunction(() => document.querySelectorAll('.work-index .project-card__button').length === 3);
-  await page.screenshot({ path: join(artifactsDir, 'mobile-filter-390.png'), animations: 'allow' });
+  const filter390 = await verifyMobileFilter(page, 390);
 
   const title = page.locator('.work-index .project-card__title').first();
   const originalTitle = await title.textContent();
@@ -388,15 +529,18 @@ async function verifyMobileNavigationAndLongTitle(page, report) {
   });
   await title.scrollIntoViewIfNeeded();
   const longTitleOverflow = await measureViewport(page);
+  const longTitleGeometry = await inspectLongTitleGeometry(title);
   assert(longTitleOverflow.overflow <= 1, `Temporary long Chinese title caused ${longTitleOverflow.overflow}px overflow`);
+  assert(longTitleGeometry.horizontalOverflow <= 1, `Temporary long title has ${longTitleGeometry.horizontalOverflow}px intrinsic overflow`);
+  assert(!longTitleGeometry.clippedByMaxHeightOrOverflow, 'Temporary long title is clipped by max-height or overflow styles');
+  assert(longTitleGeometry.overlapWithYear === 0, `Temporary long title overlaps year by ${longTitleGeometry.overlapWithYear}px²`);
+  assert(longTitleGeometry.overlapWithCategory === 0, `Temporary long title overlaps category by ${longTitleGeometry.overlapWithCategory}px²`);
   await page.screenshot({ path: join(artifactsDir, 'long-title-390.png'), animations: 'allow' });
   await title.evaluate((element, text) => {
     element.textContent = text;
   }, originalTitle);
 
-  await toolbar.getByRole('button', { name: expectedFilters[0].name, exact: true }).click();
-
-  await page.setViewportSize({ width: 320, height: 844 });
+  const filter320 = await verifyMobileFilter(page, 320);
   await resetScroll(page);
   const menu320 = page.getByRole('button', { name: 'MENU', exact: true });
   assert(await menu320.isVisible(), '320px MENU control is not visible');
@@ -419,12 +563,14 @@ async function verifyMobileNavigationAndLongTitle(page, report) {
     closeInitiallyFocused,
     escapeClosed: true,
     focusRestored,
-    filterButtonCount: 5,
-    lastFilterUsable: true,
     wrappedNavigationLabels,
     navigationLabelDefects320,
     overflow320: mobile320Measurement.overflow,
-    temporaryLongTitleOverflow: longTitleOverflow.overflow,
+    filters: [filter390, filter320],
+    longTitle: {
+      pageHorizontalOverflow: longTitleOverflow.overflow,
+      ...longTitleGeometry,
+    },
   };
 }
 
@@ -438,7 +584,7 @@ async function run() {
     interactions: {},
     diagnostics: { consoleErrors: [], pageErrors: [], requestFailures: [], webglErrors: [], classifications: [] },
     limitations: [
-      'Production content has no real video source. Audible autoplay is covered by component tests and still requires regression with the first real media delivery.',
+      'Production content has no real video source. Component tests cover the initial unmuted play() attempt and manual playback/mute controls; they do not cover an automatic muted retry after play() rejection because no such behavior exists. The first real media delivery still requires production-browser regression.',
     ],
     pass: false,
   };
