@@ -4,7 +4,7 @@ import gsap from 'gsap';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { useScrollLock } from '../../hooks/useScrollLock';
-import { markIntroPlayed, shouldPlayIntro } from '../../lib/sessionIntro';
+import { getSessionStorage, markIntroPlayed, shouldPlayIntro } from '../../lib/sessionIntro';
 
 interface IntroSequenceProps {
   onComplete: () => void;
@@ -12,7 +12,9 @@ interface IntroSequenceProps {
 
 export function IntroSequence({ onComplete }: IntroSequenceProps) {
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
-  const [visible, setVisible] = useState(() => shouldPlayIntro(window.sessionStorage, reducedMotion));
+  const [visible, setVisible] = useState(() => (
+    typeof document !== 'undefined' && shouldPlayIntro(getSessionStorage(), reducedMotion)
+  ));
   const rootRef = useRef<HTMLDivElement>(null);
   const helloRef = useRef<HTMLParagraphElement>(null);
   const nameRef = useRef<HTMLParagraphElement>(null);
@@ -25,7 +27,7 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
     }
 
     completedRef.current = true;
-    markIntroPlayed(window.sessionStorage);
+    markIntroPlayed(getSessionStorage());
     setVisible(false);
     onComplete();
   }, [onComplete]);
@@ -35,7 +37,7 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
   useFocusTrap(rootRef, modalActive, complete, skipRef);
 
   useEffect(() => {
-    if (reducedMotion || !shouldPlayIntro(window.sessionStorage, reducedMotion)) {
+    if (reducedMotion || !shouldPlayIntro(getSessionStorage(), reducedMotion)) {
       complete();
     }
   }, [complete, reducedMotion]);
@@ -63,7 +65,7 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
     return () => context.revert();
   }, [complete, reducedMotion, visible]);
 
-  if (!visible || reducedMotion) {
+  if (!visible || reducedMotion || typeof document === 'undefined') {
     return null;
   }
 

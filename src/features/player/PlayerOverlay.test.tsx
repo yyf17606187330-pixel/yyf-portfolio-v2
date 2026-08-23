@@ -53,6 +53,25 @@ const playableProject: Project = {
   aspectRatio: '16/9',
 };
 
+const secondPlayableProject: Project = {
+  ...playableProject,
+  slug: 'ai-b',
+  title: 'AI 项目 B',
+  category: 'ai-video',
+  order: 2,
+  poster: 'posters/ai-b.webp',
+  previewSrc: 'previews/ai-b.mp4',
+  fullSrc: 'videos/ai-b.mp4',
+};
+
+function deferredPromise() {
+  let resolve!: () => void;
+  const promise = new Promise<void>((resolvePromise) => {
+    resolve = resolvePromise;
+  });
+  return { promise, resolve };
+}
+
 function PlayerHarness({ project, onClose }: { project: Project; onClose: () => void }) {
   const [open, setOpen] = useState(false);
   const openerRef = useRef<HTMLButtonElement>(null);
@@ -107,6 +126,7 @@ describe('PlayerOverlay', () => {
     const video = document.body.querySelector('video') as HTMLVideoElement;
 
     expect(video).toHaveAttribute('src', '/media/videos/film-a.mp4');
+    expect(screen.getByRole('dialog', { name: '播放作品：影像项目 A' })).toHaveAttribute('data-lenis-prevent');
     await waitFor(() => expect(play).toHaveBeenCalledOnce());
     expect(video.muted).toBe(false);
 
@@ -126,6 +146,37 @@ describe('PlayerOverlay', () => {
 
     fireEvent.click(screen.getByRole('button', { name: '全屏' }));
     expect(requestFullscreen).toHaveBeenCalledOnce();
+  });
+
+  it('starts in a pending non-playing state and ignores a stale play promise after A closes and B opens', async () => {
+    const firstPlay = deferredPromise();
+    const secondPlay = deferredPromise();
+    play
+      .mockImplementationOnce(() => firstPlay.promise)
+      .mockImplementationOnce(() => secondPlay.promise);
+
+    const { rerender } = render(<PlayerOverlay project={playableProject} opener={null} onClose={vi.fn()} />);
+    expect(screen.getByRole('button', { name: '播放' })).toBeInTheDocument();
+    await waitFor(() => expect(play).toHaveBeenCalledOnce());
+
+    rerender(<PlayerOverlay project={null} opener={null} onClose={vi.fn()} />);
+    rerender(<PlayerOverlay project={secondPlayableProject} opener={null} onClose={vi.fn()} />);
+    expect(screen.getByRole('button', { name: '播放' })).toBeInTheDocument();
+    await waitFor(() => expect(play).toHaveBeenCalledTimes(2));
+
+    firstPlay.resolve();
+    await Promise.resolve();
+    expect(screen.getByRole('button', { name: '播放' })).toBeInTheDocument();
+
+    secondPlay.resolve();
+    await waitFor(() => expect(screen.getByRole('button', { name: '暂停' })).toBeInTheDocument());
+  });
+
+  it('uses the same bilingual category label as project cards instead of an internal slug', () => {
+    render(<PlayerOverlay project={playableProject} opener={null} onClose={vi.fn()} />);
+
+    expect(screen.getByText('01 / FILM / 影像')).toBeInTheDocument();
+    expect(screen.queryByText('01 / film')).not.toBeInTheDocument();
   });
 
   it('renders a designed fallback and no empty video source when full media is missing', () => {

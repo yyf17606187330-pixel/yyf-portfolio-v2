@@ -24,8 +24,9 @@ describe('IntroSequence', () => {
 
   afterEach(() => {
     cleanup();
-    window.sessionStorage.clear();
+    vi.restoreAllMocks();
     vi.unstubAllGlobals();
+    window.sessionStorage.clear();
   });
 
   it('marks the intro as played and completes when the visitor skips it', () => {
@@ -81,5 +82,53 @@ describe('IntroSequence', () => {
 
     await waitFor(() => expect(onComplete).toHaveBeenCalledOnce());
     expect(screen.queryByRole('button', { name: '跳过开场' })).not.toBeInTheDocument();
+  });
+
+  it('still renders and completes when the sessionStorage getter throws', () => {
+    vi.spyOn(window, 'sessionStorage', 'get').mockImplementation(() => {
+      throw new Error('storage getter blocked');
+    });
+    const onComplete = vi.fn();
+
+    expect(() => render(<IntroSequence onComplete={onComplete} />)).not.toThrow();
+    fireEvent.click(screen.getByRole('button', { name: '跳过开场' }));
+
+    expect(onComplete).toHaveBeenCalledOnce();
+  });
+
+  it('still renders and completes when sessionStorage.getItem throws', () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('storage read blocked');
+    });
+    const onComplete = vi.fn();
+
+    expect(() => render(<IntroSequence onComplete={onComplete} />)).not.toThrow();
+    fireEvent.click(screen.getByRole('button', { name: '跳过开场' }));
+
+    expect(onComplete).toHaveBeenCalledOnce();
+  });
+
+  it('completes even when sessionStorage.setItem rejects persistence', () => {
+    const onComplete = vi.fn();
+    render(<IntroSequence onComplete={onComplete} />);
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('storage write blocked');
+    });
+
+    expect(() => fireEvent.click(screen.getByRole('button', { name: '跳过开场' }))).not.toThrow();
+    expect(onComplete).toHaveBeenCalledOnce();
+  });
+
+  it('completes reduced-motion startup even when the sessionStorage getter throws', async () => {
+    setReducedMotion(true);
+    vi.spyOn(window, 'sessionStorage', 'get').mockImplementation(() => {
+      throw new Error('storage getter blocked');
+    });
+    const onComplete = vi.fn();
+
+    expect(() => render(<IntroSequence onComplete={onComplete} />)).not.toThrow();
+
+    await waitFor(() => expect(onComplete).toHaveBeenCalledOnce());
+    expect(screen.queryByRole('dialog', { name: '开场动画' })).not.toBeInTheDocument();
   });
 });

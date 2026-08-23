@@ -6,6 +6,7 @@ import { FluidBackdrop } from '../fluid/FluidBackdrop';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { useScrollLock } from '../../hooks/useScrollLock';
+import { resolveMediaUrl } from '../../lib/media';
 
 export type NavigationTarget = 'top' | 'capabilities' | 'about' | 'contact';
 
@@ -23,11 +24,17 @@ const capabilities = [
   { index: '04', title: 'AI & Creative Tech', skills: 'AI 视频 · 工作流 · AI 前端' },
 ];
 
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export function NavigationOverlay({ open, opener, onClose, target = 'top' }: NavigationOverlayProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const handleClose = useCallback(() => onClose(), [onClose]);
+  const portraitUrl = resolveMediaUrl(profile.portrait);
+  const wechatQrUrl = resolveMediaUrl(profile.wechatQr);
+  const email = profile.email.trim();
+  const emailHref = emailPattern.test(email) ? `mailto:${email}` : null;
 
   useScrollLock(open);
   useFocusTrap(dialogRef, open, handleClose, closeRef, opener);
@@ -76,6 +83,7 @@ export function NavigationOverlay({ open, opener, onClose, target = 'top' }: Nav
       aria-describedby={target === 'top' ? undefined : `${target}-title`}
       aria-modal="true"
       className="navigation-overlay"
+      data-lenis-prevent
       ref={dialogRef}
       role="dialog"
       tabIndex={-1}
@@ -111,10 +119,16 @@ export function NavigationOverlay({ open, opener, onClose, target = 'top' }: Nav
           </section>
 
           <section className="navigation-overlay__about" id="about" aria-labelledby="about-title" tabIndex={-1}>
-            <div className="navigation-overlay__portrait" aria-label="个人肖像待替换">
-              <span>PORTRAIT</span>
-              <span>个人肖像待替换</span>
-            </div>
+            {portraitUrl ? (
+              <div className="navigation-overlay__portrait">
+                <img alt={`${profile.name}个人肖像`} src={portraitUrl} />
+              </div>
+            ) : (
+              <div className="navigation-overlay__portrait" aria-label="个人肖像待替换">
+                <span>PORTRAIT</span>
+                <span>个人肖像待替换</span>
+              </div>
+            )}
             <div>
               <p className="eyebrow" id="about-title">ABOUT / 关于</p>
               <h2>{profile.name}</h2>
@@ -126,12 +140,18 @@ export function NavigationOverlay({ open, opener, onClose, target = 'top' }: Nav
           <section className="navigation-overlay__contact" id="contact" aria-labelledby="contact-title" tabIndex={-1}>
             <div>
               <p className="eyebrow" id="contact-title">CONTACT / 联系</p>
-              <p>{profile.email}</p>
+              {emailHref ? <a href={emailHref}>{email}</a> : <p>{profile.email}</p>}
             </div>
-            <div className="navigation-overlay__qr" aria-label="微信二维码待替换">
-              <span>WECHAT QR</span>
-              <span>微信二维码待替换</span>
-            </div>
+            {wechatQrUrl ? (
+              <div className="navigation-overlay__qr">
+                <img alt={`${profile.name}微信二维码`} src={wechatQrUrl} />
+              </div>
+            ) : (
+              <div className="navigation-overlay__qr" aria-label="微信二维码待替换">
+                <span>WECHAT QR</span>
+                <span>微信二维码待替换</span>
+              </div>
+            )}
           </section>
         </div>
       </div>

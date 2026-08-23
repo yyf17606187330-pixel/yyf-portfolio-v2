@@ -7,7 +7,8 @@ export interface PlayerState {
 export type PlayerEvent =
   | { type: 'open'; slug: string }
   | { type: 'close' }
-  | { type: 'toggle-playback' }
+  | { type: 'playing' }
+  | { type: 'paused' }
   | { type: 'toggle-muted' };
 
 export const initialPlayerState: PlayerState = {
@@ -19,11 +20,13 @@ export const initialPlayerState: PlayerState = {
 export function playerReducer(state: PlayerState, event: PlayerEvent): PlayerState {
   switch (event.type) {
     case 'open':
-      return { activeSlug: event.slug, isPlaying: true, isMuted: false };
+      return { activeSlug: event.slug, isPlaying: false, isMuted: false };
     case 'close':
       return initialPlayerState;
-    case 'toggle-playback':
-      return state.activeSlug ? { ...state, isPlaying: !state.isPlaying } : state;
+    case 'playing':
+      return state.activeSlug ? { ...state, isPlaying: true } : state;
+    case 'paused':
+      return state.activeSlug ? { ...state, isPlaying: false } : state;
     case 'toggle-muted':
       return state.activeSlug ? { ...state, isMuted: !state.isMuted } : state;
   }

@@ -587,6 +587,15 @@ input:focus-visible,
   text-align: center;
 }
 
+.navigation-overlay__portrait img,
+.navigation-overlay__qr img {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.navigation-overlay__qr img { object-fit: contain; }
+
 .navigation-overlay__about h2 {
   font-family: var(--font-display);
   font-size: clamp(2.4rem, 5vw, 5rem);
@@ -608,7 +617,8 @@ input:focus-visible,
   padding-top: 3rem;
 }
 
-.navigation-overlay__contact > div:first-child > p:last-child {
+.navigation-overlay__contact > div:first-child > :is(p, a):last-child {
+  display: block;
   font-family: var(--font-display);
   font-size: clamp(1.4rem, 3vw, 3rem);
   letter-spacing: -0.035em;

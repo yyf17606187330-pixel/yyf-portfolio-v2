@@ -48,8 +48,13 @@ export function resolveMediaUrl(path: string, baseUrl?: string): string | null {
     return mediaPath.startsWith('https://') ? mediaPath : null;
   }
 
-  const normalizedBase = resolveMediaBaseUrl(baseUrl);
   const normalizedPath = mediaPath.replace(/^\/+/, '');
+
+  if (!normalizedPath) {
+    return null;
+  }
+
+  const normalizedBase = resolveMediaBaseUrl(baseUrl);
 
   return `${normalizedBase}${normalizedPath}`;
 }

@@ -15,6 +15,8 @@ const suppliedUrl = process.argv[2];
 const viewportCases = [
   { key: 'desktop-1440', width: 1440, height: 900, screenshot: 'desktop-1440.png' },
   { key: 'desktop-1280', width: 1280, height: 800, screenshot: 'desktop-1280.png' },
+  { key: 'boundary-900', width: 900, height: 800, screenshot: 'boundary-900.png' },
+  { key: 'boundary-640', width: 640, height: 844, screenshot: 'boundary-640.png' },
   { key: 'mobile-390', width: 390, height: 844, screenshot: 'mobile-390.png' },
 ];
 
@@ -294,13 +296,46 @@ async function verifyAboutOverlay(page, report) {
     `Desktop navigation labels wrap or clip: ${JSON.stringify(position.navigationLabelDefects)}`,
   );
   assert(closeInitiallyFocused, 'Navigation CLOSE was not the initial focused control');
+  assert(await dialog.getAttribute('data-lenis-prevent') !== null, 'Navigation dialog does not opt out of Lenis wheel capture');
   await page.screenshot({ path: join(artifactsDir, 'about-overlay-1280.png'), animations: 'allow' });
+
+  await dialog.evaluate((element) => {
+    element.scrollTop = 0;
+  });
+  const dialogScrollBeforeWheel = await dialog.evaluate((element) => element.scrollTop);
+  const windowScrollBeforeWheel = await page.evaluate(() => window.scrollY);
+  const detailsBox = await dialog.locator('.navigation-overlay__details').boundingBox();
+  assert(detailsBox, 'Navigation details did not expose a wheel target');
+  await page.mouse.move(detailsBox.x + (detailsBox.width * 0.75), detailsBox.y + Math.min(detailsBox.height / 2, 300));
+  await page.mouse.wheel(0, 600);
+  await page.waitForFunction((before) => {
+    const element = document.querySelector('.navigation-overlay');
+    return element ? element.scrollTop > before : false;
+  }, dialogScrollBeforeWheel);
+  const dialogScrollAfterWheel = await dialog.evaluate((element) => element.scrollTop);
+  const windowScrollAfterWheel = await page.evaluate(() => window.scrollY);
+  assert(dialogScrollAfterWheel > dialogScrollBeforeWheel, 'Mouse wheel did not scroll the navigation dialog');
+  assert(
+    Math.abs(windowScrollAfterWheel - windowScrollBeforeWheel) <= 1,
+    `Navigation wheel moved window from ${windowScrollBeforeWheel} to ${windowScrollAfterWheel}`,
+  );
 
   await page.keyboard.press('Escape');
   await dialog.waitFor({ state: 'detached' });
   const focusRestored = await opener.evaluate((element) => document.activeElement === element);
   assert(focusRestored, 'Escape did not restore focus to the ABOUT opener');
-  report.interactions.about = { ...position, closeInitiallyFocused, escapeClosed: true, focusRestored };
+  report.interactions.about = {
+    ...position,
+    closeInitiallyFocused,
+    wheel: {
+      dialogScrollBefore: dialogScrollBeforeWheel,
+      dialogScrollAfter: dialogScrollAfterWheel,
+      windowScrollBefore: windowScrollBeforeWheel,
+      windowScrollAfter: windowScrollAfterWheel,
+    },
+    escapeClosed: true,
+    focusRestored,
+  };
 }
 
 async function verifyMissingMediaPlayer(page, report, requests) {
@@ -324,7 +359,32 @@ async function verifyMissingMediaPlayer(page, report, requests) {
   assert(videoCount === 0, `Missing-media player unexpectedly rendered ${videoCount} video element(s)`);
   assert(emptyVideoSourceCount === 0, `Missing-media player rendered ${emptyVideoSourceCount} empty video source(s)`);
   assert(mediaRequests.length === 0, `Missing-media player started media requests: ${mediaRequests.map((request) => request.url).join(', ')}`);
+  assert(await dialog.getAttribute('data-lenis-prevent') !== null, 'Player dialog does not opt out of Lenis wheel capture');
   await page.screenshot({ path: join(artifactsDir, 'player-fallback-1280.png'), animations: 'allow' });
+
+  await page.setViewportSize({ width: 640, height: 360 });
+  await page.waitForTimeout(100);
+  const playerScrollRange = await dialog.evaluate((element) => element.scrollHeight - element.clientHeight);
+  assert(playerScrollRange > 1, `Player dialog did not become scrollable at 640×360 (range ${playerScrollRange})`);
+  const playerDialogScrollBeforeWheel = await dialog.evaluate((element) => element.scrollTop);
+  const playerWindowScrollBeforeWheel = await page.evaluate(() => window.scrollY);
+  const playerBodyBox = await dialog.locator('.player-overlay__body').boundingBox();
+  assert(playerBodyBox, 'Player body did not expose a wheel target');
+  await page.mouse.move(playerBodyBox.x + (playerBodyBox.width / 2), Math.min(300, playerBodyBox.y + (playerBodyBox.height / 2)));
+  await page.mouse.wheel(0, 480);
+  await page.waitForFunction((before) => {
+    const element = document.querySelector('.player-overlay');
+    return element ? element.scrollTop > before : false;
+  }, playerDialogScrollBeforeWheel);
+  const playerDialogScrollAfterWheel = await dialog.evaluate((element) => element.scrollTop);
+  const playerWindowScrollAfterWheel = await page.evaluate(() => window.scrollY);
+  assert(playerDialogScrollAfterWheel > playerDialogScrollBeforeWheel, 'Mouse wheel did not scroll the player dialog');
+  assert(
+    Math.abs(playerWindowScrollAfterWheel - playerWindowScrollBeforeWheel) <= 1,
+    `Player wheel moved window from ${playerWindowScrollBeforeWheel} to ${playerWindowScrollAfterWheel}`,
+  );
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.waitForTimeout(100);
 
   await page.keyboard.press('Escape');
   await dialog.waitFor({ state: 'detached' });
@@ -339,6 +399,13 @@ async function verifyMissingMediaPlayer(page, report, requests) {
     videoCount,
     emptyVideoSourceCount,
     mediaRequests,
+    wheel: {
+      scrollRange: playerScrollRange,
+      dialogScrollBefore: playerDialogScrollBeforeWheel,
+      dialogScrollAfter: playerDialogScrollAfterWheel,
+      windowScrollBefore: playerWindowScrollBeforeWheel,
+      windowScrollAfter: playerWindowScrollAfterWheel,
+    },
     escapeClosed: true,
     focusRestored,
     scrollBefore,
@@ -574,6 +641,132 @@ async function verifyMobileNavigationAndLongTitle(page, report) {
   };
 }
 
+async function verifyResponsiveBoundaries(page, report) {
+  const cases = [
+    { width: 900, height: 800 },
+    { width: 640, height: 844 },
+  ];
+  const results = [];
+
+  for (const viewport of cases) {
+    const { width, height } = viewport;
+    await page.setViewportSize(viewport);
+    await resetScroll(page);
+
+    const header = page.locator('.site-header');
+    const menuOpener = page.getByRole('button', { name: 'MENU', exact: true });
+    assert(await header.isVisible(), `${width}px boundary header is not visible`);
+    assert(await menuOpener.isVisible(), `${width}px boundary MENU control is not visible`);
+    const headerGeometry = await header.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return {
+        left: rect.left,
+        top: rect.top,
+        right: rect.right,
+        bottom: rect.bottom,
+        width: rect.width,
+        height: rect.height,
+      };
+    });
+    assert(headerGeometry.left >= -1 && headerGeometry.right <= width + 1, `${width}px header escapes the viewport`);
+    assert(
+      headerGeometry.top >= -1 && headerGeometry.bottom <= height + 1 && headerGeometry.height >= 44,
+      `${width}px header geometry is invalid`,
+    );
+
+    await menuOpener.click();
+    const navigationDialog = page.getByRole('dialog', { name: '全站导航' });
+    await navigationDialog.waitFor({ state: 'visible' });
+    await page.waitForTimeout(750);
+    const navigationGeometry = await navigationDialog.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      const close = element.querySelector('[aria-label="关闭菜单"]');
+      if (!close) {
+        throw new Error('Boundary navigation CLOSE was not found');
+      }
+      const closeRect = close.getBoundingClientRect();
+      return {
+        rect: rect.toJSON(),
+        horizontalOverflow: Math.max(0, element.scrollWidth - element.clientWidth),
+        closeRect: closeRect.toJSON(),
+        closeFullyVisible: closeRect.left >= rect.left
+          && closeRect.top >= rect.top
+          && closeRect.right <= rect.right
+          && closeRect.bottom <= rect.bottom,
+      };
+    });
+    const navigationLabelDefects = await getNavigationLabelDefects(navigationDialog);
+    assert(navigationGeometry.horizontalOverflow <= 1, `${width}px navigation has horizontal overflow`);
+    assert(navigationGeometry.closeFullyVisible, `${width}px navigation CLOSE is outside the dialog`);
+    assert(navigationLabelDefects.length === 0, `${width}px navigation labels wrap or clip: ${JSON.stringify(navigationLabelDefects)}`);
+    await page.screenshot({ path: join(artifactsDir, `boundary-menu-${width}.png`), animations: 'allow' });
+    await page.keyboard.press('Escape');
+    await navigationDialog.waitFor({ state: 'detached' });
+
+    const title = page.locator('.work-index .project-card__title').first();
+    const originalTitle = await title.textContent();
+    await title.evaluate((element) => {
+      element.textContent = '这是用于验证临界宽度换行和信息层级的超长中文作品标题';
+    });
+    await title.scrollIntoViewIfNeeded();
+    const titlePageMeasurement = await measureViewport(page);
+    const titleGeometry = await inspectLongTitleGeometry(title);
+    assert(titlePageMeasurement.overflow <= 1, `${width}px long title caused page overflow`);
+    assert(titleGeometry.horizontalOverflow <= 1, `${width}px long title has intrinsic overflow`);
+    assert(!titleGeometry.clippedByMaxHeightOrOverflow, `${width}px long title is clipped`);
+    assert(titleGeometry.overlapWithYear === 0, `${width}px long title overlaps year`);
+    assert(titleGeometry.overlapWithCategory === 0, `${width}px long title overlaps category`);
+    await title.evaluate((element, text) => {
+      element.textContent = text;
+    }, originalTitle);
+
+    const projectOpener = page.locator('.featured-work .project-card__button').first();
+    await projectOpener.scrollIntoViewIfNeeded();
+    await projectOpener.click();
+    const playerDialog = page.getByRole('dialog', { name: /^播放作品：/ });
+    await playerDialog.waitFor({ state: 'visible' });
+    await page.waitForTimeout(650);
+    const playerGeometry = await playerDialog.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      const stage = element.querySelector('.player-overlay__stage');
+      const close = element.querySelector('[aria-label="关闭播放器"]');
+      if (!stage || !close) {
+        throw new Error('Boundary player stage or CLOSE was not found');
+      }
+      const stageRect = stage.getBoundingClientRect();
+      const closeRect = close.getBoundingClientRect();
+      return {
+        rect: rect.toJSON(),
+        stageRect: stageRect.toJSON(),
+        closeRect: closeRect.toJSON(),
+        horizontalOverflow: Math.max(0, element.scrollWidth - element.clientWidth),
+        stageInside: stageRect.left >= rect.left - 1 && stageRect.right <= rect.right + 1,
+        closeFullyVisible: closeRect.left >= rect.left
+          && closeRect.top >= rect.top
+          && closeRect.right <= rect.right
+          && closeRect.bottom <= rect.bottom,
+      };
+    });
+    assert(playerGeometry.horizontalOverflow <= 1, `${width}px player has horizontal overflow`);
+    assert(playerGeometry.stageInside, `${width}px player stage escapes the dialog`);
+    assert(playerGeometry.closeFullyVisible, `${width}px player CLOSE is outside the dialog`);
+    await page.screenshot({ path: join(artifactsDir, `boundary-player-${width}.png`), animations: 'allow' });
+    await page.keyboard.press('Escape');
+    await playerDialog.waitFor({ state: 'detached' });
+
+    results.push({
+      ...viewport,
+      headerGeometry,
+      navigationGeometry,
+      navigationLabelDefects,
+      longTitle: { pageHorizontalOverflow: titlePageMeasurement.overflow, ...titleGeometry },
+      playerGeometry,
+    });
+  }
+
+  report.interactions.responsiveBoundaries = results;
+}
+
 async function run() {
   await mkdir(artifactsDir, { recursive: true });
   const report = {
@@ -608,6 +801,7 @@ async function run() {
     await verifyAboutOverlay(page, report);
     await verifyMissingMediaPlayer(page, report, requests);
     await verifyMobileNavigationAndLongTitle(page, report);
+    await verifyResponsiveBoundaries(page, report);
 
     assert(report.diagnostics.consoleErrors.length === 0, `Console errors detected: ${JSON.stringify(report.diagnostics.consoleErrors)}`);
     assert(report.diagnostics.pageErrors.length === 0, `Page errors detected: ${JSON.stringify(report.diagnostics.pageErrors)}`);

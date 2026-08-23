@@ -1,11 +1,13 @@
-import { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useReducer, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import gsap from 'gsap';
+import { getCategoryLabel } from '../../content/categories';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { useScrollLock } from '../../hooks/useScrollLock';
 import { resolveMediaUrl } from '../../lib/media';
 import type { Project } from '../../types/portfolio';
+import { initialPlayerState, playerReducer } from './playerState';
 
 interface PlayerOverlayProps {
   project: Project | null;
@@ -31,8 +33,9 @@ export function PlayerOverlay({ project, opener, onClose }: PlayerOverlayProps) 
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
+  const playbackGenerationRef = useRef(0);
+  const activeSlugRef = useRef<string | null>(null);
+  const [playerState, dispatch] = useReducer(playerReducer, initialPlayerState);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
@@ -40,28 +43,59 @@ export function PlayerOverlay({ project, opener, onClose }: PlayerOverlayProps) 
   const posterUrl = resolveMediaUrl(project?.poster ?? '');
   const open = project !== null;
   const handleClose = useCallback(() => onClose(), [onClose]);
+  const isPlaying = playerState.isPlaying;
+  const isMuted = playerState.isMuted;
+
+  const isCurrentVideo = useCallback((video: HTMLVideoElement, slug: string) => (
+    videoRef.current === video && activeSlugRef.current === slug
+  ), []);
+
+  const attemptPlayback = useCallback((video: HTMLVideoElement, slug: string, generation: number) => {
+    const settle = (type: 'playing' | 'paused') => {
+      if (playbackGenerationRef.current === generation && isCurrentVideo(video, slug)) {
+        dispatch({ type });
+      }
+    };
+
+    try {
+      void video.play().then(
+        () => settle('playing'),
+        () => settle('paused'),
+      );
+    } catch {
+      settle('paused');
+    }
+  }, [isCurrentVideo]);
 
   useScrollLock(open);
   useFocusTrap(dialogRef, open, handleClose, closeRef, opener);
 
   useLayoutEffect(() => {
+    const slug = project?.slug ?? null;
+    const generation = ++playbackGenerationRef.current;
+    activeSlugRef.current = slug;
     setCurrentTime(0);
     setDuration(0);
-    setIsMuted(false);
-    setIsPlaying(Boolean(mediaUrl));
+    dispatch(slug ? { type: 'open', slug } : { type: 'close' });
 
     const video = videoRef.current;
 
-    if (!video || !mediaUrl) {
-      return;
+    if (!video || !mediaUrl || !slug) {
+      return () => {
+        playbackGenerationRef.current += 1;
+        activeSlugRef.current = null;
+      };
     }
 
     video.muted = false;
-    void video.play().then(
-      () => setIsPlaying(true),
-      () => setIsPlaying(false),
-    );
-  }, [mediaUrl, project?.slug]);
+    attemptPlayback(video, slug, generation);
+
+    return () => {
+      playbackGenerationRef.current += 1;
+      activeSlugRef.current = null;
+      video.pause();
+    };
+  }, [attemptPlayback, mediaUrl, project?.slug]);
 
   useLayoutEffect(() => {
     const dialog = dialogRef.current;
@@ -104,15 +138,14 @@ export function PlayerOverlay({ project, opener, onClose }: PlayerOverlayProps) 
     }
 
     if (isPlaying) {
+      playbackGenerationRef.current += 1;
       video.pause();
-      setIsPlaying(false);
+      dispatch({ type: 'paused' });
       return;
     }
 
-    void video.play().then(
-      () => setIsPlaying(true),
-      () => setIsPlaying(false),
-    );
+    const generation = ++playbackGenerationRef.current;
+    attemptPlayback(video, project.slug, generation);
   };
 
   const toggleMuted = () => {
@@ -124,7 +157,7 @@ export function PlayerOverlay({ project, opener, onClose }: PlayerOverlayProps) 
 
     const nextMuted = !isMuted;
     video.muted = nextMuted;
-    setIsMuted(nextMuted);
+    dispatch({ type: 'toggle-muted' });
   };
 
   const seek = (value: number) => {
@@ -158,6 +191,7 @@ export function PlayerOverlay({ project, opener, onClose }: PlayerOverlayProps) 
       aria-label={`播放作品：${project.title}`}
       aria-modal="true"
       className="player-overlay"
+      data-lenis-prevent
       ref={dialogRef}
       role="dialog"
       tabIndex={-1}
@@ -178,12 +212,36 @@ export function PlayerOverlay({ project, opener, onClose }: PlayerOverlayProps) 
               poster={posterUrl ?? undefined}
               preload="metadata"
               src={mediaUrl}
-              onDurationChange={(event) => setDuration(Number.isFinite(event.currentTarget.duration) ? event.currentTarget.duration : 0)}
-              onEnded={() => setIsPlaying(false)}
-              onLoadedMetadata={(event) => setDuration(Number.isFinite(event.currentTarget.duration) ? event.currentTarget.duration : 0)}
-              onPause={() => setIsPlaying(false)}
-              onPlay={() => setIsPlaying(true)}
-              onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
+              onDurationChange={(event) => {
+                if (isCurrentVideo(event.currentTarget, project.slug)) {
+                  setDuration(Number.isFinite(event.currentTarget.duration) ? event.currentTarget.duration : 0);
+                }
+              }}
+              onEnded={(event) => {
+                if (isCurrentVideo(event.currentTarget, project.slug)) {
+                  dispatch({ type: 'paused' });
+                }
+              }}
+              onLoadedMetadata={(event) => {
+                if (isCurrentVideo(event.currentTarget, project.slug)) {
+                  setDuration(Number.isFinite(event.currentTarget.duration) ? event.currentTarget.duration : 0);
+                }
+              }}
+              onPause={(event) => {
+                if (isCurrentVideo(event.currentTarget, project.slug)) {
+                  dispatch({ type: 'paused' });
+                }
+              }}
+              onPlay={(event) => {
+                if (isCurrentVideo(event.currentTarget, project.slug)) {
+                  dispatch({ type: 'playing' });
+                }
+              }}
+              onTimeUpdate={(event) => {
+                if (isCurrentVideo(event.currentTarget, project.slug)) {
+                  setCurrentTime(event.currentTarget.currentTime);
+                }
+              }}
             />
           ) : (
             <div className="player-overlay__missing" style={{ aspectRatio: project.aspectRatio }}>
@@ -196,7 +254,7 @@ export function PlayerOverlay({ project, opener, onClose }: PlayerOverlayProps) 
 
         <div className="player-overlay__meta">
           <div>
-            <p>{String(project.order).padStart(2, '0')} / {project.category}</p>
+            <p>{String(project.order).padStart(2, '0')} / {getCategoryLabel(project.category)}</p>
             <h2>{project.title}</h2>
           </div>
           <div>

@@ -11,3 +11,7 @@ export const categories: Category[] = [
   { id: 'photography', label: 'PHOTOGRAPHY / 摄影' },
   { id: 'design-interactive', label: 'DESIGN + INTERACTIVE / 设计与交互' },
 ];
+
+export function getCategoryLabel(category: ProjectCategory): string {
+  return categories.find((candidate) => candidate.id === category)?.label ?? category;
+}

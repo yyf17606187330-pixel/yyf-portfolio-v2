@@ -1,4 +1,4 @@
-import { categories } from '../../content/categories';
+import { getCategoryLabel } from '../../content/categories';
 import type { Project } from '../../types/portfolio';
 import { LazyPreview } from './LazyPreview';
 
@@ -7,10 +7,6 @@ interface ProjectCardProps {
   project: Project;
   variant?: 'featured' | 'index';
   onOpenProject: (project: Project, opener: HTMLElement) => void;
-}
-
-function getCategoryLabel(project: Project): string {
-  return categories.find((category) => category.id === project.category)?.label ?? project.category;
 }
 
 export function ProjectCard({ index, project, variant = 'index', onOpenProject }: ProjectCardProps) {
@@ -26,7 +22,7 @@ export function ProjectCard({ index, project, variant = 'index', onOpenProject }
         <span className="project-card__details">
           <span className="project-card__number">{String(index).padStart(2, '0')}</span>
           <span className="project-card__title">{project.title}</span>
-          <span className="project-card__category">{getCategoryLabel(project)}</span>
+          <span className="project-card__category">{getCategoryLabel(project.category)}</span>
           <span className="project-card__year">{project.year}</span>
         </span>
       </button>
