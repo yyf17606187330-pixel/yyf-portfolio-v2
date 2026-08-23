@@ -144,3 +144,33 @@ One full-suite attempt exposed a pre-existing asynchronous cleanup race in `Flui
 - Up to 900 px: `clamp(23rem, 50svh, 28rem)`.
 - Up to 640 px: `clamp(24rem, 51svh, 28.5rem)`.
 - Featured work top spacing is reduced to `clamp(2.75rem, 6vw, 5rem)`, with a 3 rem mobile value and a tighter featured heading gap. This implements the requested first-viewport direction; Task 4 remains responsible for screenshot-based viewport confirmation and evidence-driven tuning.
+
+## Fix round 2: preserve overlay target scroll
+
+The shared focus trap now resolves the explicit initial control, first focusable fallback, or dialog container fallback into one target and calls `focus({ preventScroll: true })`. Existing cleanup focus restoration continues to use the same option.
+
+### RED
+
+The NavigationOverlay target test was extended first to spy on the actual CLOSE focus call, require `{ preventScroll: true }`, and re-check the ABOUT `scrollTop` afterward:
+
+```text
+src/features/navigation/NavigationOverlay.test.tsx
+Test Files  1 failed (1)
+Tests       1 failed | 4 passed (5)
+
+expected "focus" to be called with arguments: [ { preventScroll: true } ]
+Received 1st focus call: []
+```
+
+### GREEN and verification
+
+```text
+NavigationOverlay focused suite: 5 passed (5)
+Task 3 four-suite run:            16 passed (16), 4 files passed (4)
+Full test run:                    57 passed (57), 11 files passed (11)
+typecheck:                        exit 0
+lint:                             exit 0
+build:                            exit 0, 79 modules transformed
+```
+
+These automated checks prove the CLOSE element receives the prevent-scroll focus option and that the mocked ABOUT target offset remains assigned after focus. They do not constitute browser-level visual confirmation; final Chrome target positioning remains explicitly assigned to Task 4.

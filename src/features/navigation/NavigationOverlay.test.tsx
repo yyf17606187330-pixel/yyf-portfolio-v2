@@ -131,6 +131,7 @@ describe('NavigationOverlay', () => {
   });
 
   it('positions a requested section without moving initial focus away from close', async () => {
+    const focus = vi.spyOn(HTMLElement.prototype, 'focus');
     vi.spyOn(HTMLElement.prototype, 'offsetTop', 'get').mockImplementation(function getOffsetTop(this: HTMLElement) {
       return this.id === 'about' ? 640 : 0;
     });
@@ -143,5 +144,8 @@ describe('NavigationOverlay', () => {
     expect(dialog).toHaveAttribute('aria-describedby', 'about-title');
     expect(screen.getByRole('link', { name: 'ABOUT' })).toHaveAttribute('aria-current', 'location');
     await waitFor(() => expect(closeButton).toHaveFocus());
+    expect(focus.mock.contexts).toContain(closeButton);
+    expect(focus).toHaveBeenCalledWith({ preventScroll: true });
+    expect(dialog.scrollTop).toBe(640);
   });
 });

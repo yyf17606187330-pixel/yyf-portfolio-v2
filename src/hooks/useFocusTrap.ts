@@ -42,7 +42,8 @@ export function useFocusTrap(
 
     const focusInitialControl = () => {
       const fallback = getFocusableElements(container)[0];
-      (initialFocusRef?.current ?? fallback ?? container).focus();
+      const initialControl = initialFocusRef?.current ?? fallback ?? container;
+      initialControl.focus({ preventScroll: true });
     };
 
     focusInitialControl();
