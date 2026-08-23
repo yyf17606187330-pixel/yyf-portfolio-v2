@@ -98,3 +98,49 @@ npm run lint       -> exit 0
 npm run build      -> exit 0
 vite v7.3.6 ... ✓ built in 24ms
 ```
+
+## Fix round 2: initial creation-error timing
+
+- Moved native capture listeners for `webglcontextcreationerror` and `webglcontextlost` to the persistent outer `.fluid-backdrop`.
+- The outer listener is registered in `useLayoutEffect`, before the passive WebGL probe can mount the Canvas; the late duplicate wrapper listener was removed.
+- Added a regression case where the mocked Canvas dispatches a cancellable creation error during its first layout phase.
+
+### RED evidence: fix round 2
+
+Command:
+
+```text
+npm run test:run -- src/features/fluid/fluidGate.test.ts src/features/fluid/FluidBackdrop.test.tsx src/hooks/useMediaQuery.test.tsx
+```
+
+Key raw output:
+
+```text
+FAIL  src/features/fluid/FluidBackdrop.test.tsx
+FluidBackdrop failure fallback > catches a creation error dispatched during the canvas first layout phase
+expected document not to contain element, found <canvas data-testid="fluid-canvas" />
+Test Files  1 failed | 2 passed (3)
+Tests  1 failed | 16 passed (17)
+```
+
+### GREEN evidence: fix round 2
+
+Focused command result:
+
+```text
+✓ src/features/fluid/fluidGate.test.ts (13 tests) 2ms
+✓ src/hooks/useMediaQuery.test.tsx (1 test) 6ms
+✓ src/features/fluid/FluidBackdrop.test.tsx (3 tests) 36ms
+Test Files  3 passed (3)
+Tests  17 passed (17)
+```
+
+Final verification:
+
+```text
+✓ 7 test files passed (41 tests)
+npm run typecheck  -> exit 0
+npm run lint       -> exit 0
+npm run build      -> exit 0
+vite v7.3.6 ... ✓ built in 21ms
+```

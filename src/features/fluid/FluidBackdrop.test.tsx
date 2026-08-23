@@ -2,17 +2,41 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FluidBackdrop } from './FluidBackdrop';
 
-const canvasBehavior = vi.hoisted(() => ({ shouldThrow: false }));
+const canvasBehavior = vi.hoisted(() => ({
+  creationEvent: null as Event | null,
+  dispatchCreationOnLayout: false,
+  shouldThrow: false,
+}));
 
-vi.mock('./FluidCanvas', () => ({
-  default: () => {
+vi.mock('./FluidCanvas', async () => {
+  const React = await import('react');
+
+  return {
+    default: () => {
+      const canvasRef = React.useRef<HTMLCanvasElement>(null);
+
+      React.useLayoutEffect(() => {
+        if (!canvasBehavior.dispatchCreationOnLayout || !canvasRef.current) {
+          return;
+        }
+
+        const creationEvent = new Event('webglcontextcreationerror', {
+          bubbles: true,
+          cancelable: true,
+        });
+
+        canvasBehavior.creationEvent = creationEvent;
+        canvasRef.current.dispatchEvent(creationEvent);
+      }, []);
+
     if (canvasBehavior.shouldThrow) {
       throw new Error('Canvas initialization failed');
     }
 
-    return <canvas data-testid="fluid-canvas" />;
-  },
-}));
+      return <canvas data-testid="fluid-canvas" ref={canvasRef} />;
+    },
+  };
+});
 
 const originalGetContext = HTMLCanvasElement.prototype.getContext;
 const originalMatchMedia = window.matchMedia;
@@ -29,6 +53,8 @@ function installFinePointerMediaQueries() {
 }
 
 beforeEach(() => {
+  canvasBehavior.creationEvent = null;
+  canvasBehavior.dispatchCreationOnLayout = false;
   canvasBehavior.shouldThrow = false;
   installFinePointerMediaQueries();
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
@@ -70,6 +96,18 @@ describe('FluidBackdrop failure fallback', () => {
     });
 
     expect(contextLost.defaultPrevented).toBe(true);
+    expect(container.querySelector('.fluid-backdrop__static')).toBeInTheDocument();
+  });
+
+  it('catches a creation error dispatched during the canvas first layout phase', async () => {
+    canvasBehavior.dispatchCreationOnLayout = true;
+    const { container } = render(<FluidBackdrop />);
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('fluid-canvas')).not.toBeInTheDocument();
+    });
+
+    expect(canvasBehavior.creationEvent?.defaultPrevented).toBe(true);
     expect(container.querySelector('.fluid-backdrop__static')).toBeInTheDocument();
   });
 });

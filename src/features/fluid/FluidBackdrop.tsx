@@ -3,6 +3,7 @@ import {
   lazy,
   Suspense,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -85,34 +86,8 @@ function FluidWebglEnhancement({
   isPageVisible,
   onFailure,
 }: FluidWebglEnhancementProps) {
-  const wrapperRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const wrapper = wrapperRef.current;
-
-    if (!wrapper) {
-      return undefined;
-    }
-
-    const disableEnhancement = (event: Event) => {
-      if (event.cancelable) {
-        event.preventDefault();
-      }
-
-      onFailure();
-    };
-
-    wrapper.addEventListener('webglcontextcreationerror', disableEnhancement, true);
-    wrapper.addEventListener('webglcontextlost', disableEnhancement, true);
-
-    return () => {
-      wrapper.removeEventListener('webglcontextcreationerror', disableEnhancement, true);
-      wrapper.removeEventListener('webglcontextlost', disableEnhancement, true);
-    };
-  }, [onFailure]);
-
   return (
-    <div className="fluid-backdrop__webgl" ref={wrapperRef}>
+    <div className="fluid-backdrop__webgl">
       <FluidEnhancementBoundary onFailure={onFailure}>
         <Suspense fallback={null}>
           <FluidCanvas config={config} isPageVisible={isPageVisible} />
@@ -127,6 +102,7 @@ export function FluidBackdrop({
   config = fluidEffectConfig,
   region = 'hero',
 }: FluidBackdropProps) {
+  const backdropRef = useRef<HTMLDivElement>(null);
   const finePointer = useMediaQuery('(pointer: fine)');
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const isPageVisible = usePageVisibility();
@@ -140,6 +116,30 @@ export function FluidBackdrop({
     '--fluid-color-c': config.colors[2],
     '--fluid-intensity': config.intensity,
   } as CSSProperties;
+
+  useLayoutEffect(() => {
+    const backdrop = backdropRef.current;
+
+    if (!backdrop) {
+      return undefined;
+    }
+
+    const disableEnhancement = (event: Event) => {
+      if (event.cancelable) {
+        event.preventDefault();
+      }
+
+      setWebglAvailable(false);
+    };
+
+    backdrop.addEventListener('webglcontextcreationerror', disableEnhancement, true);
+    backdrop.addEventListener('webglcontextlost', disableEnhancement, true);
+
+    return () => {
+      backdrop.removeEventListener('webglcontextcreationerror', disableEnhancement, true);
+      backdrop.removeEventListener('webglcontextlost', disableEnhancement, true);
+    };
+  }, []);
 
   useEffect(() => {
     if (!shouldProbeFluidWebGL({ enabled, finePointer, reducedMotion })) {
@@ -158,6 +158,7 @@ export function FluidBackdrop({
         `fluid-backdrop--${config.fallback}`,
         className,
       ].filter(Boolean).join(' ')}
+      ref={backdropRef}
       style={cssVariables}
     >
       <div className="fluid-backdrop__static" />
