@@ -1,5 +1,6 @@
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { projects } from '../../content/projects';
 import type { Project } from '../../types/portfolio';
 import { LazyPreview } from './LazyPreview';
 import { WorkIndex } from './WorkIndex';
@@ -83,24 +84,30 @@ describe('WorkIndex', () => {
     vi.unstubAllGlobals();
   });
 
-  it('shows category counts and filters the visible project controls without navigation', () => {
+  it('shows exactly the nine additional index projects with index-only counts and filtering', () => {
     const onOpenProject = vi.fn();
-    render(<WorkIndex projects={projectFixtures} onOpenProject={onOpenProject} />);
+    render(<WorkIndex projects={projects} onOpenProject={onOpenProject} />);
 
-    expect(screen.getByRole('button', { name: 'ALL / 全部 5' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'ADDITIONAL WORKS' })).toBeInTheDocument();
+    expect(screen.getByText('索引中显示 9 项')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /^打开项目：/ })).toHaveLength(9);
+    expect(screen.queryByRole('button', { name: '打开项目：待补充影像项目 01' })).not.toBeInTheDocument();
+
+    expect(screen.getByRole('button', { name: 'ALL / 全部 9' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'FILM / 影像 2' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'AI VIDEO / AI视频 1' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'PHOTOGRAPHY / 摄影 1' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'DESIGN + INTERACTIVE / 设计与交互 1' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'AI VIDEO / AI视频 2' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'PHOTOGRAPHY / 摄影 2' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'DESIGN + INTERACTIVE / 设计与交互 3' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'FILM / 影像 2' }));
 
-    expect(screen.getByRole('button', { name: '打开项目：影像项目 A' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '打开项目：影像项目 B' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: '打开项目：AI 视频项目 A' })).not.toBeInTheDocument();
+    expect(screen.getByText('索引中显示 2 项')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '打开项目：待补充影像项目 02' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '打开项目：待补充影像项目 03' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '打开项目：待补充 AI 视频项目 02' })).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: '打开项目：影像项目 A' }));
-    expect(onOpenProject).toHaveBeenCalledWith(projectFixtures[0], expect.any(HTMLElement));
+    fireEvent.click(screen.getByRole('button', { name: '打开项目：待补充影像项目 02' }));
+    expect(onOpenProject).toHaveBeenCalledWith(projects[3], expect.any(HTMLElement));
   });
 
   it('does not attach a preview source until its frame approaches the viewport', () => {

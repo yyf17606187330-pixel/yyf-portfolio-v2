@@ -3,7 +3,7 @@ import { profile } from './content/profile';
 import { projects } from './content/projects';
 import { FluidBackdrop } from './features/fluid/FluidBackdrop';
 import { IntroSequence } from './features/intro/IntroSequence';
-import { NavigationOverlay } from './features/navigation/NavigationOverlay';
+import { NavigationOverlay, type NavigationTarget } from './features/navigation/NavigationOverlay';
 import { SiteHeader } from './features/navigation/SiteHeader';
 import { PlayerOverlay } from './features/player/PlayerOverlay';
 import { ProjectCard } from './features/works/ProjectCard';
@@ -12,7 +12,7 @@ import { useLenis } from './hooks/useLenis';
 import type { Project } from './types/portfolio';
 
 type TopLayer =
-  | { kind: 'menu'; opener: HTMLElement }
+  | { kind: 'menu'; opener: HTMLElement; target: NavigationTarget }
   | { kind: 'player'; opener: HTMLElement; project: Project }
   | null;
 
@@ -25,8 +25,8 @@ export default function App() {
   useLenis();
 
   const completeIntro = useCallback(() => setIntroComplete(true), []);
-  const openMenu = useCallback((opener: HTMLElement) => {
-    setTopLayer({ kind: 'menu', opener });
+  const openMenu = useCallback((opener: HTMLElement, target: NavigationTarget) => {
+    setTopLayer({ kind: 'menu', opener, target });
   }, []);
   const openProject = useCallback((project: Project, opener: HTMLElement) => {
     setTopLayer({ kind: 'player', project, opener });
@@ -89,7 +89,7 @@ export default function App() {
         <footer className="site-footer">
           <p>{profile.latinName}</p>
           <p>{profile.positioning}</p>
-          <button type="button" onClick={(event) => openMenu(event.currentTarget)}>
+          <button type="button" onClick={(event) => openMenu(event.currentTarget, 'contact')}>
             CONTACT / 联系
           </button>
         </footer>
@@ -99,6 +99,7 @@ export default function App() {
         open={topLayer?.kind === 'menu'}
         opener={topLayer?.kind === 'menu' ? topLayer.opener : null}
         onClose={closeTopLayer}
+        target={topLayer?.kind === 'menu' ? topLayer.target : 'top'}
       />
       <PlayerOverlay
         project={topLayer?.kind === 'player' ? topLayer.project : null}

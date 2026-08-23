@@ -85,3 +85,62 @@ Vitest output contained no React `act(...)` warnings and no application console 
 The Task 3 brief created `src/main.tsx` but originally excluded `index.html`, whose existing document had no module entry and would have rendered a blank runtime despite a successful build. The parent task explicitly expanded Task 3 ownership for one change only: add `<script type="module" src="/src/main.tsx"></script>` after `#root`. No other Task 1 file was changed.
 
 All other changes stay within the Task 3 brief. Browser screenshots and viewport-specific visual evidence are intentionally left to Task 4, as assigned; Task 3 does not claim visual QA approval.
+
+## Fix round 1: review alignment
+
+### Ruling and implementation
+
+- Kept the three featured projects exclusive to the featured sequence. `WorkIndex` now defensively removes featured entries even when it receives the complete project collection, so the additional index, its filter counts, and its live result count are all based only on the nine supplemental projects.
+- Replaced the misleading `ALL WORKS` label with `ADDITIONAL WORKS`; the live status now reads `索引中显示 N 项`.
+- Added reduced-motion gates to both navigation and player overlays. When `prefers-reduced-motion: reduce` matches, neither component creates a GSAP context or timeline and the native final layout remains visible and operable.
+- Restored the four approved capability groups and their exact concrete skill coverage: Film & Direction, Photography & Retouch, Visual Design, and AI & Creative Tech.
+- Header CAPABILITIES / ABOUT / CONTACT and footer CONTACT now open the overlay with a typed initial target. The overlay sets its own `scrollTop` from the target section offset, exposes the selected location through `aria-describedby` and `aria-current`, and leaves initial focus on the close button. MENU still opens at the top; no `scrollIntoView` call was introduced.
+
+### RED evidence
+
+The four focused suites were extended before production changes. The required command failed for the five missing review behaviors:
+
+```text
+Test Files  3 failed | 1 passed (4)
+Tests       5 failed | 11 passed (16)
+
+- WorkIndex still exposed ALL WORKS / 12 items instead of a nine-item supplemental index.
+- NavigationOverlay created a GSAP context in reduced motion.
+- PlayerOverlay created a GSAP context in reduced motion.
+- The four approved capability headings and skill strings were absent.
+- The requested ABOUT target did not set the overlay scroll position or location semantics.
+```
+
+### GREEN and final verification
+
+Focused component verification after implementation:
+
+```text
+✓ src/features/intro/IntroSequence.test.tsx (4 tests)
+✓ src/features/player/PlayerOverlay.test.tsx (4 tests)
+✓ src/features/works/WorkIndex.test.tsx (3 tests)
+✓ src/features/navigation/NavigationOverlay.test.tsx (5 tests)
+Test Files  4 passed (4)
+Tests       16 passed (16)
+```
+
+Full verification:
+
+```text
+npm run test:run
+Test Files  11 passed (11)
+Tests       57 passed (57)
+
+npm run typecheck  -> tsc -b, exit 0
+npm run lint       -> eslint ., exit 0
+npm run build      -> exit 0, 79 modules transformed
+```
+
+One full-suite attempt exposed a pre-existing asynchronous cleanup race in `FluidBackdrop.test.tsx` (duplicate test canvas and React concurrent-render stderr). Its isolated suite passed 3/3 immediately, and the complete suite then passed 57/57 without `act(...)`, React, or application console noise. No out-of-scope Fluid file was modified. Vite still reports only the known lazy `FluidCanvas` chunk-size advisory after a successful build.
+
+### Compact identity band
+
+- Desktop identity lead: `clamp(23rem, 46svh, 29rem)`.
+- Up to 900 px: `clamp(23rem, 50svh, 28rem)`.
+- Up to 640 px: `clamp(24rem, 51svh, 28.5rem)`.
+- Featured work top spacing is reduced to `clamp(2.75rem, 6vw, 5rem)`, with a 3 rem mobile value and a tighter featured heading gap. This implements the requested first-viewport direction; Task 4 remains responsible for screenshot-based viewport confirmation and evidence-driven tuning.

@@ -1,13 +1,14 @@
 import type { MouseEvent } from 'react';
 import { profile } from '../../content/profile';
+import type { NavigationTarget } from './NavigationOverlay';
 
 interface SiteHeaderProps {
-  onOpenMenu: (opener: HTMLElement) => void;
+  onOpenMenu: (opener: HTMLElement, target: NavigationTarget) => void;
 }
 
 export function SiteHeader({ onOpenMenu }: SiteHeaderProps) {
-  const openMenu = (event: MouseEvent<HTMLButtonElement>) => {
-    onOpenMenu(event.currentTarget);
+  const openMenu = (event: MouseEvent<HTMLButtonElement>, target: NavigationTarget) => {
+    onOpenMenu(event.currentTarget, target);
   };
 
   return (
@@ -18,10 +19,10 @@ export function SiteHeader({ onOpenMenu }: SiteHeaderProps) {
       </a>
       <nav className="site-header__nav" aria-label="主导航">
         <a href="#work">WORK</a>
-        <button className="site-header__nav-secondary" type="button" onClick={openMenu}>CAPABILITIES</button>
-        <button className="site-header__nav-secondary" type="button" onClick={openMenu}>ABOUT</button>
-        <button className="site-header__nav-secondary" type="button" onClick={openMenu}>CONTACT</button>
-        <button className="site-header__menu" type="button" onClick={openMenu}>MENU</button>
+        <button className="site-header__nav-secondary" type="button" onClick={(event) => openMenu(event, 'capabilities')}>CAPABILITIES</button>
+        <button className="site-header__nav-secondary" type="button" onClick={(event) => openMenu(event, 'about')}>ABOUT</button>
+        <button className="site-header__nav-secondary" type="button" onClick={(event) => openMenu(event, 'contact')}>CONTACT</button>
+        <button className="site-header__menu" type="button" onClick={(event) => openMenu(event, 'top')}>MENU</button>
       </nav>
     </header>
   );

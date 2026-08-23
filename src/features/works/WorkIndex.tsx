@@ -17,7 +17,10 @@ const emptyCounts: Record<ProjectCategory, number> = {
 
 export function WorkIndex({ projects, onOpenProject }: WorkIndexProps) {
   const [activeCategory, setActiveCategory] = useState<CategorySelection>('all');
-  const sortedProjects = useMemo(() => [...projects].sort((left, right) => left.order - right.order), [projects]);
+  const sortedProjects = useMemo(
+    () => projects.filter((project) => !project.featured).sort((left, right) => left.order - right.order),
+    [projects],
+  );
   const counts = useMemo(
     () => sortedProjects.reduce<Record<ProjectCategory, number>>(
       (result, project) => ({ ...result, [project.category]: result[project.category] + 1 }),
@@ -33,8 +36,8 @@ export function WorkIndex({ projects, onOpenProject }: WorkIndexProps) {
     <section className="work-index" aria-labelledby="work-index-title">
       <div className="section-heading">
         <p className="eyebrow">WORK INDEX / 作品索引</p>
-        <h2 id="work-index-title">ALL WORKS</h2>
-        <p aria-live="polite">当前显示 {visibleProjects.length} 项</p>
+        <h2 id="work-index-title">ADDITIONAL WORKS</h2>
+        <p aria-live="polite">索引中显示 {visibleProjects.length} 项</p>
       </div>
       <CategoryFilter
         activeCategory={activeCategory}

@@ -4,6 +4,40 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Project } from '../../types/portfolio';
 import { PlayerOverlay } from './PlayerOverlay';
 
+const gsapMock = vi.hoisted(() => {
+  const timeline = vi.fn(() => {
+    const api = { fromTo: vi.fn() };
+    api.fromTo.mockReturnValue(api);
+    return api;
+  });
+  const context = vi.fn((callback: () => void) => {
+    callback();
+    return { revert: vi.fn() };
+  });
+
+  return { context, timeline };
+});
+
+vi.mock('gsap', () => ({
+  default: {
+    context: gsapMock.context,
+    timeline: gsapMock.timeline,
+  },
+}));
+
+function setReducedMotion(matches: boolean) {
+  vi.stubGlobal('matchMedia', (query: string) => ({
+    matches: query === '(prefers-reduced-motion: reduce)' ? matches : false,
+    media: query,
+    onchange: null,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  }));
+}
+
 const playableProject: Project = {
   slug: 'film-a',
   title: '影像项目 A',
@@ -47,6 +81,8 @@ describe('PlayerOverlay', () => {
   let scrollTo: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
+    gsapMock.context.mockClear();
+    gsapMock.timeline.mockClear();
     play.mockClear();
     pause.mockClear();
     requestFullscreen.mockClear();
@@ -63,6 +99,7 @@ describe('PlayerOverlay', () => {
   afterEach(() => {
     cleanup();
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it('attempts audible playback on open and exposes playback, mute, progress and fullscreen controls', async () => {
@@ -116,5 +153,19 @@ describe('PlayerOverlay', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(opener).toHaveFocus();
     expect(scrollTo).toHaveBeenCalledWith({ top: 375, left: 0, behavior: 'auto' });
+  });
+
+  it('skips its GSAP timeline for reduced motion while keeping player controls operable', async () => {
+    setReducedMotion(true);
+
+    render(<PlayerOverlay project={playableProject} opener={null} onClose={vi.fn()} />);
+
+    expect(gsapMock.context).not.toHaveBeenCalled();
+    expect(gsapMock.timeline).not.toHaveBeenCalled();
+    expect(screen.getByRole('dialog', { name: '播放作品：影像项目 A' })).toBeInTheDocument();
+    await waitFor(() => expect(play).toHaveBeenCalledOnce());
+    const video = document.body.querySelector('video') as HTMLVideoElement;
+    fireEvent.click(screen.getByRole('button', { name: '静音' }));
+    expect(video.muted).toBe(true);
   });
 });

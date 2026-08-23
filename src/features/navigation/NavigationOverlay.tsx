@@ -4,24 +4,29 @@ import gsap from 'gsap';
 import { profile } from '../../content/profile';
 import { FluidBackdrop } from '../fluid/FluidBackdrop';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { useScrollLock } from '../../hooks/useScrollLock';
+
+export type NavigationTarget = 'top' | 'capabilities' | 'about' | 'contact';
 
 interface NavigationOverlayProps {
   open: boolean;
   opener: HTMLElement | null;
   onClose: () => void;
+  target?: NavigationTarget;
 }
 
 const capabilities = [
-  { index: '01', english: 'SHOOTING & DIRECTION', chinese: '影像导演' },
-  { index: '02', english: 'EDITING & COLOR', chinese: '剪辑与调色' },
-  { index: '03', english: 'PHOTOGRAPHY & DESIGN', chinese: '摄影与视觉设计' },
-  { index: '04', english: 'AI VIDEO & INTERACTIVE', chinese: 'AI 影像与交互' },
+  { index: '01', title: 'Film & Direction', skills: '编导 · 拍摄 · 剪辑 · 调色 · 基础特效' },
+  { index: '02', title: 'Photography & Retouch', skills: '人像/商品棚拍 · 人像修图' },
+  { index: '03', title: 'Visual Design', skills: 'PS 合成 · 平面修改与设计' },
+  { index: '04', title: 'AI & Creative Tech', skills: 'AI 视频 · 工作流 · AI 前端' },
 ];
 
-export function NavigationOverlay({ open, opener, onClose }: NavigationOverlayProps) {
+export function NavigationOverlay({ open, opener, onClose, target = 'top' }: NavigationOverlayProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const handleClose = useCallback(() => onClose(), [onClose]);
 
   useScrollLock(open);
@@ -31,6 +36,17 @@ export function NavigationOverlay({ open, opener, onClose }: NavigationOverlayPr
     const dialog = dialogRef.current;
 
     if (!open || !dialog) {
+      return;
+    }
+
+    const section = target === 'top' ? null : dialog.querySelector<HTMLElement>(`#${target}`);
+    dialog.scrollTop = section?.offsetTop ?? 0;
+  }, [open, target]);
+
+  useLayoutEffect(() => {
+    const dialog = dialogRef.current;
+
+    if (!open || !dialog || reducedMotion) {
       return undefined;
     }
 
@@ -48,7 +64,7 @@ export function NavigationOverlay({ open, opener, onClose }: NavigationOverlayPr
     }, dialog);
 
     return () => context.revert();
-  }, [open]);
+  }, [open, reducedMotion]);
 
   if (!open) {
     return null;
@@ -57,6 +73,7 @@ export function NavigationOverlay({ open, opener, onClose }: NavigationOverlayPr
   return createPortal(
     <div
       aria-label="全站导航"
+      aria-describedby={target === 'top' ? undefined : `${target}-title`}
       aria-modal="true"
       className="navigation-overlay"
       ref={dialogRef}
@@ -74,26 +91,26 @@ export function NavigationOverlay({ open, opener, onClose }: NavigationOverlayPr
       <div className="navigation-overlay__layout">
         <nav className="navigation-overlay__nav" aria-label="覆盖层导航">
           <a href="#work" onClick={handleClose}>WORK</a>
-          <a href="#capabilities">CAPABILITIES</a>
-          <a href="#about">ABOUT</a>
-          <a href="#contact">CONTACT</a>
+          <a aria-current={target === 'capabilities' ? 'location' : undefined} href="#capabilities">CAPABILITIES</a>
+          <a aria-current={target === 'about' ? 'location' : undefined} href="#about">ABOUT</a>
+          <a aria-current={target === 'contact' ? 'location' : undefined} href="#contact">CONTACT</a>
         </nav>
 
         <div className="navigation-overlay__details">
-          <section id="capabilities" aria-labelledby="capabilities-title">
+          <section id="capabilities" aria-labelledby="capabilities-title" tabIndex={-1}>
             <p className="eyebrow" id="capabilities-title">CAPABILITIES / 能力</p>
             <div className="navigation-overlay__capabilities">
               {capabilities.map((capability) => (
                 <div className="navigation-overlay__capability" key={capability.index}>
                   <span>{capability.index}</span>
-                  <p>{capability.english}</p>
-                  <p>{capability.chinese}</p>
+                  <h2>{capability.title}</h2>
+                  <p>{capability.skills}</p>
                 </div>
               ))}
             </div>
           </section>
 
-          <section className="navigation-overlay__about" id="about" aria-labelledby="about-title">
+          <section className="navigation-overlay__about" id="about" aria-labelledby="about-title" tabIndex={-1}>
             <div className="navigation-overlay__portrait" aria-label="个人肖像待替换">
               <span>PORTRAIT</span>
               <span>个人肖像待替换</span>
@@ -106,7 +123,7 @@ export function NavigationOverlay({ open, opener, onClose }: NavigationOverlayPr
             </div>
           </section>
 
-          <section className="navigation-overlay__contact" id="contact" aria-labelledby="contact-title">
+          <section className="navigation-overlay__contact" id="contact" aria-labelledby="contact-title" tabIndex={-1}>
             <div>
               <p className="eyebrow" id="contact-title">CONTACT / 联系</p>
               <p>{profile.email}</p>

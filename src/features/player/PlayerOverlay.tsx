@@ -2,6 +2,7 @@ import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import gsap from 'gsap';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { useScrollLock } from '../../hooks/useScrollLock';
 import { resolveMediaUrl } from '../../lib/media';
 import type { Project } from '../../types/portfolio';
@@ -34,6 +35,7 @@ export function PlayerOverlay({ project, opener, onClose }: PlayerOverlayProps) 
   const [isMuted, setIsMuted] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const mediaUrl = resolveMediaUrl(project?.fullSrc ?? '');
   const posterUrl = resolveMediaUrl(project?.poster ?? '');
   const open = project !== null;
@@ -64,7 +66,7 @@ export function PlayerOverlay({ project, opener, onClose }: PlayerOverlayProps) 
   useLayoutEffect(() => {
     const dialog = dialogRef.current;
 
-    if (!open || !dialog) {
+    if (!open || !dialog || reducedMotion) {
       return undefined;
     }
 
@@ -88,7 +90,7 @@ export function PlayerOverlay({ project, opener, onClose }: PlayerOverlayProps) 
     }, dialog);
 
     return () => context.revert();
-  }, [open, project?.slug]);
+  }, [open, project?.slug, reducedMotion]);
 
   if (!project) {
     return null;
