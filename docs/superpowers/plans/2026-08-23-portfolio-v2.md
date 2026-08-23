@@ -6,7 +6,7 @@
 
 **Architecture:** A Vite React application keeps portfolio content in typed data modules, media URL/session/player behavior in pure testable helpers, and interaction surfaces in focused React features. GSAP owns cinematic transitions, Lenis owns optional smooth scrolling, and a lazily loaded React Three Fiber field progressively enhances a static CSS fallback.
 
-**Tech Stack:** Vite 8, React 19, TypeScript 6, Vitest, Testing Library, GSAP 3, Lenis 1, Three.js, React Three Fiber, ESLint 9, Playwright Core for screenshot QA.
+**Tech Stack:** Vite, React 19, TypeScript, Vitest, Testing Library, GSAP 3, Lenis 1, Three.js, React Three Fiber, ESLint 9, Playwright Core for screenshot QA.
 
 **Spec:** `docs/superpowers/specs/portfolio-v2-spec.md`
 
@@ -97,6 +97,7 @@ Commit subject: `feat: add configurable fluid enhancement`
 ### Task 3: Work-first portfolio interface and interactions
 
 **Files:**
+- Modify: `package.json`, `package-lock.json` to add `@fontsource-variable/manrope@5.3.0` and `@fontsource-variable/syne@5.3.0`
 - Create: `src/main.tsx`, `src/App.tsx`, `src/styles/index.css`, `src/styles/tokens.css`
 - Create: `src/features/intro/IntroSequence.tsx`, `src/features/intro/IntroSequence.test.tsx`
 - Create: `src/features/navigation/SiteHeader.tsx`, `src/features/navigation/NavigationOverlay.tsx`, `src/features/navigation/NavigationOverlay.test.tsx`
