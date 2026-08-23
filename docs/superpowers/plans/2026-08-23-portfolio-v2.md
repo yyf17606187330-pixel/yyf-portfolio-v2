@@ -98,6 +98,7 @@ Commit subject: `feat: add configurable fluid enhancement`
 
 **Files:**
 - Modify: `package.json`, `package-lock.json` to add `@fontsource-variable/manrope@5.3.0` and `@fontsource-variable/syne@5.3.0`
+- Modify: `index.html` to mount `/src/main.tsx`
 - Create: `src/main.tsx`, `src/App.tsx`, `src/styles/index.css`, `src/styles/tokens.css`
 - Create: `src/features/intro/IntroSequence.tsx`, `src/features/intro/IntroSequence.test.tsx`
 - Create: `src/features/navigation/SiteHeader.tsx`, `src/features/navigation/NavigationOverlay.tsx`, `src/features/navigation/NavigationOverlay.test.tsx`
@@ -138,6 +139,7 @@ Commit subject: `feat: build work-first portfolio interface`
 ### Task 4: Visual QA, browser interaction QA and handoff documentation
 
 **Files:**
+- Modify: `package.json`, `package-lock.json` to add `playwright-core@1.62.1` and the `qa:visual` script
 - Create: `scripts/visual-qa.mjs`, `docs/content-inventory.md`
 - Modify: UI/style/test files only when a QA finding requires a fix.
 - Create locally and keep ignored: `artifacts/qa/desktop-1440.png`, `artifacts/qa/desktop-1280.png`, `artifacts/qa/mobile-390.png`, `artifacts/qa/qa-report.json`
