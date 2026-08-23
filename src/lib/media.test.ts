@@ -26,6 +26,8 @@ describe('resolveMediaUrl', () => {
   });
 
   it('falls back safely when no media base URL is configured', () => {
+    vi.stubEnv('VITE_MEDIA_BASE_URL', undefined);
+
     expect(resolveMediaUrl('posters/film-01.webp')).toBe('/media/posters/film-01.webp');
   });
 
@@ -36,6 +38,13 @@ describe('resolveMediaUrl', () => {
     vi.stubEnv('VITE_MEDIA_BASE_URL', 'javascript:alert(1)');
     expect(resolveMediaUrl('posters/film-01.webp')).toBe('/media/posters/film-01.webp');
   });
+
+  it.each(['\\\\evil.example', 'media\\archive', 'media%5Carchive'])(
+    'falls back for an ambiguous base URL: %s',
+    (baseUrl) => {
+      expect(resolveMediaUrl('posters/film-01.webp', baseUrl)).toBe('/media/posters/film-01.webp');
+    },
+  );
 
   it('preserves approved HTTPS and image data URLs', () => {
     expect(resolveMediaUrl('https://cdn.example.com/poster.webp')).toBe('https://cdn.example.com/poster.webp');

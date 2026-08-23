@@ -6,7 +6,7 @@ function containsTraversal(path: string): boolean {
   return path.split('/').some((segment) => {
     try {
       const decodedSegment = decodeURIComponent(segment);
-      return decodedSegment.split(/[\\/]/).some((part) => part === '.' || part === '..');
+      return decodedSegment.includes('\\') || decodedSegment.split(/[\\/]/).some((part) => part === '.' || part === '..');
     } catch {
       return true;
     }
