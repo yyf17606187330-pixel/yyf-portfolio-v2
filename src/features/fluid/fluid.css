@@ -11,6 +11,7 @@
 }
 
 .fluid-backdrop__static,
+.fluid-backdrop__webgl,
 .fluid-backdrop__canvas {
   height: 100%;
   inset: 0;

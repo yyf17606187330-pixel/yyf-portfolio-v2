@@ -1,9 +1,18 @@
-import { lazy, Suspense, useEffect, useState, type CSSProperties } from 'react';
+import {
+  Component,
+  lazy,
+  Suspense,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from 'react';
 import { fluidEffectConfig } from '../../content/profile';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { usePageVisibility } from '../../hooks/usePageVisibility';
 import type { FluidEffectConfig } from '../../types/portfolio';
-import { getFluidMode } from './fluidGate';
+import { getFluidMode, shouldProbeFluidWebGL } from './fluidGate';
 import './fluid.css';
 
 const FluidCanvas = lazy(() => import('./FluidCanvas'));
@@ -37,6 +46,82 @@ function canCreateWebGL(): boolean {
   }
 }
 
+interface FluidEnhancementBoundaryProps {
+  children: ReactNode;
+  onFailure: () => void;
+}
+
+interface FluidEnhancementBoundaryState {
+  hasFailed: boolean;
+}
+
+class FluidEnhancementBoundary extends Component<
+  FluidEnhancementBoundaryProps,
+  FluidEnhancementBoundaryState
+> {
+  state: FluidEnhancementBoundaryState = { hasFailed: false };
+
+  static getDerivedStateFromError(): FluidEnhancementBoundaryState {
+    return { hasFailed: true };
+  }
+
+  componentDidCatch() {
+    this.props.onFailure();
+  }
+
+  render() {
+    return this.state.hasFailed ? null : this.props.children;
+  }
+}
+
+interface FluidWebglEnhancementProps {
+  config: FluidEffectConfig;
+  isPageVisible: boolean;
+  onFailure: () => void;
+}
+
+function FluidWebglEnhancement({
+  config,
+  isPageVisible,
+  onFailure,
+}: FluidWebglEnhancementProps) {
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const wrapper = wrapperRef.current;
+
+    if (!wrapper) {
+      return undefined;
+    }
+
+    const disableEnhancement = (event: Event) => {
+      if (event.cancelable) {
+        event.preventDefault();
+      }
+
+      onFailure();
+    };
+
+    wrapper.addEventListener('webglcontextcreationerror', disableEnhancement, true);
+    wrapper.addEventListener('webglcontextlost', disableEnhancement, true);
+
+    return () => {
+      wrapper.removeEventListener('webglcontextcreationerror', disableEnhancement, true);
+      wrapper.removeEventListener('webglcontextlost', disableEnhancement, true);
+    };
+  }, [onFailure]);
+
+  return (
+    <div className="fluid-backdrop__webgl" ref={wrapperRef}>
+      <FluidEnhancementBoundary onFailure={onFailure}>
+        <Suspense fallback={null}>
+          <FluidCanvas config={config} isPageVisible={isPageVisible} />
+        </Suspense>
+      </FluidEnhancementBoundary>
+    </div>
+  );
+}
+
 export function FluidBackdrop({
   className,
   config = fluidEffectConfig,
@@ -57,8 +142,13 @@ export function FluidBackdrop({
   } as CSSProperties;
 
   useEffect(() => {
+    if (!shouldProbeFluidWebGL({ enabled, finePointer, reducedMotion })) {
+      setWebglAvailable(false);
+      return;
+    }
+
     setWebglAvailable(canCreateWebGL());
-  }, []);
+  }, [enabled, finePointer, reducedMotion]);
 
   return (
     <div
@@ -72,9 +162,11 @@ export function FluidBackdrop({
     >
       <div className="fluid-backdrop__static" />
       {canEnhance ? (
-        <Suspense fallback={null}>
-          <FluidCanvas config={config} isPageVisible={isPageVisible} />
-        </Suspense>
+        <FluidWebglEnhancement
+          config={config}
+          isPageVisible={isPageVisible}
+          onFailure={() => setWebglAvailable(false)}
+        />
       ) : null}
     </div>
   );

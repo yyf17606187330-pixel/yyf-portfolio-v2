@@ -46,3 +46,55 @@ vite v7.3.6 ... ✓ built in 21ms
 ## Scope
 
 Created only the Task 2 fluid feature, its gate test, and the two shared hooks. No legacy demo UI, palette, glass panels, private R3F renderer hooks, or old-project files were copied.
+
+## Fix round 1: hardened fallback paths
+
+- Wrapped the lazy Canvas subtree in a local error boundary. A render or lazy-load failure now unmounts only the enhancement and leaves the static layer in place.
+- Added capture-phase listeners for `webglcontextcreationerror` and `webglcontextlost`; cancellable events are prevented and WebGL state is disabled so the Canvas unmounts.
+- `useMediaQuery` now treats a missing `window.matchMedia` as a safe false result.
+- WebGL probing now occurs only for an enabled region with a fine pointer and no reduced-motion preference.
+
+### RED evidence: fix round 1
+
+Command:
+
+```text
+npm run test:run -- src/features/fluid/fluidGate.test.ts src/features/fluid/FluidBackdrop.test.tsx src/hooks/useMediaQuery.test.tsx
+```
+
+Key raw output:
+
+```text
+FAIL  src/hooks/useMediaQuery.test.tsx
+TypeError: window.matchMedia is not a function
+
+FAIL  src/features/fluid/FluidBackdrop.test.tsx
+expected document not to contain element, found <canvas data-testid="fluid-canvas" />
+
+FAIL  src/features/fluid/fluidGate.test.ts
+TypeError: (0 , shouldProbeFluidWebGL) is not a function
+Test Files  3 failed (3)
+Tests  7 failed | 9 passed (16)
+```
+
+### GREEN evidence: fix round 1
+
+Focused command result:
+
+```text
+✓ src/features/fluid/fluidGate.test.ts (13 tests) 2ms
+✓ src/hooks/useMediaQuery.test.tsx (1 test) 6ms
+✓ src/features/fluid/FluidBackdrop.test.tsx (2 tests) 30ms
+Test Files  3 passed (3)
+Tests  16 passed (16)
+```
+
+Final verification:
+
+```text
+✓ 7 test files passed (40 tests)
+npm run typecheck  -> exit 0
+npm run lint       -> exit 0
+npm run build      -> exit 0
+vite v7.3.6 ... ✓ built in 24ms
+```
