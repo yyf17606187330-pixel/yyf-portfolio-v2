@@ -1,18 +1,39 @@
 const dataImagePattern = /^data:image\/[a-z0-9.+-]+(?:;[a-z0-9=:+-]+)*,/i;
 const schemePattern = /^[a-z][a-z0-9+.-]*:/i;
+const fallbackMediaBaseUrl = '/media/';
 
 function containsTraversal(path: string): boolean {
   return path.split('/').some((segment) => {
     try {
       const decodedSegment = decodeURIComponent(segment);
-      return decodedSegment === '.' || decodedSegment === '..' || decodedSegment.includes('\\');
+      return decodedSegment.split(/[\\/]/).some((part) => part === '.' || part === '..');
     } catch {
       return true;
     }
   });
 }
 
-export function resolveMediaUrl(path: string, baseUrl = '/media/'): string | null {
+function resolveMediaBaseUrl(baseUrl?: string): string {
+  const candidate = (baseUrl ?? import.meta.env.VITE_MEDIA_BASE_URL ?? '').trim();
+
+  if (!candidate || candidate.startsWith('//') || candidate.includes('?') || candidate.includes('#') || containsTraversal(candidate)) {
+    return fallbackMediaBaseUrl;
+  }
+
+  if (schemePattern.test(candidate)) {
+    try {
+      if (new URL(candidate).protocol !== 'https:') {
+        return fallbackMediaBaseUrl;
+      }
+    } catch {
+      return fallbackMediaBaseUrl;
+    }
+  }
+
+  return candidate === '/' ? candidate : `${candidate.replace(/\/+$/, '')}/`;
+}
+
+export function resolveMediaUrl(path: string, baseUrl?: string): string | null {
   const mediaPath = path.trim();
 
   if (!mediaPath || mediaPath.startsWith('//') || containsTraversal(mediaPath)) {
@@ -27,8 +48,8 @@ export function resolveMediaUrl(path: string, baseUrl = '/media/'): string | nul
     return mediaPath.startsWith('https://') ? mediaPath : null;
   }
 
-  const normalizedBase = baseUrl.trim().replace(/\/+$/, '');
+  const normalizedBase = resolveMediaBaseUrl(baseUrl);
   const normalizedPath = mediaPath.replace(/^\/+/, '');
 
-  return `${normalizedBase}/${normalizedPath}`;
+  return `${normalizedBase}${normalizedPath}`;
 }

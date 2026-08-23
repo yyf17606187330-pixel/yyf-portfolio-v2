@@ -25,4 +25,15 @@ describe('playerReducer', () => {
       isMuted: false,
     });
   });
+
+  it('toggles mute only while a project is active', () => {
+    const openState = playerReducer(initialPlayerState, { type: 'open', slug: 'film-01' });
+
+    expect(playerReducer(openState, { type: 'toggle-muted' })).toEqual({
+      activeSlug: 'film-01',
+      isPlaying: true,
+      isMuted: true,
+    });
+    expect(playerReducer(initialPlayerState, { type: 'toggle-muted' })).toBe(initialPlayerState);
+  });
 });
