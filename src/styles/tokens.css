@@ -1,0 +1,30 @@
+:root {
+  --color-paper: #e9e6de;
+  --color-paper-translucent: rgb(233 230 222 / 88%);
+  --color-surface: #d8d4ca;
+  --color-placeholder: #c7c2b7;
+  --color-ink: #171715;
+  --color-muted: #68675f;
+  --color-line: #33322e;
+  --color-line-soft: rgb(51 50 46 / 28%);
+  --color-overlay: #151513;
+  --color-overlay-soft: #24231f;
+  --color-overlay-translucent: rgb(21 21 19 / 92%);
+  --color-inverse: #f2efe7;
+  --color-inverse-muted: #aaa79f;
+  --color-focus: #f8f5ed;
+  --font-display: 'Syne Variable', 'Avenir Next Condensed', sans-serif;
+  --font-body: 'Manrope Variable', 'PingFang SC', sans-serif;
+  --font-weight-regular: 430;
+  --font-weight-medium: 590;
+  --tracking-tight: -0.055em;
+  --tracking-label: 0.09em;
+  --page-gutter: clamp(1rem, 2.6vw, 2.5rem);
+  --section-space: clamp(5.5rem, 11vw, 10rem);
+  --line: 1px;
+  --focus-width: 2px;
+  --header-height: 4.75rem;
+  --layer-header: 30;
+  --layer-overlay: 70;
+  --layer-intro: 100;
+}
