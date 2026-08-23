@@ -1,0 +1,34 @@
+.fluid-backdrop {
+  --fluid-color-a: #000;
+  --fluid-color-b: #000;
+  --fluid-color-c: #000;
+  --fluid-intensity: 0.4;
+  isolation: isolate;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  position: absolute;
+}
+
+.fluid-backdrop__static,
+.fluid-backdrop__canvas {
+  height: 100%;
+  inset: 0;
+  position: absolute !important;
+  width: 100%;
+}
+
+.fluid-backdrop__static {
+  background:
+    radial-gradient(circle at 78% 18%, var(--fluid-color-c), transparent 43%),
+    radial-gradient(circle at 16% 76%, var(--fluid-color-b), transparent 52%),
+    var(--fluid-color-a);
+}
+
+.fluid-backdrop--solid .fluid-backdrop__static {
+  background: var(--fluid-color-a);
+}
+
+.fluid-backdrop__canvas {
+  opacity: var(--fluid-intensity);
+}
