@@ -6,4 +6,4 @@ artifacts/qa/
 .env
 .env.local
 public/media/
-
+.worktrees/
