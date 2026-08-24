@@ -14,13 +14,13 @@
 
 **Acceptance:** 文档、任务模板和 PR 模板均已进入 Draft PR；不改页面视觉代码。
 
-## Task 2：恢复测试基线
+## Task 2：排查并稳定测试基线
 
 **Owner:** 流体模块负责人
 
 **Files:** `src/features/fluid/FluidBackdrop.test.tsx` 及必要的最小流体实现文件
 
-**Acceptance:** 当前 2 个失败用例恢复通过，且全部检查无新增失败。
+**Acceptance:** `FluidBackdrop` 首轮偶发的重复 canvas 问题得到复现或排除；连续完整运行稳定通过，且无新增失败。
 
 ## Task 3：两个独立动效任务
 
