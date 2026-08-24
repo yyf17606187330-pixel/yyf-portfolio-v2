@@ -1,5 +1,7 @@
 # Portfolio v2 Implementation Plan
 
+> Historical build plan. Current GitHub branch, ownership and merge rules are defined by `PROJECT.md` and `CONTRIBUTING.md`; those rules supersede the original no-push instruction below.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build an independent, tested portfolio frontend for Yang Yufeng with a cinematic intro, work-first index, overlay navigation, full-screen player, and configurable fluid accent.
