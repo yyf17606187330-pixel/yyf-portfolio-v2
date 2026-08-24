@@ -14,7 +14,7 @@
 
 ## Global Constraints
 
-- Work only in `/Users/yangyufeng/Desktop/前端/yyf-portfolio-v2`; never modify `/Users/yangyufeng/Desktop/前端/src` or its existing project files.
+- Work only in this repository; never modify sibling frontend projects or files outside the active worktree.
 - Positioning copy is `杨玉峰` / `YANG YUFENG` / `影像导演 × AI 视觉创作者`.
 - Intro is `HELLO.` → `YANG YUFENG` → works in 1.5–1.8 seconds, skippable, reduced-motion safe, once per browser session.
 - Categories are exactly `FILM / 影像`, `AI VIDEO / AI视频`, `PHOTOGRAPHY / 摄影`, `DESIGN + INTERACTIVE / 设计与交互`.
@@ -128,7 +128,7 @@ Use semantic buttons, `aria-modal`, named dialog regions, visible focus, body sc
 
 - [ ] **Step 4: Apply the provisional design system and motion**
 
-Use centralized neutral tokens, Syne for display and Manrope for body, square media frames with borders instead of rounded cards, CSS grid variation for the three featured projects, GSAP transitions, and responsive states at 900px and 640px. Avoid orange, percentage loaders, loading logos, heavy gradients, excessive pills and repeated full-screen headings.
+Use centralized neutral tokens, Syne for display and Manrope for body, square media frames with borders instead of rounded cards, CSS grid variation for the three featured projects, GSAP transitions, and responsive states at 900px and 640px. Orange remains an allowed but unconfirmed option; avoid percentage loaders, loading logos, heavy gradients, excessive pills and repeated full-screen headings.
 
 - [ ] **Step 5: Verify component/full tests, typecheck, lint and build**
 
