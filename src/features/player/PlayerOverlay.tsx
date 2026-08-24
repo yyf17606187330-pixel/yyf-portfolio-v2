@@ -207,6 +207,7 @@ export function PlayerOverlay({ project, opener, onClose }: PlayerOverlayProps) 
         <div className="player-overlay__stage">
           {mediaUrl ? (
             <video
+              key={project.slug}
               ref={videoRef}
               playsInline
               poster={posterUrl ?? undefined}

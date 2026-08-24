@@ -140,7 +140,7 @@ export function NavigationOverlay({ open, opener, onClose, target = 'top' }: Nav
           <section className="navigation-overlay__contact" id="contact" aria-labelledby="contact-title" tabIndex={-1}>
             <div>
               <p className="eyebrow" id="contact-title">CONTACT / 联系</p>
-              {emailHref ? <a href={emailHref}>{email}</a> : <p>{profile.email}</p>}
+              {emailHref ? <a href={emailHref}>{email}</a> : <p>{profile.email || '邮箱待补充'}</p>}
             </div>
             {wechatQrUrl ? (
               <div className="navigation-overlay__qr">

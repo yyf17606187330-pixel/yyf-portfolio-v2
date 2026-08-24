@@ -94,10 +94,12 @@ describe('NavigationOverlay', () => {
   });
 
   it('uses explicit placeholders without image or mailto requests while profile media and email are missing', () => {
+    profile.email = '';
     render(<NavigationOverlay open opener={null} onClose={vi.fn()} />);
 
     expect(screen.getByLabelText('个人肖像待替换')).toBeInTheDocument();
     expect(screen.getByLabelText('微信二维码待替换')).toBeInTheDocument();
+    expect(screen.getByText('邮箱待补充')).toBeInTheDocument();
     expect(document.body.querySelector('.navigation-overlay__portrait img')).not.toBeInTheDocument();
     expect(document.body.querySelector('.navigation-overlay__qr img')).not.toBeInTheDocument();
     expect(document.body.querySelector('a[href^="mailto:"]')).not.toBeInTheDocument();

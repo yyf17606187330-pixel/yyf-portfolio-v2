@@ -172,6 +172,33 @@ describe('PlayerOverlay', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: '暂停' })).toBeInTheDocument());
   });
 
+  it('replaces the video element between projects so stale media events cannot update the next project', async () => {
+    const firstPlay = deferredPromise();
+    const secondPlay = deferredPromise();
+    play
+      .mockImplementationOnce(() => firstPlay.promise)
+      .mockImplementationOnce(() => secondPlay.promise);
+
+    const { rerender } = render(
+      <PlayerOverlay project={playableProject} opener={null} onClose={vi.fn()} />,
+    );
+    const firstVideo = document.body.querySelector('video') as HTMLVideoElement;
+    await waitFor(() => expect(play).toHaveBeenCalledOnce());
+
+    rerender(<PlayerOverlay project={secondPlayableProject} opener={null} onClose={vi.fn()} />);
+    const secondVideo = document.body.querySelector('video') as HTMLVideoElement;
+    await waitFor(() => expect(play).toHaveBeenCalledTimes(2));
+
+    expect(secondVideo).not.toBe(firstVideo);
+    fireEvent.play(firstVideo);
+    fireEvent.timeUpdate(firstVideo, { target: { currentTime: 37 } });
+    expect(screen.getByRole('button', { name: '播放' })).toBeInTheDocument();
+    expect(screen.getAllByText('00:00')).toHaveLength(2);
+
+    secondPlay.resolve();
+    await waitFor(() => expect(screen.getByRole('button', { name: '暂停' })).toBeInTheDocument());
+  });
+
   it('uses the same bilingual category label as project cards instead of an internal slug', () => {
     render(<PlayerOverlay project={playableProject} opener={null} onClose={vi.fn()} />);
 
