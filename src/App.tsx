@@ -20,9 +20,9 @@ export default function App() {
   const featuredProjects = projects.filter((project) => project.featured).sort((left, right) => left.order - right.order);
   const indexProjects = projects.filter((project) => !project.featured).sort((left, right) => left.order - right.order);
   const heroPortrait = {
-    objectPosition: '68% 45%',
-    scale: 1,
-    src: '',
+    objectPosition: '67% 42%',
+    scale: 1.04,
+    src: '/assets/hero/hero-candidate-03.webp',
     tone: 'light' as const,
   };
 
