@@ -64,6 +64,8 @@ export function useScrollVideo({
   const hasAttachedSource = canLoadVideo && attachedSource === source;
 
   useEffect(() => {
+    setReadySource(null);
+
     if (!canLoadVideo || !source) {
       setAttachedSource(null);
       return undefined;

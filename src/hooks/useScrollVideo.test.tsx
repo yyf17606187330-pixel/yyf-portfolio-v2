@@ -63,10 +63,11 @@ function setMediaPreferences({ desktop = true, reducedMotion = false } = {}) {
   }));
 }
 
-function ScrollVideoHarness() {
+function ScrollVideoHarness({ enabled = true }: { enabled?: boolean }) {
   const triggerRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { videoProps } = useScrollVideo({
+    enabled,
     poster: '/media/hero/hero-poster.webp',
     source: '/media/hero/hero-scroll.mp4',
     triggerRef,
@@ -243,5 +244,31 @@ describe('useScrollVideo', () => {
     expect(window.cancelAnimationFrame).toHaveBeenCalledWith(pendingSeekFrame);
     expect(gsapMock.revert).toHaveBeenCalledOnce();
     expect(video.currentTime).toBe(0);
+  });
+
+  it('requires fresh metadata after disabling and re-enabling the same source', () => {
+    const { getByTestId, rerender } = render(<ScrollVideoHarness />);
+    const video = getByTestId('scroll-video') as HTMLVideoElement;
+    flushAnimationFrame();
+    Object.defineProperty(video, 'duration', { configurable: true, value: 6 });
+    fireEvent.loadedMetadata(video);
+    const firstConfig = scrollTriggerMock.create.mock.calls[0]?.[0] as MockScrollTriggerConfig;
+    act(() => firstConfig.onUpdate({ progress: 0.5 }));
+    const pendingSeekFrame = vi.mocked(window.requestAnimationFrame).mock.results.at(-1)?.value;
+
+    rerender(<ScrollVideoHarness enabled={false} />);
+
+    expect(video).not.toHaveAttribute('src');
+    expect(window.cancelAnimationFrame).toHaveBeenCalledWith(pendingSeekFrame);
+    expect(gsapMock.revert).toHaveBeenCalledOnce();
+
+    rerender(<ScrollVideoHarness />);
+    flushAnimationFrame();
+
+    expect(video).toHaveAttribute('src', '/media/hero/hero-scroll.mp4');
+    expect(scrollTriggerMock.create).toHaveBeenCalledOnce();
+
+    fireEvent.loadedMetadata(video);
+    expect(scrollTriggerMock.create).toHaveBeenCalledTimes(2);
   });
 });
