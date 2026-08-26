@@ -44,7 +44,14 @@ export function Hero({ portrait }: HeroProps) {
           <a className="hero__cta" href="#top">查看作品</a>
         </div>
       </div>
-      <div aria-hidden="true" className="hero__marker" />
+      <div aria-label="微信联系标识" className="hero__marker">
+        <span className="hero__marker-initial">Y.</span>
+        <img
+          alt="微信"
+          className="hero__marker-wechat"
+          src="/assets/icons/wechat.svg"
+        />
+      </div>
     </section>
   );
 }

@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { Hero } from './Hero';
 
 describe('Hero', () => {
-  it('renders the approved portfolio identity, narrative, and reserved award slot', () => {
-    const { container } = render(
+  it('renders the approved portfolio identity, narrative, and WeChat marker', () => {
+    render(
       <Hero
         portrait={{
           objectPosition: '68% 45%',
@@ -24,10 +24,12 @@ describe('Hero', () => {
       ),
     ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '查看作品' })).toHaveAttribute('href', '#top');
-    const awardMarker = container.querySelector('.hero__marker');
-    expect(awardMarker).toBeInTheDocument();
-    expect(awardMarker).toBeEmptyDOMElement();
-    expect(screen.queryByText('Y.')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('微信联系标识')).toBeInTheDocument();
+    expect(screen.getByText('Y.')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: '微信' })).toHaveAttribute(
+      'src',
+      '/assets/icons/wechat.svg',
+    );
     expect(screen.queryByText('PORTFOLIO 2026')).not.toBeInTheDocument();
     expect(screen.queryByText(/nominee/i)).not.toBeInTheDocument();
     expect(screen.getByRole('img', { name: '杨玉峰个人肖像' })).toHaveAttribute(
@@ -49,6 +51,7 @@ describe('Hero', () => {
     );
 
     expect(screen.getByText('肖像待替换')).toBeInTheDocument();
-    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: '杨玉峰个人肖像' })).not.toBeInTheDocument();
+    expect(screen.getByRole('img', { name: '微信' })).toBeInTheDocument();
   });
 });

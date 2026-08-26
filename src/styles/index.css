@@ -246,14 +246,33 @@ input:focus-visible,
 }
 
 .hero__marker {
+  align-items: center;
   background: #11110f;
+  color: var(--color-inverse);
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
   height: 144px;
+  padding-top: 1.05rem;
   position: absolute;
   right: 0;
   top: 50%;
   transform: translateY(-50%);
   width: 48px;
   z-index: 2;
+}
+
+.hero__marker-initial {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 650;
+  line-height: 1;
+}
+
+.hero__marker-wechat {
+  filter: brightness(0) invert(1);
+  height: 22px;
+  width: 22px;
 }
 
 .featured-work,
