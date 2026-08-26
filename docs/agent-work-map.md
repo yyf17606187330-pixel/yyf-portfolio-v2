@@ -19,7 +19,7 @@ Agent 可以辅助提出方案，但产品和视觉方向只有杨玉峰能够�
 | --- | --- | --- | --- |
 | 主／集成 Agent | 目标文档、任务排序、共享入口、依赖、冲突和 PR 集成 | `PROJECT.md`、`AGENTS.md`、`docs/`、`src/App.tsx`、`src/main.tsx`、全局样式与构建配置 | 替用户决定最终审美 |
 | 内容 Agent | 真实作品、标题、分类、角色、个人资料和媒体交接 | `src/content/`、`docs/content-inventory.md` | 页面结构、动效和虚构数据 |
-| 作品／视觉 Agent | 作品区、排版、色彩和真实媒体构图；最终视觉检查优先在 macOS 完成 | `src/features/works/`，全局样式只提交提案给集成 Agent | 流体、播放器逻辑和自行批准方向 |
+| 作品／视觉 Agent | 作品区、排版、色彩和真实媒体构图；Windows／macOS 均可检查，当前自动截图脚本仅兼容 macOS | `src/features/works/`，全局样式只提交提案给集成 Agent | 流体、播放器逻辑和自行批准方向 |
 | 流体 Agent | 全局流体、降级、性能和对应测试 | `src/features/fluid/` | 菜单、播放器、作品内容 |
 | 动效／交互 Agent | 开场、导航、播放器、焦点与滚动交互 | `src/features/intro/`、`src/features/navigation/`、`src/features/player/`、相关 hooks | Shader、作品数据和最终色板 |
 
@@ -49,7 +49,7 @@ PR 就绪时再开一个短期独立审核对话读取改动和验证证据；�
 - `App.tsx`、全局样式和跨模块接口默认只由技术／集成负责人修改
 - 发现任务重叠时先暂停重叠部分，由技术负责人重新划边界
 - 纯技术冲突由技术负责人解决；影响产品或视觉方向时交给杨玉峰裁决
-- 上下文压缩、暂停或换设备前提交并推送检查点，在 Draft PR 留下“已完成／未完成／验证／风险／下一步”
+- 同机上下文压缩或暂停前覆盖更新工作树内的 `.agent-state/STATUS.md`；只有换设备、备份或删除工作树前才提交并推送
 
 ## 6. 当前文档任务边界
 
