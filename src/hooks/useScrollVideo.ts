@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { RefObject, VideoHTMLAttributes } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -11,6 +11,7 @@ const DEFAULT_SCROLL_DISTANCE = 1600;
 gsap.registerPlugin(ScrollTrigger);
 
 interface UseScrollVideoOptions {
+  onProgress?: (progress: number | null) => void;
   poster: string;
   source: string | null;
   triggerRef: RefObject<HTMLElement | null>;
@@ -21,6 +22,7 @@ interface UseScrollVideoOptions {
 }
 
 interface UseScrollVideoResult {
+  motionEnabled: boolean;
   videoProps: Pick<
     VideoHTMLAttributes<HTMLVideoElement>,
     | 'autoPlay'
@@ -44,6 +46,7 @@ export function mapScrollProgressToTime(progress: number, duration: number): num
 
 export function useScrollVideo({
   enabled = true,
+  onProgress,
   pinRef,
   poster,
   scrollDistance = DEFAULT_SCROLL_DISTANCE,
@@ -56,6 +59,8 @@ export function useScrollVideo({
   const [attachedSource, setAttachedSource] = useState<string | null>(null);
   const [failedSource, setFailedSource] = useState<string | null>(null);
   const [readySource, setReadySource] = useState<string | null>(null);
+  const onProgressRef = useRef(onProgress);
+  onProgressRef.current = onProgress;
   const canLoadVideo = enabled
     && desktop
     && !reducedMotion
@@ -98,6 +103,7 @@ export function useScrollVideo({
       ? scrollDistance
       : DEFAULT_SCROLL_DISTANCE;
     let seekFrame: number | null = null;
+    let targetProgress = 0;
     let targetTime = 0;
     const context = gsap.context(() => {
       ScrollTrigger.create({
@@ -108,6 +114,7 @@ export function useScrollVideo({
         scrub: true,
         invalidateOnRefresh: true,
         onUpdate: ({ progress }) => {
+          targetProgress = progress;
           targetTime = mapScrollProgressToTime(progress, duration);
 
           if (seekFrame !== null) {
@@ -120,10 +127,13 @@ export function useScrollVideo({
             if (videoRef.current === video && Math.abs(video.currentTime - targetTime) > 0.001) {
               video.currentTime = targetTime;
             }
+
+            onProgressRef.current?.(targetProgress);
           });
         },
       });
     }, trigger);
+    onProgressRef.current?.(0);
 
     return () => {
       if (seekFrame !== null) {
@@ -131,10 +141,12 @@ export function useScrollVideo({
       }
 
       context.revert();
+      onProgressRef.current?.(null);
     };
   }, [hasAttachedSource, pinRef, readySource, scrollDistance, source, triggerRef, videoRef]);
 
   return {
+    motionEnabled: canLoadVideo,
     videoProps: {
       autoPlay: false,
       muted: true,

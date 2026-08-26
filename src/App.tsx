@@ -1,7 +1,9 @@
+import { useRef } from 'react';
 import { Hero } from './features/hero/Hero';
 import { SiteHeader } from './features/navigation/SiteHeader';
 
 export default function App() {
+  const headerRef = useRef<HTMLElement>(null);
   const heroPortrait = {
     objectPosition: '64% 44%',
     scale: 1,
@@ -11,9 +13,16 @@ export default function App() {
 
   return (
     <div className="site-shell">
-      <SiteHeader />
+      <SiteHeader headerRef={headerRef} />
       <main id="top">
-        <Hero portrait={heroPortrait} />
+        <Hero
+          headerRef={headerRef}
+          portrait={heroPortrait}
+          scrollVideo={{
+            poster: '/media/hero/hero-poster.webp',
+            source: '/media/hero/hero-scroll.mp4',
+          }}
+        />
       </main>
     </div>
   );

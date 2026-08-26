@@ -63,11 +63,18 @@ function setMediaPreferences({ desktop = true, reducedMotion = false } = {}) {
   }));
 }
 
-function ScrollVideoHarness({ enabled = true }: { enabled?: boolean }) {
+function ScrollVideoHarness({
+  enabled = true,
+  onProgress,
+}: {
+  enabled?: boolean;
+  onProgress?: (progress: number | null) => void;
+}) {
   const triggerRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const { videoProps } = useScrollVideo({
+  const { motionEnabled, videoProps } = useScrollVideo({
     enabled,
+    onProgress,
     poster: '/media/hero/hero-poster.webp',
     source: '/media/hero/hero-scroll.mp4',
     triggerRef,
@@ -75,7 +82,7 @@ function ScrollVideoHarness({ enabled = true }: { enabled?: boolean }) {
   });
 
   return (
-    <section ref={triggerRef}>
+    <section data-scroll-motion={motionEnabled ? 'enabled' : 'static'} ref={triggerRef}>
       <video data-testid="scroll-video" ref={videoRef} {...videoProps} />
     </section>
   );
@@ -142,6 +149,7 @@ describe('useScrollVideo', () => {
     expect(video.muted).toBe(true);
     expect(video.playsInline).toBe(true);
     expect(video.autoplay).toBe(false);
+    expect(video.parentElement).toHaveAttribute('data-scroll-motion', 'enabled');
 
     flushAnimationFrame();
 
@@ -162,6 +170,7 @@ describe('useScrollVideo', () => {
     expect(video).toHaveAttribute('poster', '/media/hero/hero-poster.webp');
     expect(video).not.toHaveAttribute('src');
     expect(video).toHaveAttribute('preload', 'none');
+    expect(video.parentElement).toHaveAttribute('data-scroll-motion', 'static');
     expect(window.requestAnimationFrame).not.toHaveBeenCalled();
   });
 
@@ -177,6 +186,7 @@ describe('useScrollVideo', () => {
     expect(video).toHaveAttribute('poster', '/media/hero/hero-poster.webp');
     expect(video).not.toHaveAttribute('src');
     expect(video).toHaveAttribute('preload', 'none');
+    expect(video.parentElement).toHaveAttribute('data-scroll-motion', 'static');
     expect(gsapMock.revert).toHaveBeenCalledOnce();
   });
 
@@ -226,6 +236,52 @@ describe('useScrollVideo', () => {
     expect(window.requestAnimationFrame).toHaveBeenCalledTimes(requestCountBeforeScroll + 1);
     flushAnimationFrame();
     expect(video.currentTime).toBe(3);
+  });
+
+  it('publishes the latest scroll progress in the same frame as the video seek', () => {
+    const onProgress = vi.fn();
+    const { getByTestId } = render(<ScrollVideoHarness onProgress={onProgress} />);
+    const video = getByTestId('scroll-video') as HTMLVideoElement;
+    flushAnimationFrame();
+    Object.defineProperty(video, 'duration', { configurable: true, value: 6 });
+    fireEvent.loadedMetadata(video);
+    const config = scrollTriggerMock.create.mock.calls[0]?.[0] as MockScrollTriggerConfig;
+    onProgress.mockClear();
+
+    act(() => {
+      config.onUpdate({ progress: 0.25 });
+      config.onUpdate({ progress: 0.75 });
+      config.onUpdate({ progress: 0.5 });
+    });
+
+    expect(video.currentTime).toBe(0);
+    expect(onProgress).not.toHaveBeenCalled();
+
+    flushAnimationFrame();
+
+    expect(video.currentTime).toBe(3);
+    expect(onProgress).toHaveBeenCalledOnce();
+    expect(onProgress).toHaveBeenCalledWith(0.5);
+  });
+
+  it('resets the shared scroll progress when scrubbing is disabled', () => {
+    const onProgress = vi.fn();
+    const { getByTestId, rerender } = render(
+      <ScrollVideoHarness onProgress={onProgress} />,
+    );
+    const video = getByTestId('scroll-video') as HTMLVideoElement;
+    flushAnimationFrame();
+    Object.defineProperty(video, 'duration', { configurable: true, value: 6 });
+    fireEvent.loadedMetadata(video);
+    const config = scrollTriggerMock.create.mock.calls[0]?.[0] as MockScrollTriggerConfig;
+    act(() => config.onUpdate({ progress: 0.75 }));
+    flushAnimationFrame();
+    onProgress.mockClear();
+
+    rerender(<ScrollVideoHarness enabled={false} onProgress={onProgress} />);
+
+    expect(video).not.toHaveAttribute('src');
+    expect(onProgress).toHaveBeenCalledWith(null);
   });
 
   it('cancels a pending seek and reverts the GSAP context when unmounted', () => {
