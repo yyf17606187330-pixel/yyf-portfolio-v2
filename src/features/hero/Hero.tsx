@@ -1,5 +1,4 @@
 import type { CSSProperties } from 'react';
-import { profile } from '../../content/profile';
 
 export interface HeroPortrait {
   objectPosition: string;
@@ -23,7 +22,7 @@ export function Hero({ portrait }: HeroProps) {
       <div className="hero__media" aria-hidden={!portrait.src}>
         {portrait.src ? (
           <img
-            alt={`${profile.name}个人肖像`}
+            alt="杨玉峰个人肖像"
             decoding="async"
             fetchPriority="high"
             sizes="(max-width: 900px) 100vw, 58vw"
@@ -33,20 +32,16 @@ export function Hero({ portrait }: HeroProps) {
           <span className="hero__media-placeholder">肖像待替换</span>
         )}
       </div>
-      <div className="hero__veil" aria-hidden="true" />
       <div className="hero__inner">
         <div className="hero__copy">
-          <p className="hero__eyebrow">DIRECTOR / AI VISUAL CREATOR</p>
-          <p className="hero__name">{profile.name}</p>
-          <h1 aria-label="YANG YUFENG" id="hero-title">
-            <span>YANG</span>
-            <span>YUFENG</span>
-          </h1>
-          <p className="hero__positioning">{profile.positioning}</p>
-          <p className="hero__bio">{profile.bio}</p>
-          <a className="hero__cta" href="#work">
-            VIEW WORK <span aria-hidden="true">↗</span>
-          </a>
+          <h1 id="hero-title">杨玉峰</h1>
+          <p className="hero__positioning">新媒体内容运营 × 影像创作者</p>
+          <p className="hero__emphasis">懂运营，也能把内容从脚本拍到成片。</p>
+          <p className="hero__bio">
+            我以新媒体运营为核心，独立完成选题策划、脚本编导、拍摄剪辑、发布投放与数据复盘。既懂内容怎么做，也懂内容为什么有效；AI
+            则是我提升创意和生产效率的一部分。
+          </p>
+          <a className="hero__cta" href="#top">查看作品</a>
         </div>
       </div>
     </section>

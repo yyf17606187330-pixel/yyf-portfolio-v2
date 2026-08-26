@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { Hero } from './Hero';
 
 describe('Hero', () => {
-  it('renders the shared identity hierarchy, placeholder bio, and work entry', () => {
+  it('renders the approved portfolio identity, narrative, and work entry', () => {
     render(
       <Hero
         portrait={{
@@ -15,10 +15,15 @@ describe('Hero', () => {
       />,
     );
 
-    expect(screen.getByRole('heading', { name: 'YANG YUFENG' })).toBeInTheDocument();
-    expect(screen.getByText('影像导演 × AI 视觉创作者')).toBeInTheDocument();
-    expect(screen.getByText('待补充个人简介')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'VIEW WORK' })).toHaveAttribute('href', '#work');
+    expect(screen.getByRole('heading', { name: '杨玉峰' })).toBeInTheDocument();
+    expect(screen.getByText('新媒体内容运营 × 影像创作者')).toBeInTheDocument();
+    expect(screen.getByText('懂运营，也能把内容从脚本拍到成片。')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        '我以新媒体运营为核心，独立完成选题策划、脚本编导、拍摄剪辑、发布投放与数据复盘。既懂内容怎么做，也懂内容为什么有效；AI 则是我提升创意和生产效率的一部分。',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '查看作品' })).toHaveAttribute('href', '#top');
     expect(screen.getByRole('img', { name: '杨玉峰个人肖像' })).toHaveAttribute(
       'src',
       '/assets/hero/hero-candidate-02.webp',
