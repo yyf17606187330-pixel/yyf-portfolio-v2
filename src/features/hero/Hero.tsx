@@ -25,7 +25,7 @@ export function Hero({ portrait }: HeroProps) {
             alt="杨玉峰个人肖像"
             decoding="async"
             fetchPriority="high"
-            sizes="(max-width: 900px) 100vw, 58vw"
+            sizes="100vw"
             src={portrait.src}
           />
         ) : (
@@ -44,6 +44,7 @@ export function Hero({ portrait }: HeroProps) {
           <a className="hero__cta" href="#top">查看作品</a>
         </div>
       </div>
+      <div aria-hidden="true" className="hero__marker" />
     </section>
   );
 }
