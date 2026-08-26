@@ -1,8 +1,7 @@
 import { useCallback, useState } from 'react';
 import { profile } from './content/profile';
 import { projects } from './content/projects';
-import { FluidBackdrop } from './features/fluid/FluidBackdrop';
-import { IntroSequence } from './features/intro/IntroSequence';
+import { Hero } from './features/hero/Hero';
 import { NavigationOverlay, type NavigationTarget } from './features/navigation/NavigationOverlay';
 import { SiteHeader } from './features/navigation/SiteHeader';
 import { PlayerOverlay } from './features/player/PlayerOverlay';
@@ -17,14 +16,18 @@ type TopLayer =
   | null;
 
 export default function App() {
-  const [introComplete, setIntroComplete] = useState(false);
   const [topLayer, setTopLayer] = useState<TopLayer>(null);
   const featuredProjects = projects.filter((project) => project.featured).sort((left, right) => left.order - right.order);
   const indexProjects = projects.filter((project) => !project.featured).sort((left, right) => left.order - right.order);
+  const heroPortrait = {
+    objectPosition: '68% 45%',
+    scale: 1,
+    src: '',
+    tone: 'light' as const,
+  };
 
   useLenis();
 
-  const completeIntro = useCallback(() => setIntroComplete(true), []);
   const openMenu = useCallback((opener: HTMLElement, target: NavigationTarget) => {
     setTopLayer({ kind: 'menu', opener, target });
   }, []);
@@ -35,34 +38,15 @@ export default function App() {
 
   return (
     <>
-      <IntroSequence onComplete={completeIntro} />
-
       <div
-        aria-hidden={!introComplete || topLayer !== null ? 'true' : undefined}
+        aria-hidden={topLayer !== null ? 'true' : undefined}
         className="site-shell"
-        inert={!introComplete || topLayer !== null}
+        inert={topLayer !== null}
       >
         <SiteHeader onOpenMenu={openMenu} />
 
         <main id="top">
-          <section className="identity-lead" aria-labelledby="identity-title">
-            <FluidBackdrop region="hero" />
-            <div className="identity-lead__meta">
-              <p>PORTFOLIO / 作品集</p>
-              <p>IMAGE DIRECTION × AI VISUAL</p>
-            </div>
-            <div className="identity-lead__copy">
-              <p>{profile.name}</p>
-              <h1 id="identity-title">
-                <span>YANG</span>
-                <span>YUFENG</span>
-              </h1>
-              <p>{profile.positioning}</p>
-            </div>
-            <a className="identity-lead__jump" href="#work">
-              VIEW WORK <span aria-hidden="true">↓</span>
-            </a>
-          </section>
+          <Hero portrait={heroPortrait} />
 
           <section className="featured-work" id="work" aria-labelledby="featured-title">
             <div className="section-heading section-heading--featured">

@@ -19,7 +19,6 @@ export function SiteHeader({ onOpenMenu }: SiteHeaderProps) {
       </a>
       <nav className="site-header__nav" aria-label="主导航">
         <a href="#work">WORK</a>
-        <button className="site-header__nav-secondary" type="button" onClick={(event) => openMenu(event, 'capabilities')}>CAPABILITIES</button>
         <button className="site-header__nav-secondary" type="button" onClick={(event) => openMenu(event, 'about')}>ABOUT</button>
         <button className="site-header__nav-secondary" type="button" onClick={(event) => openMenu(event, 'contact')}>CONTACT</button>
         <button className="site-header__menu" type="button" onClick={(event) => openMenu(event, 'top')}>MENU</button>
