@@ -80,4 +80,4 @@
 - 交互：桌面与手机实际检查，无溢出、关键操作可用
 - 记录：只在开工、关键完成、阻塞、范围改变、交接、完成时更新 Issue／PR；不要求为了“日报”每天刷记录
 
-文档入口见 [docs/README.md](docs/README.md)，设计方向见 [docs/design-direction.md](docs/design-direction.md)，Agent 拆分见 [docs/agent-work-map.md](docs/agent-work-map.md)，分支与合并规则见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+文档入口见 [docs/README.md](docs/README.md)，设计方向见 [docs/design-direction.md](docs/design-direction.md)，Agent 拆分见 [docs/agent-work-map.md](docs/agent-work-map.md)，阶段门槛见 [项目进度书](docs/superpowers/plans/2026-08-26-project-progress-gates.md)，分支与合并规则见 [CONTRIBUTING.md](CONTRIBUTING.md)。

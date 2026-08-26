@@ -9,6 +9,7 @@
 | [`design-direction.md`](design-direction.md) | 视觉、版式、媒体和动效方向 | 草案，待杨玉峰审核 |
 | [`decision-log.md`](decision-log.md) | 已确认、待确认和已舍弃的决定 | 持续更新 |
 | [`agent-work-map.md`](agent-work-map.md) | Agent 分工、边界、依赖和交付关系 | 当前协作骨架 |
+| [`2026-08-26-project-progress-gates.md`](superpowers/plans/2026-08-26-project-progress-gates.md) | 正式推进阶段、五个对话、启动顺序与验收门槛 | 当前进度书 |
 | [`content-inventory.md`](content-inventory.md) | 真实作品和个人资料交接要求 | 素材阶段使用 |
 | [`portfolio-v2-spec.md`](superpowers/specs/portfolio-v2-spec.md) | 产品与技术规格 | 下级约束 |
 | [`CONTRIBUTING.md`](../CONTRIBUTING.md) | 分支、PR、合并与仓库内容规则 | 协作规则 |
