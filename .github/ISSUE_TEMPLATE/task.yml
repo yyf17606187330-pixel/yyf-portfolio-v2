@@ -1,0 +1,46 @@
+name: 开发任务
+description: 为一个目标分配唯一负责人、范围、依赖与验收标准
+title: "[模块] "
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: 核心目标
+      description: 完成后，用户能看到或做到什么？
+    validations:
+      required: true
+  - type: input
+    id: owner
+    attributes:
+      label: 直接负责人
+      description: 一个任务只能有一个直接负责人。
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: 负责范围
+      description: 列出允许修改的模块或文件。
+    validations:
+      required: true
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: 明确不做
+      description: 写清楚哪些相邻工作不属于本任务。
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: 前置依赖
+      description: 没有就写“无”。
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 验收标准
+      description: 写可检查的结果、测试或截图。
+    validations:
+      required: true
