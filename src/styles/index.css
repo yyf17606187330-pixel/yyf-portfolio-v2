@@ -251,9 +251,9 @@ input:focus-visible,
   color: var(--color-inverse);
   display: flex;
   flex-direction: column;
-  gap: 1.35rem;
-  height: 144px;
-  padding-top: 1.05rem;
+  gap: 1.05rem;
+  height: auto;
+  padding: 1rem 0;
   position: absolute;
   right: 0;
   top: 50%;
