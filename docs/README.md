@@ -4,6 +4,7 @@
 
 | 文档 | 作用 | 状态 |
 | --- | --- | --- |
+| [`AGENTS.md`](../AGENTS.md) | Agent 开工、工作树、交接、验证与平台规则 | 仓库级执行入口 |
 | [`PROJECT.md`](../PROJECT.md) | 最终目标、范围、阶段、角色与文档优先级 | 最高级事实源 |
 | [`design-direction.md`](design-direction.md) | 视觉、版式、媒体和动效方向 | 草案，待杨玉峰审核 |
 | [`decision-log.md`](decision-log.md) | 已确认、待确认和已舍弃的决定 | 持续更新 |
