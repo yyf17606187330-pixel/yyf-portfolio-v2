@@ -1,7 +1,5 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import '@fontsource-variable/manrope';
-import '@fontsource-variable/syne';
 import App from './App';
 import './styles/index.css';
 

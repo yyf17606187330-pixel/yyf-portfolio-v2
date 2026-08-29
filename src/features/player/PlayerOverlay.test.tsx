@@ -96,17 +96,20 @@ function PlayerHarness({ project, onClose }: { project: Project; onClose: () => 
 describe('PlayerOverlay', () => {
   const play = vi.fn(() => Promise.resolve());
   const pause = vi.fn();
+  const load = vi.fn();
   const requestFullscreen = vi.fn(() => Promise.resolve());
   let scrollTo: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     gsapMock.context.mockClear();
     gsapMock.timeline.mockClear();
-    play.mockClear();
+    play.mockReset().mockResolvedValue();
     pause.mockClear();
+    load.mockClear();
     requestFullscreen.mockClear();
     vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(play);
     vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(pause);
+    vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(load);
     scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
     Object.defineProperty(window, 'scrollY', { configurable: true, value: 0 });
     Object.defineProperty(HTMLVideoElement.prototype, 'requestFullscreen', {
@@ -204,6 +207,65 @@ describe('PlayerOverlay', () => {
 
     expect(screen.getByText('01 / FILM / 影像')).toBeInTheDocument();
     expect(screen.queryByText('01 / film')).not.toBeInTheDocument();
+  });
+
+  it('switches to the compatibility source once, then offers retry if that source also fails', async () => {
+    render(<PlayerOverlay
+      project={{ ...playableProject, fallbackSrc: 'videos/film-a-h264.mp4' }}
+      opener={null}
+      onClose={vi.fn()}
+    />);
+    const primaryVideo = document.body.querySelector('video') as HTMLVideoElement;
+    fireEvent.error(primaryVideo);
+
+    await waitFor(() => expect(document.body.querySelector('video'))
+      .toHaveAttribute('src', '/media/videos/film-a-h264.mp4'));
+    const compatibleVideo = document.body.querySelector('video') as HTMLVideoElement;
+    expect(compatibleVideo).not.toBe(primaryVideo);
+    expect(screen.getByText(/兼容播放/)).toBeInTheDocument();
+
+    fireEvent.error(compatibleVideo);
+    expect(screen.getByRole('alert')).toHaveTextContent('暂时无法播放');
+    expect(compatibleVideo).toHaveAttribute('src', '/media/videos/film-a-h264.mp4');
+    fireEvent.click(screen.getByRole('button', { name: '重试播放' }));
+    expect(load).toHaveBeenCalledOnce();
+    await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
+  });
+
+  it('explains blocked audible autoplay and lets a deliberate play click recover', async () => {
+    play.mockRejectedValueOnce(new DOMException('A user gesture is required', 'NotAllowedError'));
+    render(<PlayerOverlay project={playableProject} opener={null} onClose={vi.fn()} />);
+
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('点击下方“播放”'));
+    fireEvent.click(screen.getByRole('button', { name: '播放' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: '暂停' })).toBeInTheDocument());
+    expect(screen.queryByText(/点击下方“播放”/)).not.toBeInTheDocument();
+  });
+
+  it('preserves an explicit mute choice when a decoding error switches the same work to its fallback', async () => {
+    render(<PlayerOverlay
+      project={{ ...playableProject, fallbackSrc: 'videos/film-a-h264.mp4' }}
+      opener={null}
+      onClose={vi.fn()}
+    />);
+    fireEvent.click(screen.getByRole('button', { name: '静音' }));
+    fireEvent.error(document.body.querySelector('video') as HTMLVideoElement);
+
+    await waitFor(() => expect(document.body.querySelector('video'))
+      .toHaveAttribute('src', '/media/videos/film-a-h264.mp4'));
+    expect((document.body.querySelector('video') as HTMLVideoElement).muted).toBe(true);
+    expect(screen.getByRole('button', { name: '取消静音' })).toBeInTheDocument();
+  });
+
+  it('keeps the custom controls in fullscreen by requesting fullscreen on the dialog when supported', async () => {
+    render(<PlayerOverlay project={playableProject} opener={null} onClose={vi.fn()} />);
+    const dialog = screen.getByRole('dialog');
+    const dialogFullscreen = vi.fn(() => Promise.resolve());
+    Object.defineProperty(dialog, 'requestFullscreen', { configurable: true, value: dialogFullscreen });
+
+    fireEvent.click(screen.getByRole('button', { name: '全屏' }));
+    expect(dialogFullscreen).toHaveBeenCalledOnce();
+    expect(requestFullscreen).not.toHaveBeenCalled();
   });
 
   it('renders a designed fallback and no empty video source when full media is missing', () => {

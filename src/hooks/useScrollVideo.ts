@@ -4,7 +4,7 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useMediaQuery } from './useMediaQuery';
 
-const DESKTOP_MEDIA_QUERY = '(min-width: 768px) and (pointer: fine)';
+const DESKTOP_MEDIA_QUERY = '(min-width: 1024px) and (pointer: fine)';
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 const DEFAULT_SCROLL_DISTANCE = 1600;
 
@@ -22,6 +22,7 @@ interface UseScrollVideoOptions {
 }
 
 interface UseScrollVideoResult {
+  motionEligible: boolean;
   motionEnabled: boolean;
   videoProps: Pick<
     VideoHTMLAttributes<HTMLVideoElement>,
@@ -146,7 +147,8 @@ export function useScrollVideo({
   }, [hasAttachedSource, pinRef, readySource, scrollDistance, source, triggerRef, videoRef]);
 
   return {
-    motionEnabled: canLoadVideo,
+    motionEligible: canLoadVideo,
+    motionEnabled: hasAttachedSource && readySource === source,
     videoProps: {
       autoPlay: false,
       muted: true,
@@ -155,9 +157,12 @@ export function useScrollVideo({
         setAttachedSource(null);
         setReadySource(null);
       },
-      onLoadedMetadata: () => {
-        if (hasAttachedSource && source) {
+      onLoadedMetadata: (event) => {
+        const duration = event.currentTarget.duration;
+        if (hasAttachedSource && source && Number.isFinite(duration) && duration > 0) {
           setReadySource(source);
+        } else if (hasAttachedSource && source) {
+          setFailedSource(source);
         }
       },
       playsInline: true,

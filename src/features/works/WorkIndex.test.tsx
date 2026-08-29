@@ -1,5 +1,5 @@
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { projects } from '../../content/projects';
 import type { Project } from '../../types/portfolio';
 import { LazyPreview } from './LazyPreview';
@@ -79,8 +79,14 @@ const projectFixtures: Project[] = [
 ];
 
 describe('WorkIndex', () => {
+  beforeEach(() => {
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
+    vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined);
+  });
+
   afterEach(() => {
     cleanup();
+    vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
 
@@ -128,7 +134,7 @@ describe('WorkIndex', () => {
       poster: 'posters/film-a.webp',
       previewSrc: 'previews/film-a.mp4',
     };
-    const { container } = render(<LazyPreview project={previewProject} />);
+    const { container, unmount } = render(<LazyPreview project={previewProject} />);
 
     expect(container.querySelector('img')).toHaveAttribute('src', '/media/posters/film-a.webp');
     expect(container.querySelector('video')).not.toBeInTheDocument();
@@ -143,6 +149,7 @@ describe('WorkIndex', () => {
     });
 
     expect(container.querySelector('video')).toHaveAttribute('src', '/media/previews/film-a.mp4');
+    unmount();
     expect(disconnect).toHaveBeenCalledOnce();
   });
 

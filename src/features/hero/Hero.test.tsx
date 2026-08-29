@@ -1,6 +1,7 @@
 import { createRef } from 'react';
-import { act, render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import gsap from 'gsap';
 import { SiteHeader } from '../navigation/SiteHeader';
 import { Hero } from './Hero';
 
@@ -14,13 +15,16 @@ describe('Hero', () => {
   beforeEach(() => {
     useScrollVideoMock.mockReset();
     useScrollVideoMock.mockImplementation(({
+      enabled = true,
       poster,
       source,
     }: {
+      enabled?: boolean;
       poster: string;
       source: string | null;
     }) => ({
-      motionEnabled: Boolean(source),
+      motionEligible: enabled && Boolean(source),
+      motionEnabled: enabled && Boolean(source),
       videoProps: {
         autoPlay: false,
         muted: true,
@@ -30,6 +34,11 @@ describe('Hero', () => {
         src: source ?? undefined,
       },
     }));
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it('renders the approved portfolio identity, narrative, and WeChat marker', () => {
@@ -98,13 +107,13 @@ describe('Hero', () => {
     const bio = screen.getByText(
       '我以新媒体运营为核心，独立完成选题策划、脚本编导、拍摄剪辑、发布投放与数据复盘。既懂内容怎么做，也懂内容为什么有效；AI 则是我提升创意和生产效率的一部分。',
     );
-    const cta = screen.getByRole('link', { name: '查看作品' });
+    const cta = screen.getByText('查看作品');
 
     expect(bio.compareDocumentPosition(cta) & Node.DOCUMENT_POSITION_FOLLOWING)
       .toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });
 
-  it('layers a silent decorative scroll video over the committed portrait fallback', () => {
+  it('uses the matching first-frame poster for both static and video layers', () => {
     const { container } = render(
       <Hero
         portrait={{
@@ -123,7 +132,7 @@ describe('Hero', () => {
     const portrait = screen.getByRole('img', { name: '杨玉峰个人肖像' });
     const video = container.querySelector('video');
 
-    expect(portrait).toHaveAttribute('src', '/assets/hero/hero-candidate-03.webp');
+    expect(portrait).toHaveAttribute('src', '/media/hero/hero-poster.webp');
     expect(video).toHaveAttribute('poster', '/media/hero/hero-poster.webp');
     expect(video).toHaveAttribute('src', '/media/hero/hero-scroll.mp4');
     expect(video).toHaveClass('hero__scroll-video');
@@ -136,7 +145,25 @@ describe('Hero', () => {
     }));
   });
 
-  it('uses the shared scroll progress to replace the intro with the approved capability copy', () => {
+  it('falls back to the committed portrait if the local poster is unavailable', () => {
+    const { container } = render(
+      <Hero
+        portrait={{ objectPosition: '64% 43%', scale: 1, src: '/assets/hero/hero-candidate-03.webp', tone: 'light' }}
+        scrollVideo={{ poster: '/media/hero/hero-poster.webp', source: '/media/hero/hero-scroll.mp4' }}
+      />,
+    );
+    const portrait = screen.getByRole('img', { name: '杨玉峰个人肖像' });
+
+    fireEvent.error(portrait);
+
+    expect(portrait).toHaveAttribute('src', '/assets/hero/hero-candidate-03.webp');
+    expect(container.querySelector('video')).toHaveAttribute('poster', '/assets/hero/hero-candidate-03.webp');
+
+    fireEvent.error(portrait);
+    expect(portrait).toHaveAttribute('src', '/assets/hero/hero-candidate-03.webp');
+  });
+
+  it('opens with the complete introduction and reveals the four proof points at the end', () => {
     const { container } = render(
       <Hero
         portrait={{
@@ -156,28 +183,130 @@ describe('Hero', () => {
     const secondary = container.querySelector('.hero__story-panel--secondary') as HTMLElement;
     const heading = screen.getByRole('heading', { name: '杨玉峰' });
     const emphasis = screen.getByText('懂运营，也能把内容从脚本拍到成片。');
-    const cta = screen.getByRole('link', { name: '查看作品' });
+    const cta = screen.getByText('查看作品');
     const options = useScrollVideoMock.mock.calls.at(-1)?.[0] as {
       onProgress?: (progress: number | null) => void;
     };
 
     expect(primary).toContainElement(heading);
     expect(primary).toContainElement(cta);
-    expect(secondary).toContainElement(emphasis);
+    expect(primary).toContainElement(emphasis);
+    expect(primary.querySelector('.hero__bio')).not.toBeNull();
+    expect(secondary.querySelectorAll('dl > div')).toHaveLength(4);
+    expect(secondary).toHaveTextContent('7年');
+    expect(secondary).toHaveTextContent('800万+');
+    expect(secondary).toHaveTextContent('100+');
+    expect(secondary).toHaveTextContent('0→1');
+    expect(secondary).toHaveTextContent('参与拍摄项目');
     expect(options.onProgress).toEqual(expect.any(Function));
     expect(hero).toHaveClass('hero--scroll-story');
 
     act(() => options.onProgress?.(0));
     expect(secondary).toHaveStyle({ opacity: '0', visibility: 'hidden' });
 
-    act(() => options.onProgress?.(0.7));
+    act(() => options.onProgress?.(0.9));
     expect(heading).toHaveStyle({ opacity: '0', visibility: 'hidden' });
-    expect(cta).toHaveStyle({ opacity: '0', visibility: 'hidden' });
+    expect(emphasis).toHaveStyle({ opacity: '0', visibility: 'hidden' });
+    expect(cta).toBeVisible();
     expect(secondary).toHaveStyle({ opacity: '1' });
     expect(secondary).not.toHaveStyle({ visibility: 'hidden' });
   });
 
-  it('uses the shared scroll progress to hide and restore the surrounding navigation chrome', () => {
+  it('zooms only the media toward the face and reverses without moving the copy', () => {
+    const { container } = render(
+      <Hero
+        portrait={{ objectPosition: '64% 43%', scale: 1, src: '/assets/hero/hero-candidate-03.webp', tone: 'light' }}
+        scrollVideo={{ poster: '/media/hero/hero-poster.webp', source: '/media/hero/hero-scroll.mp4' }}
+      />,
+    );
+    const media = container.querySelector('.hero__media') as HTMLElement;
+    const copy = container.querySelector('.hero__copy') as HTMLElement;
+    const options = useScrollVideoMock.mock.calls.at(-1)?.[0] as {
+      onProgress: (progress: number | null) => void;
+    };
+
+    act(() => options.onProgress(1));
+    expect(Number(gsap.getProperty(media, 'scaleX'))).toBeCloseTo(1.1, 3);
+    expect(Number(gsap.getProperty(media, 'x'))).toBe(0);
+    expect(copy.style.transform).toBe('');
+
+    act(() => options.onProgress(0));
+    expect(Number(gsap.getProperty(media, 'scaleX'))).toBe(1);
+    expect(screen.getByText('查看作品')).not.toBeVisible();
+
+    act(() => options.onProgress(null));
+    expect(media.style.transform).toBe('');
+  });
+
+  it('returns to normal document flow when the story cannot fit the viewport', () => {
+    let panelHeight = 420;
+    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function (this: HTMLElement) {
+      return this.classList.contains('hero__story-panel') ? panelHeight : 0;
+    });
+    vi.stubGlobal('innerHeight', 800);
+    const { container } = render(
+      <Hero
+        portrait={{ objectPosition: '64% 43%', scale: 1, src: '/assets/hero/hero-candidate-03.webp', tone: 'light' }}
+        scrollVideo={{ poster: '/media/hero/hero-poster.webp', source: '/media/hero/hero-scroll.mp4' }}
+      />,
+    );
+    const hero = container.querySelector('.hero');
+    expect(hero).toHaveClass('hero--scroll-story');
+
+    panelHeight = 900;
+    fireEvent(window, new Event('resize'));
+
+    expect(hero).not.toHaveClass('hero--scroll-story');
+    expect(screen.getByRole('link', { name: '查看作品' })).toBeVisible();
+    expect(screen.getByText('800万+')).toBeVisible();
+
+    panelHeight = 420;
+    fireEvent(window, new Event('resize'));
+    expect(hero).toHaveClass('hero--scroll-story');
+  });
+
+  it('rechecks content-only resizes and disconnects the observer when unmounted', () => {
+    let panelHeight = 420;
+    let resizeContent: (() => void) | undefined;
+    const observe = vi.fn();
+    const disconnect = vi.fn();
+    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function (this: HTMLElement) {
+      return this.classList.contains('hero__story-panel') ? panelHeight : 0;
+    });
+    vi.stubGlobal('innerHeight', 800);
+    vi.stubGlobal('ResizeObserver', class {
+      observe = observe;
+      disconnect = disconnect;
+
+      constructor(callback: () => void) {
+        resizeContent = callback;
+      }
+    });
+    const { container, unmount } = render(
+      <Hero
+        portrait={{ objectPosition: '64% 43%', scale: 1, src: '/assets/hero/hero-candidate-03.webp', tone: 'light' }}
+        scrollVideo={{ poster: '/media/hero/hero-poster.webp', source: '/media/hero/hero-scroll.mp4' }}
+      />,
+    );
+    const hero = container.querySelector('.hero');
+    expect(observe).toHaveBeenCalledWith(container.querySelector('.hero__story-panel--primary'));
+    expect(observe).toHaveBeenCalledWith(container.querySelector('.hero__story-panel--secondary'));
+    expect(hero).toHaveClass('hero--scroll-story');
+
+    panelHeight = 900;
+    act(() => resizeContent?.());
+    expect(hero).not.toHaveClass('hero--scroll-story');
+    expect(screen.getByText('800万+')).toBeVisible();
+
+    panelHeight = 420;
+    act(() => resizeContent?.());
+    expect(hero).toHaveClass('hero--scroll-story');
+
+    unmount();
+    expect(disconnect).toHaveBeenCalledOnce();
+  });
+
+  it('reveals navigation gradually and waits for the proof section before showing the CTA', () => {
     const headerRef = createRef<HTMLElement>();
     const { container } = render(
       <>
@@ -199,20 +328,144 @@ describe('Hero', () => {
     );
     const header = container.querySelector('.site-header') as HTMLElement;
     const marker = screen.getByLabelText('微信联系标识');
+    const cta = screen.getByText('查看作品');
+    const chrome = [header, marker];
+    const controls = [header, marker, cta];
     const options = useScrollVideoMock.mock.calls.at(-1)?.[0] as {
       onProgress?: (progress: number | null) => void;
     };
 
-    expect(header).not.toHaveStyle({ opacity: '0', visibility: 'hidden' });
-    expect(marker).not.toHaveStyle({ opacity: '0', visibility: 'hidden' });
-
-    act(() => options.onProgress?.(0.2));
-    expect(header).toHaveStyle({ opacity: '0', visibility: 'hidden' });
-    expect(marker).toHaveStyle({ opacity: '0', visibility: 'hidden' });
+    for (const control of controls) {
+      expect(control).toHaveStyle({ opacity: '0', visibility: 'hidden' });
+    }
+    expect(screen.queryByRole('link', { name: '查看作品' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: '返回页面顶部' })).not.toBeInTheDocument();
 
     act(() => options.onProgress?.(0));
-    expect(header).not.toHaveStyle({ opacity: '0', visibility: 'hidden' });
-    expect(marker).not.toHaveStyle({ opacity: '0', visibility: 'hidden' });
+    for (const control of controls) {
+      expect(control).not.toBeVisible();
+    }
+
+    act(() => options.onProgress?.(0.12));
+    for (const control of controls) {
+      expect(control).not.toBeVisible();
+    }
+
+    act(() => options.onProgress?.(0.3));
+    const partialOpacity = chrome.map((control) => Number(control.style.opacity));
+    for (const opacity of partialOpacity) {
+      expect(opacity).toBeGreaterThan(0);
+      expect(opacity).toBeLessThan(0.5);
+    }
+    expect(cta).not.toBeVisible();
+
+    for (const progress of [0.6, 0.8]) {
+      act(() => options.onProgress?.(progress));
+      for (const control of chrome) {
+        expect(control).toHaveStyle({ opacity: '1' });
+        expect(control).toBeVisible();
+      }
+      expect(cta).not.toBeVisible();
+    }
+    expect(screen.getByText('800万+')).toBeVisible();
+
+    act(() => options.onProgress?.(0.86));
+    const partialCtaOpacity = Number(cta.style.opacity);
+    expect(partialCtaOpacity).toBeGreaterThan(0);
+    expect(partialCtaOpacity).toBeLessThan(0.25);
+
+    act(() => options.onProgress?.(1));
+    for (const control of controls) {
+      expect(control).toHaveStyle({ opacity: '1' });
+      expect(control).toBeVisible();
+    }
+
+    act(() => options.onProgress?.(0.86));
+    expect(Number(cta.style.opacity)).toBeCloseTo(partialCtaOpacity, 4);
+    act(() => options.onProgress?.(0.3));
+    chrome.forEach((control, index) => {
+      expect(Number(control.style.opacity)).toBeCloseTo(partialOpacity[index], 4);
+    });
+    expect(cta).not.toBeVisible();
+
+    act(() => options.onProgress?.(0));
+    for (const control of controls) {
+      expect(control).toHaveStyle({ opacity: '0', visibility: 'hidden' });
+    }
+  });
+
+  it('hides controls before video metadata arrives and restores them on static fallback', () => {
+    let eligible = true;
+    useScrollVideoMock.mockImplementation(({ poster }: { poster: string }) => ({
+      motionEligible: eligible,
+      motionEnabled: false,
+      videoProps: { poster, muted: true, playsInline: true },
+    }));
+    const headerRef = createRef<HTMLElement>();
+    const Page = () => (
+      <>
+        <SiteHeader headerRef={headerRef} />
+        <Hero
+          headerRef={headerRef}
+          portrait={{ objectPosition: '64% 43%', scale: 1, src: '/assets/hero/hero-candidate-03.webp', tone: 'light' }}
+          scrollVideo={{ poster: '/media/hero/hero-poster.webp', source: '/media/hero/hero-scroll.mp4' }}
+        />
+      </>
+    );
+    const { container, rerender, unmount } = render(<Page />);
+    const controls = [
+      container.querySelector('.site-header') as HTMLElement,
+      screen.getByLabelText('微信联系标识'),
+      screen.getByText('查看作品'),
+    ];
+    for (const control of controls) {
+      expect(control).toHaveStyle({ opacity: '0', visibility: 'hidden' });
+    }
+    expect(container.querySelector('.hero')).not.toHaveClass('hero--scroll-story');
+
+    eligible = false;
+    rerender(<Page />);
+    expect(screen.getByRole('link', { name: '查看作品' })).toBeVisible();
+    expect(screen.getByRole('link', { name: '返回页面顶部' })).toBeVisible();
+    expect(screen.getByLabelText('微信联系标识')).toBeVisible();
+
+    unmount();
+    for (const control of controls) {
+      expect(control.style.opacity).toBe('');
+      expect(control.style.visibility).toBe('');
+    }
+  });
+
+  it('reserves the persistent CTA space before enabling the pinned story', () => {
+    let metadataReady = false;
+    useScrollVideoMock.mockImplementation(({ enabled, poster, source }: {
+      enabled: boolean;
+      poster: string;
+      source: string | null;
+    }) => ({
+      motionEligible: enabled && Boolean(source),
+      motionEnabled: enabled && metadataReady,
+      videoProps: { autoPlay: false, muted: true, playsInline: true, poster, preload: 'none' },
+    }));
+    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function (this: HTMLElement) {
+      if (this.classList.contains('hero__story-panel')) return 740;
+      return this.classList.contains('hero__cta') ? 80 : 0;
+    });
+    vi.stubGlobal('innerHeight', 800);
+    const Page = () => (
+      <Hero
+        portrait={{ objectPosition: '64% 43%', scale: 1, src: '/assets/hero/hero-candidate-03.webp', tone: 'light' }}
+        scrollVideo={{ poster: '/media/hero/hero-poster.webp', source: '/media/hero/hero-scroll.mp4' }}
+      />
+    );
+    const { container, rerender } = render(<Page />);
+
+    metadataReady = true;
+    rerender(<Page />);
+
+    expect(container.querySelector('.hero')).not.toHaveClass('hero--scroll-story');
+    expect(screen.getByRole('link', { name: '查看作品' })).toBeVisible();
+    expect(screen.getByText('800万+')).toBeVisible();
   });
 
   it('restores the complete static copy when scroll-driven motion stops', () => {
@@ -236,7 +489,6 @@ describe('Hero', () => {
     const hero = container.querySelector('.hero') as HTMLElement;
     const heading = screen.getByRole('heading', { name: '杨玉峰' });
     const emphasis = screen.getByText('懂运营，也能把内容从脚本拍到成片。');
-    const cta = screen.getByRole('link', { name: '查看作品' });
     const options = useScrollVideoMock.mock.calls.at(-1)?.[0] as {
       onProgress?: (progress: number | null) => void;
     };
@@ -252,6 +504,7 @@ describe('Hero', () => {
       poster: string;
       source: string | null;
     }) => ({
+      motionEligible: false,
       motionEnabled: false,
       videoProps: {
         autoPlay: false,
@@ -267,6 +520,7 @@ describe('Hero', () => {
     expect(hero).not.toHaveClass('hero--scroll-story');
     expect(heading).not.toHaveStyle({ opacity: '0', visibility: 'hidden' });
     expect(emphasis).not.toHaveStyle({ opacity: '0', visibility: 'hidden' });
-    expect(cta).not.toHaveStyle({ opacity: '0', visibility: 'hidden' });
+    expect(screen.getByRole('link', { name: '查看作品' })).toBeVisible();
+    expect(screen.getByText('800万+')).toBeVisible();
   });
 });

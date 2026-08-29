@@ -34,7 +34,6 @@ vi.mock('gsap/ScrollTrigger', () => ({
   },
 }));
 
-const DESKTOP_MEDIA_QUERY = '(min-width: 768px) and (pointer: fine)';
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 
 interface MockScrollTriggerConfig {
@@ -48,10 +47,10 @@ interface MockScrollTriggerConfig {
   trigger: Element;
 }
 
-function setMediaPreferences({ desktop = true, reducedMotion = false } = {}) {
-  vi.stubGlobal('matchMedia', (query: string) => ({
-    matches: query === DESKTOP_MEDIA_QUERY
-      ? desktop
+function setMediaPreferences({ desktop = true, reducedMotion = false, width = 1280 } = {}) {
+  vi.stubGlobal('matchMedia', vi.fn((query: string) => ({
+    matches: query.includes('(pointer: fine)')
+      ? desktop && width >= Number(query.match(/min-width: (\d+)px/)?.[1] ?? 0)
       : query === REDUCED_MOTION_QUERY && reducedMotion,
     media: query,
     onchange: null,
@@ -60,7 +59,7 @@ function setMediaPreferences({ desktop = true, reducedMotion = false } = {}) {
     addListener: vi.fn(),
     removeListener: vi.fn(),
     dispatchEvent: vi.fn(),
-  }));
+  })));
 }
 
 function ScrollVideoHarness({
@@ -72,7 +71,7 @@ function ScrollVideoHarness({
 }) {
   const triggerRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const { motionEnabled, videoProps } = useScrollVideo({
+  const { motionEligible, motionEnabled, videoProps } = useScrollVideo({
     enabled,
     onProgress,
     poster: '/media/hero/hero-poster.webp',
@@ -82,7 +81,7 @@ function ScrollVideoHarness({
   });
 
   return (
-    <section data-scroll-motion={motionEnabled ? 'enabled' : 'static'} ref={triggerRef}>
+    <section data-scroll-eligible={motionEligible ? 'yes' : 'no'} data-scroll-motion={motionEnabled ? 'enabled' : 'static'} ref={triggerRef}>
       <video data-testid="scroll-video" ref={videoRef} {...videoProps} />
     </section>
   );
@@ -149,12 +148,54 @@ describe('useScrollVideo', () => {
     expect(video.muted).toBe(true);
     expect(video.playsInline).toBe(true);
     expect(video.autoplay).toBe(false);
-    expect(video.parentElement).toHaveAttribute('data-scroll-motion', 'enabled');
+    expect(video.parentElement).toHaveAttribute('data-scroll-motion', 'static');
+    expect(video.parentElement).toHaveAttribute('data-scroll-eligible', 'yes');
 
     flushAnimationFrame();
 
     expect(video).toHaveAttribute('src', '/media/hero/hero-scroll.mp4');
     expect(video).toHaveAttribute('preload', 'auto');
+    expect(video.parentElement).toHaveAttribute('data-scroll-motion', 'static');
+
+    Object.defineProperty(video, 'duration', { configurable: true, value: 5.133333 });
+    fireEvent.loadedMetadata(video);
+    expect(video.parentElement).toHaveAttribute('data-scroll-motion', 'enabled');
+  });
+
+  it.each([0, -1, Number.NaN, Number.POSITIVE_INFINITY])(
+    'does not hide static content or pin when metadata duration is %s',
+    (duration) => {
+      const { getByTestId } = render(<ScrollVideoHarness />);
+      const video = getByTestId('scroll-video') as HTMLVideoElement;
+      flushAnimationFrame();
+      Object.defineProperty(video, 'duration', { configurable: true, value: duration });
+
+      fireEvent.loadedMetadata(video);
+
+      expect(video.parentElement).toHaveAttribute('data-scroll-motion', 'static');
+      expect(video.parentElement).toHaveAttribute('data-scroll-eligible', 'no');
+      expect(scrollTriggerMock.create).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([1023, 1024])('only loads a fine-pointer video at 1024px or wider (%spx)', (width) => {
+    setMediaPreferences({ width });
+    const { getByTestId } = render(<ScrollVideoHarness />);
+    const video = getByTestId('scroll-video') as HTMLVideoElement;
+
+    flushAnimationFrame();
+
+    expect(window.matchMedia).toHaveBeenCalledWith('(min-width: 1024px) and (pointer: fine)');
+    if (width < 1024) {
+      expect(video).not.toHaveAttribute('src');
+      expect(video.parentElement).toHaveAttribute('data-scroll-motion', 'static');
+      expect(video.parentElement).toHaveAttribute('data-scroll-eligible', 'no');
+    } else {
+      expect(video).toHaveAttribute('src', '/media/hero/hero-scroll.mp4');
+      Object.defineProperty(video, 'duration', { configurable: true, value: 5.133333 });
+      fireEvent.loadedMetadata(video);
+      expect(video.parentElement).toHaveAttribute('data-scroll-motion', 'enabled');
+    }
   });
 
   it.each([
@@ -171,6 +212,7 @@ describe('useScrollVideo', () => {
     expect(video).not.toHaveAttribute('src');
     expect(video).toHaveAttribute('preload', 'none');
     expect(video.parentElement).toHaveAttribute('data-scroll-motion', 'static');
+    expect(video.parentElement).toHaveAttribute('data-scroll-eligible', 'no');
     expect(window.requestAnimationFrame).not.toHaveBeenCalled();
   });
 
@@ -187,6 +229,7 @@ describe('useScrollVideo', () => {
     expect(video).not.toHaveAttribute('src');
     expect(video).toHaveAttribute('preload', 'none');
     expect(video.parentElement).toHaveAttribute('data-scroll-motion', 'static');
+    expect(video.parentElement).toHaveAttribute('data-scroll-eligible', 'no');
     expect(gsapMock.revert).toHaveBeenCalledOnce();
   });
 

@@ -12,6 +12,7 @@ export interface Project {
   poster: string;
   previewSrc: string;
   fullSrc: string;
+  fallbackSrc?: string;
   aspectRatio: `${number}/${number}`;
 }
 
