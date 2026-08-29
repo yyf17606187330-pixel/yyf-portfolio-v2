@@ -369,17 +369,14 @@
   .experience-heading {
     margin-inline: 0;
     max-width: none;
-    padding-left: max(
-      var(--experience-gutter),
-      calc((100vw - 86rem) / 2 + var(--experience-gutter))
-    );
+    padding-left: var(--experience-gutter);
     padding-right: var(--experience-gutter);
     text-align: left;
     transform: none;
   }
 
   .experience-list {
-    max-width: 86rem;
+    max-width: none;
   }
 
   .experience-heading__chapter,
