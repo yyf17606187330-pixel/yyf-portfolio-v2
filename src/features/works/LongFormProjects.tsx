@@ -231,6 +231,9 @@ export function LongFormProjects({ playerOpen, onOpenProject }: LongFormProjects
   const cardRefs = useRef<Array<HTMLElement | null>>([]);
   const deckRef = useRef<HTMLDivElement>(null);
   const isAnimatingRef = useRef(false);
+  const outgoingReleaseCardRef = useRef<HTMLElement | null>(null);
+  const outgoingReleaseFrameRef = useRef<number | null>(null);
+  const outgoingReleasePaintRef = useRef<number | null>(null);
   const touchGestureCapturedRef = useRef(false);
   const touchStartYRef = useRef<number | null>(null);
   const wheelLockedRef = useRef(false);
@@ -243,6 +246,40 @@ export function LongFormProjects({ playerOpen, onOpenProject }: LongFormProjects
     setPreviewPaused(false);
     isAnimatingRef.current = false;
   }, []);
+
+  const cancelOutgoingStyleRelease = useCallback((releaseStyles = false) => {
+    if (outgoingReleaseFrameRef.current !== null) {
+      window.cancelAnimationFrame(outgoingReleaseFrameRef.current);
+      outgoingReleaseFrameRef.current = null;
+    }
+    if (outgoingReleasePaintRef.current !== null) {
+      window.cancelAnimationFrame(outgoingReleasePaintRef.current);
+      outgoingReleasePaintRef.current = null;
+    }
+    if (releaseStyles && outgoingReleaseCardRef.current) {
+      gsap.set(outgoingReleaseCardRef.current, {
+        clearProps: 'transform,opacity,visibility,willChange',
+      });
+    }
+    outgoingReleaseCardRef.current = null;
+  }, []);
+
+  const releaseOutgoingStylesAfterPaint = useCallback((card: HTMLElement) => {
+    cancelOutgoingStyleRelease(true);
+    outgoingReleaseCardRef.current = card;
+    outgoingReleaseFrameRef.current = window.requestAnimationFrame(() => {
+      outgoingReleaseFrameRef.current = null;
+      outgoingReleasePaintRef.current = window.requestAnimationFrame(() => {
+        outgoingReleasePaintRef.current = null;
+        if (outgoingReleaseCardRef.current === card) {
+          gsap.set(card, {
+            clearProps: 'transform,opacity,visibility,willChange',
+          });
+          outgoingReleaseCardRef.current = null;
+        }
+      });
+    });
+  }, [cancelOutgoingStyleRelease]);
 
   const transitionTo = useCallback((nextIndex: number) => {
     const currentIndex = activeIndexRef.current;
@@ -261,10 +298,14 @@ export function LongFormProjects({ playerOpen, onOpenProject }: LongFormProjects
     }
 
     isAnimatingRef.current = true;
+    cancelOutgoingStyleRelease(true);
     animationContextRef.current?.revert();
     animationContextRef.current = gsap.context(() => {
       const onComplete = () => {
         flushSync(() => commitIndex(nextIndex));
+        if (nextIndex > currentIndex) {
+          releaseOutgoingStylesAfterPaint(currentCard);
+        }
       };
       const transitionDepth = Math.min(3, Math.abs(nextIndex - currentIndex));
 
@@ -283,7 +324,6 @@ export function LongFormProjects({ playerOpen, onOpenProject }: LongFormProjects
         });
         gsap.to(currentCard, {
           autoAlpha: 0,
-          clearProps: 'transform,opacity,visibility,willChange',
           duration: 0.68,
           ease: 'power4.inOut',
           onComplete,
@@ -319,7 +359,7 @@ export function LongFormProjects({ playerOpen, onOpenProject }: LongFormProjects
     }, deckRef);
 
     return true;
-  }, [commitIndex, reducedMotion]);
+  }, [cancelOutgoingStyleRelease, commitIndex, reducedMotion, releaseOutgoingStylesAfterPaint]);
 
   useEffect(() => {
     const deck = deckRef.current;
@@ -401,11 +441,12 @@ export function LongFormProjects({ playerOpen, onOpenProject }: LongFormProjects
   }, [playerOpen, transitionTo]);
 
   useEffect(() => () => {
+    cancelOutgoingStyleRelease();
     animationContextRef.current?.revert();
     if (wheelReleaseTimerRef.current !== null) {
       window.clearTimeout(wheelReleaseTimerRef.current);
     }
-  }, []);
+  }, [cancelOutgoingStyleRelease]);
 
   const handleKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
     let nextIndex: number | null = null;

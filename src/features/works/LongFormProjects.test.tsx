@@ -45,6 +45,7 @@ vi.mock('gsap', () => ({
 
 describe('LongFormProjects card deck', () => {
   const observed = new Map<Element, IntersectionObserverCallback>();
+  const animationFrames: FrameRequestCallback[] = [];
   const pause = vi.fn();
   const play = vi.fn(() => Promise.resolve());
 
@@ -65,6 +66,7 @@ describe('LongFormProjects card deck', () => {
 
   beforeEach(() => {
     observed.clear();
+    animationFrames.length = 0;
     pause.mockClear();
     play.mockClear();
     gsapMock.context.mockClear();
@@ -95,6 +97,11 @@ describe('LongFormProjects card deck', () => {
       rootMargin: '',
       thresholds: [],
     })));
+    vi.stubGlobal('requestAnimationFrame', vi.fn((callback: FrameRequestCallback) => {
+      animationFrames.push(callback);
+      return animationFrames.length;
+    }));
+    vi.stubGlobal('cancelAnimationFrame', vi.fn());
   });
 
   afterEach(() => {
@@ -272,8 +279,10 @@ describe('LongFormProjects card deck', () => {
       z: 0,
     }));
     expect(gsapMock.to).toHaveBeenCalledWith(currentCard, expect.objectContaining({
-      clearProps: 'transform,opacity,visibility,willChange',
       duration: 0.68,
+    }));
+    expect(gsapMock.to).toHaveBeenCalledWith(currentCard, expect.not.objectContaining({
+      clearProps: expect.anything(),
     }));
   });
 
@@ -283,6 +292,30 @@ describe('LongFormProjects card deck', () => {
     fireEvent.click(screen.getByRole('button', { name: '下一张作品' }));
 
     expect(gsapMock.state.completionActiveSlugs).toEqual(['narrative-film']);
+  });
+
+  it('keeps the outgoing card hidden through one paint before releasing its tween styles', () => {
+    const { container } = render(<LongFormProjects playerOpen={false} onOpenProject={vi.fn()} />);
+    const outgoingCard = container.querySelector('[data-film-card="travel-vlog"]');
+
+    fireEvent.click(screen.getByRole('button', { name: '下一张作品' }));
+
+    expect(gsapMock.to).toHaveBeenCalledWith(outgoingCard, expect.not.objectContaining({
+      clearProps: expect.anything(),
+    }));
+    expect(gsapMock.set).not.toHaveBeenCalledWith(outgoingCard, {
+      clearProps: 'transform,opacity,visibility,willChange',
+    });
+
+    act(() => animationFrames.shift()?.(16));
+    expect(gsapMock.set).not.toHaveBeenCalledWith(outgoingCard, {
+      clearProps: 'transform,opacity,visibility,willChange',
+    });
+
+    act(() => animationFrames.shift()?.(32));
+    expect(gsapMock.set).toHaveBeenCalledWith(outgoingCard, {
+      clearProps: 'transform,opacity,visibility,willChange',
+    });
   });
 
   it('captures one valid touch swipe while releasing page scroll at both deck boundaries', () => {
