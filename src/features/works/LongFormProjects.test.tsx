@@ -4,7 +4,10 @@ import type { Project } from '../../types/portfolio';
 import { LongFormProjects } from './LongFormProjects';
 
 const gsapMock = vi.hoisted(() => {
-  const state = { autoComplete: true };
+  const state = {
+    autoComplete: true,
+    completionActiveSlugs: [] as Array<string | null>,
+  };
   const tween = { kill: vi.fn() };
   return {
     context: vi.fn((setup: () => void) => {
@@ -18,7 +21,14 @@ const gsapMock = vi.hoisted(() => {
     set: vi.fn(),
     state,
     to: vi.fn((_target: unknown, vars: { onComplete?: () => void }) => {
-      if (state.autoComplete) vars.onComplete?.();
+      if (state.autoComplete && vars.onComplete) {
+        vars.onComplete();
+        state.completionActiveSlugs.push(
+          document
+            .querySelector('[data-film-card][aria-current="true"]')
+            ?.getAttribute('data-film-card') ?? null,
+        );
+      }
       return tween;
     }),
   };
@@ -62,6 +72,7 @@ describe('LongFormProjects card deck', () => {
     gsapMock.set.mockClear();
     gsapMock.to.mockClear();
     gsapMock.state.autoComplete = true;
+    gsapMock.state.completionActiveSlugs.length = 0;
     vi.useFakeTimers();
     vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(play);
     vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(pause);
@@ -250,6 +261,14 @@ describe('LongFormProjects card deck', () => {
       clearProps: 'transform,opacity,visibility,willChange',
       duration: 0.68,
     }));
+  });
+
+  it('commits the incoming card before the completed tween can expose cleared outgoing styles', () => {
+    render(<LongFormProjects playerOpen={false} onOpenProject={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole('button', { name: '下一张作品' }));
+
+    expect(gsapMock.state.completionActiveSlugs).toEqual(['narrative-film']);
   });
 
   it('captures one valid touch swipe while releasing page scroll at both deck boundaries', () => {

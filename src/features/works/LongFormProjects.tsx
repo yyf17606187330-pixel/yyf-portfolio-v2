@@ -6,6 +6,7 @@ import {
   type CSSProperties,
   type KeyboardEvent as ReactKeyboardEvent,
 } from 'react';
+import { flushSync } from 'react-dom';
 import gsap from 'gsap';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { resolveMediaUrl } from '../../lib/media';
@@ -259,7 +260,9 @@ export function LongFormProjects({ playerOpen, onOpenProject }: LongFormProjects
     isAnimatingRef.current = true;
     animationContextRef.current?.revert();
     animationContextRef.current = gsap.context(() => {
-      const onComplete = () => commitIndex(nextIndex);
+      const onComplete = () => {
+        flushSync(() => commitIndex(nextIndex));
+      };
       const transitionDepth = Math.min(3, Math.abs(nextIndex - currentIndex));
 
       gsap.set([currentCard, nextCard], { willChange: 'transform, opacity' });
