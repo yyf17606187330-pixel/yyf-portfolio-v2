@@ -91,7 +91,7 @@ describe('App', () => {
   });
 
   it('loads full media only after a click and restores the opener after closing', async () => {
-    const { container } = render(<App />);
+    render(<App />);
     const opener = screen.getByRole('button', { name: '播放净水器完整作品' });
 
     expect(document.querySelector('video[src*="full-"]')).not.toBeInTheDocument();
