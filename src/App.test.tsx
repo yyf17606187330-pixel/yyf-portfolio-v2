@@ -95,7 +95,7 @@ describe('App', () => {
     const opener = screen.getByRole('button', { name: '播放净水器完整作品' });
 
     expect(document.querySelector('video[src*="full-"]')).not.toBeInTheDocument();
-    expect(container.querySelector('.lazy-preview')).toHaveStyle({ aspectRatio: '9/16' });
+    expect(opener.querySelector('.lazy-preview')).toHaveStyle({ aspectRatio: '9/16' });
     fireEvent.click(opener);
 
     const dialog = await screen.findByRole('dialog', { name: '播放作品：净水器' });

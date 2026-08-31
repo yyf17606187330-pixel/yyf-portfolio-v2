@@ -80,6 +80,8 @@ export function ProjectShowcase({
         </div>
       </div>
 
+      <LongFormProjects playerOpen={playerOpen} onOpenProject={onOpenProject} />
+
       <header className="project-showcase__heading">
         <div className="project-showcase__eyebrow">
           <p>02.{String(project.order).padStart(2, '0')} / SELECTED WORK</p>
@@ -212,7 +214,6 @@ export function ProjectShowcase({
         </div>
       </article>
 
-      <LongFormProjects playerOpen={playerOpen} onOpenProject={onOpenProject} />
     </section>
   );
 }

@@ -49,6 +49,33 @@ describe('ProjectShowcase', () => {
     expect(responsibilities).toHaveTextContent('账号运营');
   });
 
+  it('keeps the existing four-card editorial block before the standalone commercial project', () => {
+    const { container } = render(
+      <ProjectShowcase
+        {...waterPurifierCopy}
+        project={waterPurifierProject}
+        playerOpen={false}
+        onOpenProject={vi.fn()}
+      />,
+    );
+
+    const showcase = container.querySelector('.project-showcase');
+    const selectedFilms = container.querySelector('.long-form-projects');
+    const commercialHeading = container.querySelector('.project-showcase__heading');
+    const commercialProject = container.querySelector('.project-showcase__project');
+    const blocks = [...(showcase?.children ?? [])];
+
+    expect(selectedFilms).toBeInTheDocument();
+    expect(commercialHeading).toBeInTheDocument();
+    expect(commercialProject).toBeInTheDocument();
+    expect(blocks.indexOf(selectedFilms as Element)).toBeLessThan(
+      blocks.indexOf(commercialHeading as Element),
+    );
+    expect(blocks.indexOf(selectedFilms as Element)).toBeLessThan(
+      blocks.indexOf(commercialProject as Element),
+    );
+  });
+
   it('keeps the real 9:16 preview clickable without loading full media early', () => {
     const onOpenProject = vi.fn();
     const { container } = render(
@@ -61,7 +88,7 @@ describe('ProjectShowcase', () => {
     );
     const playButton = screen.getByRole('button', { name: '播放净水器完整作品' });
 
-    expect(container.querySelector('.lazy-preview')).toHaveStyle({ aspectRatio: '9/16' });
+    expect(playButton.querySelector('.lazy-preview')).toHaveStyle({ aspectRatio: '9/16' });
     expect(container.querySelector('video[src*="full-"]')).not.toBeInTheDocument();
     expect(playButton).toHaveAttribute('aria-describedby', 'water-purifier-description');
     expect(screen.getByText(waterPurifierCopy.description)).toHaveAttribute(
