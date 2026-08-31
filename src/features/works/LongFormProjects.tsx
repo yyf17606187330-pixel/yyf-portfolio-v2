@@ -156,7 +156,10 @@ function LongFilmCard({
       data-card-state={stackState}
       data-film-card={film.project.slug}
       ref={cardRef}
-      style={{ '--card-depth': depth } as CardStyle}
+      style={{
+        '--card-depth': depth,
+        aspectRatio: film.project.aspectRatio.replace('/', ' / '),
+      } as CardStyle}
     >
       <span aria-hidden="true" className="long-form-projects__card-number">
         {String(index + 1).padStart(2, '0')}

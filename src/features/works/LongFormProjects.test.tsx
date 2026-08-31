@@ -145,6 +145,20 @@ describe('LongFormProjects card deck', () => {
     expect(container.querySelector('video[src*="full-"]')).not.toBeInTheDocument();
   });
 
+  it('keeps every stacked card at its source ratio without a filler frame', () => {
+    const { container } = render(
+      <LongFormProjects playerOpen={false} onOpenProject={vi.fn()} />,
+    );
+    const cards = [...container.querySelectorAll<HTMLElement>('[data-film-card]')];
+
+    expect(cards.map((card) => card.style.aspectRatio)).toEqual([
+      '2 / 1',
+      '16 / 9',
+      '16 / 9',
+      '16 / 9',
+    ]);
+  });
+
   it('updates the original editorial copy in place without creating a second project layout', () => {
     const { container } = render(<LongFormProjects playerOpen={false} onOpenProject={vi.fn()} />);
     const copySlot = container.querySelector('[data-active-film-copy]');
