@@ -317,6 +317,31 @@ describe('LongFormProjects card deck', () => {
     expect(container.querySelector('video[src*="full-hevc"]')).not.toBeInTheDocument();
   });
 
+  it('keeps each incoming preview behind its poster until that video decodes a first frame', () => {
+    const { container } = render(<LongFormProjects playerOpen={false} onOpenProject={vi.fn()} />);
+    enterObservedPreviews();
+
+    let video = container.querySelector<HTMLVideoElement>('.long-form-projects__card video');
+    expect(video).toHaveAttribute('src', '/media/projects/long-form/travel/preview-h264.mp4');
+    expect(video).toHaveAttribute('data-preview-ready', 'false');
+
+    fireEvent.loadedData(video as HTMLVideoElement);
+    expect(video).toHaveAttribute('data-preview-ready', 'true');
+
+    fireEvent.click(screen.getByRole('button', { name: '下一张作品' }));
+    video = container.querySelector<HTMLVideoElement>('.long-form-projects__card video');
+    expect(video).toHaveAttribute('src', '/media/projects/long-form/narrative/preview-h264.mp4');
+    expect(video).toHaveAttribute('data-preview-ready', 'false');
+
+    fireEvent.loadedData(video as HTMLVideoElement);
+    expect(video).toHaveAttribute('data-preview-ready', 'true');
+
+    fireEvent.click(screen.getByRole('button', { name: '上一张作品' }));
+    video = container.querySelector<HTMLVideoElement>('.long-form-projects__card video');
+    expect(video).toHaveAttribute('src', '/media/projects/long-form/travel/preview-h264.mp4');
+    expect(video).toHaveAttribute('data-preview-ready', 'false');
+  });
+
   it('opens only the current project and passes frozen full media only after activation', () => {
     const onOpenProject = vi.fn<(project: Project, opener: HTMLElement) => void>();
     const { container } = render(

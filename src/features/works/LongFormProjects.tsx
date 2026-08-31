@@ -172,6 +172,7 @@ function LongFilmCard({
         <LazyPreview
           enabled={active && previewEnabled && !playerOpen}
           project={film.project}
+          revealAfterFirstFrame
         />
         <span className="long-form-projects__play-label" aria-hidden="true">
           {hasFullMedia ? '播放正片' : '暂不可播放'}

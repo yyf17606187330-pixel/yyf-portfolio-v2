@@ -298,6 +298,14 @@
   width: 100%;
 }
 
+.long-form-projects__play video[data-preview-ready='false'] {
+  opacity: 0;
+}
+
+.long-form-projects__play video[data-preview-ready='true'] {
+  opacity: 1;
+}
+
 .long-form-projects__play-label {
   background: rgb(24 22 20 / 82%);
   border: var(--line) solid rgb(255 255 255 / 44%);

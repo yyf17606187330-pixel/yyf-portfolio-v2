@@ -6,15 +6,21 @@ import type { Project } from '../../types/portfolio';
 interface LazyPreviewProps {
   project: Project;
   enabled?: boolean;
+  revealAfterFirstFrame?: boolean;
 }
 
-export function LazyPreview({ project, enabled = true }: LazyPreviewProps) {
+export function LazyPreview({
+  project,
+  enabled = true,
+  revealAfterFirstFrame = false,
+}: LazyPreviewProps) {
   const frameRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hasEnteredViewport, setHasEnteredViewport] = useState(false);
   const [inViewport, setInViewport] = useState(false);
   const [pageVisible, setPageVisible] = useState(() => document.visibilityState === 'visible');
   const [failedSource, setFailedSource] = useState<string | null>(null);
+  const [readySource, setReadySource] = useState<string | null>(null);
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const posterUrl = resolveMediaUrl(project.poster);
   const previewUrl = resolveMediaUrl(project.previewSrc);
@@ -23,6 +29,11 @@ export function LazyPreview({ project, enabled = true }: LazyPreviewProps) {
     && previewUrl
     && !reducedMotion
     && failedSource !== previewUrl;
+  const previewReady = !revealAfterFirstFrame || readySource === previewUrl;
+
+  useEffect(() => {
+    if (!enabled && revealAfterFirstFrame) setReadySource(null);
+  }, [enabled, revealAfterFirstFrame]);
 
   useEffect(() => {
     const frame = frameRef.current;
@@ -76,6 +87,7 @@ export function LazyPreview({ project, enabled = true }: LazyPreviewProps) {
       {showVideo && previewUrl ? (
         <video
           aria-hidden="true"
+          data-preview-ready={revealAfterFirstFrame ? String(previewReady) : undefined}
           key={previewUrl}
           ref={videoRef}
           loop
@@ -86,6 +98,7 @@ export function LazyPreview({ project, enabled = true }: LazyPreviewProps) {
           src={previewUrl}
           tabIndex={-1}
           onError={() => setFailedSource(previewUrl)}
+          onLoadedData={() => setReadySource(previewUrl)}
         />
       ) : null}
       {!posterUrl && !showVideo ? (
