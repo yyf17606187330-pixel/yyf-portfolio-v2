@@ -10,7 +10,7 @@ describe('ProjectShowcase', () => {
     vi.unstubAllGlobals();
   });
 
-  it('presents a substantial, explicitly temporary editorial narrative with the real responsibilities', () => {
+  it('presents the verified commercial case without exposing editorial placeholders', () => {
     render(
       <ProjectShowcase
         {...waterPurifierCopy}
@@ -22,12 +22,23 @@ describe('ProjectShowcase', () => {
 
     expect(screen.getByRole('region', { name: '精选作品' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 2, name: '净水器' })).toBeInTheDocument();
-    expect(screen.getByText('排版占位 · 正式文案待替换')).toBeInTheDocument();
 
-    const narrative = screen.getByLabelText('作品说明占位文案');
-    expect(narrative.textContent?.length).toBeGreaterThanOrEqual(350);
+    const showcase = screen.getByRole('region', { name: '精选作品' });
+    expect(showcase).toHaveTextContent('碧云泉官方旗舰店 · 2022.10—2025.06');
+    expect(showcase).toHaveTextContent('单条素材单月最高投放消耗 45 万元，投产比 1:5');
+    expect(showcase).toHaveTextContent('UV 价值从 0 提升至约 6 元，BPM 约 6000');
+    expect(showcase).not.toHaveTextContent(
+      /排版占位|正式文案待替换|LAYOUT STUDY|作品说明占位|创作过程占位/,
+    );
+    expect(showcase).not.toHaveTextContent(/销售额|利润|累计消耗/);
+
+    const narrative = screen.getByLabelText('净水器项目说明');
+    expect(narrative.textContent?.length).toBeGreaterThanOrEqual(300);
     expect(narrative.querySelectorAll('p')).toHaveLength(4);
-    expect(screen.getAllByText(/排版占位 0[1-4]｜待替换/)).toHaveLength(4);
+    expect(narrative).toHaveTextContent('从零搭起直播间骨架');
+    expect(narrative).toHaveTextContent('用人群分析确定饮水安全题材');
+    expect(narrative).toHaveTextContent('把制作、投放与复盘连成闭环');
+    expect(narrative).toHaveTextContent('从内容结果反推直播表达');
 
     const responsibilities = screen.getByRole('list', { name: '本项目职责' });
     expect(responsibilities).toHaveTextContent('策划');
@@ -87,7 +98,7 @@ describe('ProjectShowcase', () => {
     expect(ticker?.querySelectorAll('.project-showcase__ticker-set')).toHaveLength(2);
   });
 
-  it('organizes the project as a dated transition rail, process timeline, and factual vitals', () => {
+  it('organizes the project as a dated transition rail, verified process timeline, and factual vitals', () => {
     render(
       <ProjectShowcase
         {...waterPurifierCopy}
@@ -101,17 +112,20 @@ describe('ProjectShowcase', () => {
     expect(transition).toHaveTextContent("NOW · AUG '26");
     expect(transition).toHaveTextContent('净水器项目');
     expect(transition).toHaveTextContent('9 / 16');
+    expect(transition).toHaveTextContent('商业内容闭环');
+    expect(transition).toHaveTextContent('人群分析 · 制作 · 投放复盘');
 
-    const process = screen.getByRole('list', { name: '创作过程占位' });
+    const process = screen.getByRole('list', { name: '净水器项目创作过程' });
     expect(process.children).toHaveLength(4);
     expect(process).toHaveTextContent('01 / 项目背景');
     expect(process).toHaveTextContent('04 / 职责复盘');
 
     const vitals = screen.getByLabelText('项目关键信息');
-    expect(vitals).toHaveTextContent("VOL. 01 · '26");
+    expect(vitals).toHaveTextContent('2022.10—2025.06');
+    expect(vitals).toHaveTextContent('碧云泉官方旗舰店');
     expect(vitals).toHaveTextContent('COMMERCIAL FILM / 商业短视频');
     expect(vitals).toHaveTextContent('9 / 16 · 01:16');
-    expect(vitals).toHaveTextContent('正式文案待替换');
+    expect(vitals).toHaveTextContent('已完成商业投放');
   });
 
   it('presents the approved four-film deck in source order without loading any full film early', () => {

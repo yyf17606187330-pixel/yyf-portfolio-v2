@@ -11,24 +11,27 @@ interface ProjectShowcaseProps {
   label: string;
   description: string;
   durationLabel: string;
+  contentTitle: string;
+  contentSummary: string;
+  statusLabel: string;
+  process: Array<{
+    stage: string;
+    title: string;
+    body: string;
+  }>;
   playerOpen: boolean;
   onOpenProject: (project: Project, opener: HTMLElement) => void;
 }
-
-const placeholderNarrative = [
-  '本段用于承接项目背景与沟通目标。正式版本应说明作品为什么被制作、希望观众先理解什么，以及竖屏画面对应的发布场景。当前内容只用于确认首段高度、行宽和阅读节奏，不代表真实客户需求，也不包含未经确认的业务结论。',
-  '本段用于说明从选题、脚本到拍摄执行的过程。正式版本可补充经过确认的创作判断、现场限制与镜头组织方式，但在资料补齐前不写具体品牌要求、人员规模、预算、周期或合作关系。此处文字只负责撑开第二段的视觉密度。',
-  '本段用于描述剪辑、声音、调色与平台适配等后期思路。后续应由内容负责人根据真实素材替换，保留能够被作品画面直接验证的信息；不填播放量、转化率、投放回报、奖项或其他未经核实的数据。当前段落仅用于测试连续中文的换行与段距。',
-  '本段用于收束个人职责与复盘角度。正式文案可以解释哪些环节由本人完成、哪些来自协作，以及最终版本如何回应最初目标；在确认前不扩大职责、不虚构成果，也不把排版占位视为公开案例说明。此处用于确认长文与右侧九比十六视频在桌面上的高度关系。',
-];
-
-const processStages = ['项目背景', '策划与拍摄', '后期与适配', '职责复盘'];
 
 export function ProjectShowcase({
   project,
   label,
   description,
   durationLabel,
+  contentTitle,
+  contentSummary,
+  statusLabel,
+  process,
   playerOpen,
   onOpenProject,
 }: ProjectShowcaseProps) {
@@ -70,8 +73,8 @@ export function ProjectShowcase({
             </div>
             <div>
               <dt>CONTENT</dt>
-              <dd>LAYOUT STUDY</dd>
-              <small>正式文案待替换</small>
+              <dd>{contentTitle}</dd>
+              <small>{contentSummary}</small>
             </div>
           </dl>
         </div>
@@ -80,7 +83,7 @@ export function ProjectShowcase({
       <header className="project-showcase__heading">
         <div className="project-showcase__eyebrow">
           <p>02.{String(project.order).padStart(2, '0')} / SELECTED WORK</p>
-          <p className="project-showcase__placeholder-note">排版占位 · 正式文案待替换</p>
+          <p>{project.client} · {project.year}</p>
         </div>
         <h2 aria-label={project.title} id={projectTitleId}>
           {project.title}<span aria-hidden="true">项目</span>
@@ -156,7 +159,7 @@ export function ProjectShowcase({
           <section aria-label="项目关键信息" className="project-showcase__vitals">
             <header>
               <h3>Project vitals</h3>
-              <span>VOL. 01 · '26</span>
+              <span>{project.year}</span>
             </header>
             <dl>
               <div>
@@ -172,28 +175,36 @@ export function ProjectShowcase({
                 <dd>9 / 16 · {durationLabel}</dd>
               </div>
               <div>
+                <dt>品牌 / BRAND</dt>
+                <dd>{project.client}</dd>
+              </div>
+              <div>
+                <dt>周期 / PERIOD</dt>
+                <dd>{project.year}</dd>
+              </div>
+              <div>
                 <dt>状态 / STATUS</dt>
-                <dd>正式文案待替换</dd>
+                <dd>{statusLabel}</dd>
               </div>
             </dl>
           </section>
         </div>
 
         <div
-          aria-label="作品说明占位文案"
+          aria-label={`${project.title}项目说明`}
           className="project-showcase__copy"
         >
           <div className="project-showcase__process-heading">
             <strong>/ {project.title}项目 · 创作过程</strong>
             <span>PROCESS NOTES</span>
           </div>
-          <ol aria-label="创作过程占位" className="project-showcase__timeline">
-            {placeholderNarrative.map((paragraph, index) => (
-              <li key={paragraph}>
-                <span className="project-showcase__stage">0{index + 1} / {processStages[index]}</span>
+          <ol aria-label={`${project.title}项目创作过程`} className="project-showcase__timeline">
+            {process.map((item, index) => (
+              <li key={item.title}>
+                <span className="project-showcase__stage">0{index + 1} / {item.stage}</span>
                 <p>
-                  <strong>排版占位 0{index + 1}｜待替换</strong>
-                  {paragraph}
+                  <strong>{item.title}</strong>
+                  {item.body}
                 </p>
               </li>
             ))}
