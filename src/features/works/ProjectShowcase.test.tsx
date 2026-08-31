@@ -155,7 +155,7 @@ describe('ProjectShowcase', () => {
     expect(vitals).toHaveTextContent('已完成商业投放');
   });
 
-  it('presents the approved four-film deck in source order without loading any full film early', () => {
+  it('presents two independent four-film decks in source order without loading any full film early', () => {
     const onOpenProject = vi.fn();
     const { container } = render(
       <ProjectShowcase
@@ -167,12 +167,21 @@ describe('ProjectShowcase', () => {
     );
 
     const longFilms = screen.getByRole('region', { name: '长片作品' });
-    const cards = [...longFilms.querySelectorAll<HTMLElement>('[data-film-card]')];
-    expect(cards.map((card) => card.dataset.filmCard)).toEqual([
+    const decks = [...longFilms.querySelectorAll<HTMLElement>('[data-film-deck]')];
+    expect(decks).toHaveLength(2);
+    expect([...decks[0].querySelectorAll<HTMLElement>('[data-film-card]')]
+      .map((card) => card.dataset.filmCard)).toEqual([
       'travel-vlog',
       'narrative-film',
       'dark-room',
       'film-2025-06-15',
+    ]);
+    expect([...decks[1].querySelectorAll<HTMLElement>('[data-film-card]')]
+      .map((card) => card.dataset.filmCard)).toEqual([
+      'grading-skate-workshop',
+      'grading-percussion',
+      'grading-dance',
+      'grading-winter-aerial',
     ]);
     expect(within(longFilms).getByRole('heading', {
       level: 3,
@@ -181,11 +190,15 @@ describe('ProjectShowcase', () => {
     expect(longFilms).not.toHaveTextContent(/待补|待确认|占位|内部说明/);
 
     const previews = longFilms.querySelectorAll('.lazy-preview');
-    expect(previews).toHaveLength(4);
+    expect(previews).toHaveLength(8);
     expect(previews[0]).toHaveStyle({ aspectRatio: '2/1' });
     expect(previews[1]).toHaveStyle({ aspectRatio: '16/9' });
     expect(previews[2]).toHaveStyle({ aspectRatio: '16/9' });
     expect(previews[3]).toHaveStyle({ aspectRatio: '16/9' });
+    expect(previews[4]).toHaveStyle({ aspectRatio: '16/9' });
+    expect(previews[5]).toHaveStyle({ aspectRatio: '16/9' });
+    expect(previews[6]).toHaveStyle({ aspectRatio: '16/9' });
+    expect(previews[7]).toHaveStyle({ aspectRatio: '16/9' });
     expect(container.querySelector('video[src*="full-hevc"]')).not.toBeInTheDocument();
 
     const travelButton = within(longFilms).getByRole('button', { name: '播放旅拍 Vlog完整作品' });
@@ -220,9 +233,10 @@ describe('ProjectShowcase', () => {
       '02.01 / SELECTED WORK',
     );
     expect(container.querySelector('.long-form-projects__heading > span')).toHaveTextContent(
-      '02.02—02.05',
+      '02.01—02.02',
     );
-    expect(longFilms).toHaveTextContent('02.02 / LONG-FORM');
+    expect(longFilms).toHaveTextContent('02.01 / LONG-FORM');
+    expect(longFilms).toHaveTextContent('02.02 / COLOR GRADING');
     expect(longFilms).toHaveTextContent('04:20');
     expect(longFilms).toHaveTextContent('剪辑 · 调色 · 配乐 · 人声');
   });

@@ -1,4 +1,4 @@
-import { act, cleanup, createEvent, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, createEvent, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Project } from '../../types/portfolio';
 import { LongFormProjects } from './LongFormProjects';
@@ -114,7 +114,8 @@ describe('LongFormProjects card deck', () => {
 
   it('keeps the approved four-card order and exposes only factual visitor-facing metadata', () => {
     const { container } = render(<LongFormProjects playerOpen={false} onOpenProject={vi.fn()} />);
-    const cards = [...container.querySelectorAll<HTMLElement>('[data-film-card]')];
+    const firstDeck = container.querySelector<HTMLElement>('[data-film-deck="selected-films-02-01"]');
+    const cards = [...firstDeck!.querySelectorAll<HTMLElement>('[data-film-card]')];
 
     expect(screen.getByRole('heading', {
       level: 2,
@@ -139,8 +140,9 @@ describe('LongFormProjects card deck', () => {
     );
     expect(container.querySelector('.long-form-projects__editorial-grid')).toBeInTheDocument();
     expect(container.querySelector('.long-form-projects__deck-column')).toBeInTheDocument();
-    expect(container.querySelectorAll('.long-form-projects__preview-bar > span')).toHaveLength(1);
-    expect(container.querySelector('.long-form-projects__preview-bar > span'))
+    expect(container.querySelectorAll('.long-form-projects__preview-bar > span')).toHaveLength(2);
+    expect(firstDeck?.closest('[data-card-feature]')
+      ?.querySelector('.long-form-projects__preview-bar > span'))
       .toHaveTextContent('8 秒静音预览');
     expect(cards.map((card) => card.querySelector('img')?.getAttribute('src'))).toEqual([
       '/media/projects/long-form/travel/poster-card.webp',
@@ -152,14 +154,76 @@ describe('LongFormProjects card deck', () => {
     expect(container.querySelector('video[src*="full-"]')).not.toBeInTheDocument();
   });
 
+  it('mounts two independent four-card decks without combining their active state', () => {
+    const { container } = render(<LongFormProjects playerOpen={false} onOpenProject={vi.fn()} />);
+    const decks = [...container.querySelectorAll<HTMLElement>('[data-film-deck]')];
+
+    expect(decks).toHaveLength(2);
+    expect([...decks[0].querySelectorAll<HTMLElement>('[data-film-card]')]
+      .map((card) => card.dataset.filmCard)).toEqual([
+      'travel-vlog',
+      'narrative-film',
+      'dark-room',
+      'film-2025-06-15',
+    ]);
+    expect([...decks[1].querySelectorAll<HTMLElement>('[data-film-card]')]
+      .map((card) => card.dataset.filmCard)).toEqual([
+      'grading-skate-workshop',
+      'grading-percussion',
+      'grading-dance',
+      'grading-winter-aerial',
+    ]);
+
+    const secondFeature = decks[1].closest<HTMLElement>('[data-card-feature]')!;
+    fireEvent.click(within(secondFeature).getByRole('button', { name: '下一张调色练习' }));
+    expect(activeSlug(decks[0])).toBe('travel-vlog');
+    expect(activeSlug(decks[1])).toBe('grading-percussion');
+    expect(decks[0].closest('[data-card-feature]')).toHaveTextContent('旅拍 Vlog');
+    expect(secondFeature).toHaveTextContent('民族器乐');
+    expect(secondFeature).toHaveTextContent('00:03');
+
+    fireEvent.keyDown(decks[0], { key: 'ArrowDown' });
+    expect(activeSlug(decks[0])).toBe('narrative-film');
+    expect(activeSlug(decks[1])).toBe('grading-percussion');
+
+    const secondWheel = new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: 120 });
+    act(() => decks[1].dispatchEvent(secondWheel));
+    expect(secondWheel.defaultPrevented).toBe(true);
+    expect(activeSlug(decks[0])).toBe('narrative-film');
+    expect(activeSlug(decks[1])).toBe('grading-dance');
+
+    fireEvent.touchStart(decks[1], { touches: [{ clientY: 500 }] });
+    const secondSwipe = createEvent.touchMove(decks[1], {
+      bubbles: true,
+      cancelable: true,
+      touches: [{ clientY: 390 }],
+    });
+    fireEvent(decks[1], secondSwipe);
+    expect(secondSwipe.defaultPrevented).toBe(true);
+    expect(activeSlug(decks[0])).toBe('narrative-film');
+    expect(activeSlug(decks[1])).toBe('grading-winter-aerial');
+
+    const secondBoundary = new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: 120 });
+    act(() => decks[1].dispatchEvent(secondBoundary));
+    expect(secondBoundary.defaultPrevented).toBe(false);
+  });
+
   it('keeps every stacked card at its source ratio without a filler frame', () => {
     const { container } = render(
       <LongFormProjects playerOpen={false} onOpenProject={vi.fn()} />,
     );
-    const cards = [...container.querySelectorAll<HTMLElement>('[data-film-card]')];
+    const decks = [...container.querySelectorAll<HTMLElement>('[data-film-deck]')];
 
-    expect(cards.map((card) => card.style.aspectRatio)).toEqual([
+    expect([...decks[0].querySelectorAll<HTMLElement>('[data-film-card]')]
+      .map((card) => card.style.aspectRatio)).toEqual([
       '2 / 1',
+      '16 / 9',
+      '16 / 9',
+      '16 / 9',
+    ]);
+    expect([...decks[1].querySelectorAll<HTMLElement>('[data-film-card]')]
+      .map((card) => card.style.aspectRatio)).toEqual([
+      '16 / 9',
       '16 / 9',
       '16 / 9',
       '16 / 9',
@@ -180,31 +244,34 @@ describe('LongFormProjects card deck', () => {
     expect(container.querySelectorAll('.long-form-projects__editorial-grid')).toHaveLength(1);
   });
 
-  it('keeps the card deck in the original travel media slot and preserves the lower narrative feature', () => {
+  it('keeps the first deck in the original travel slot and replaces the lower repeat with grading deck 02.02', () => {
     const { container } = render(<LongFormProjects playerOpen={false} onOpenProject={vi.fn()} />);
     const staggeredLayout = container.querySelector('[data-long-form-staggered-layout]');
-    const deckFeature = container.querySelector('[data-card-feature]');
-    const narrativeFeature = container.querySelector('[data-static-feature="narrative-film"]');
+    const deckFeature = container.querySelector('[data-card-feature="selected-films-02-01"]');
+    const gradingFeature = container.querySelector('[data-card-feature="color-grading-02-02"]');
 
     expect(staggeredLayout).toBeInTheDocument();
-    expect(deckFeature).toContainElement(container.querySelector('[data-film-deck]'));
-    expect(deckFeature).toContainElement(container.querySelector('[data-active-film-copy]'));
-    expect(narrativeFeature).toHaveTextContent('剧情短片');
-    expect(narrativeFeature).toHaveTextContent('03:24');
-    expect(narrativeFeature).toHaveTextContent('编导 · 制片 · 拍摄 · 剪辑 · 调色 · 输出');
-    expect(narrativeFeature?.querySelector('img')).toHaveAttribute(
+    expect(deckFeature).toContainElement(container.querySelector('[data-film-deck="selected-films-02-01"]'));
+    expect(gradingFeature).toContainElement(container.querySelector('[data-film-deck="color-grading-02-02"]'));
+    expect(gradingFeature).toHaveTextContent('滑板工坊');
+    expect(gradingFeature).toHaveTextContent('00:05');
+    expect(gradingFeature).toHaveTextContent('调色');
+    expect(within(gradingFeature as HTMLElement).getByRole('button', {
+      name: '滑板工坊完整视频暂不可用',
+    })).toBeDisabled();
+    expect(gradingFeature?.querySelector('img')).toHaveAttribute(
       'src',
-      '/media/projects/long-form/narrative/poster-card.webp',
+      '/media/projects/long-form/grading-skate-workshop/poster-card.webp',
     );
-    expect(narrativeFeature?.querySelector('video')).not.toBeInTheDocument();
+    expect(gradingFeature?.querySelector('video')).not.toBeInTheDocument();
 
-    const preservedNarrative = narrativeFeature;
+    const preservedGradingFeature = gradingFeature;
     fireEvent.click(screen.getByRole('button', { name: '下一张作品' }));
     fireEvent.click(screen.getByRole('button', { name: '下一张作品' }));
 
-    expect(container.querySelector('[data-static-feature="narrative-film"]'))
-      .toBe(preservedNarrative);
-    expect(preservedNarrative).toHaveTextContent('剧情短片');
+    expect(container.querySelector('[data-card-feature="color-grading-02-02"]'))
+      .toBe(preservedGradingFeature);
+    expect(preservedGradingFeature).toHaveTextContent('滑板工坊');
     expect(container.querySelector('[data-active-film-copy]')).toHaveTextContent('MacBook 短片');
   });
 
@@ -318,6 +385,33 @@ describe('LongFormProjects card deck', () => {
     });
   });
 
+  it('applies the same painted-frame handoff to the independent grading deck', () => {
+    const { container } = render(<LongFormProjects playerOpen={false} onOpenProject={vi.fn()} />);
+    const gradingDeck = container.querySelector<HTMLElement>(
+      '[data-film-deck="color-grading-02-02"]',
+    )!;
+    const gradingFeature = gradingDeck.closest<HTMLElement>('[data-card-feature]')!;
+    const outgoingCard = gradingDeck.querySelector('[data-film-card="grading-skate-workshop"]');
+
+    fireEvent.click(within(gradingFeature).getByRole('button', { name: '下一张调色练习' }));
+
+    expect(activeSlug(container.querySelector('[data-film-deck="selected-films-02-01"]')!))
+      .toBe('travel-vlog');
+    expect(activeSlug(gradingDeck)).toBe('grading-percussion');
+    expect(gsapMock.to).toHaveBeenCalledWith(outgoingCard, expect.not.objectContaining({
+      clearProps: expect.anything(),
+    }));
+
+    act(() => animationFrames.shift()?.(16));
+    expect(gsapMock.set).not.toHaveBeenCalledWith(outgoingCard, {
+      clearProps: 'transform,opacity,visibility,willChange',
+    });
+    act(() => animationFrames.shift()?.(32));
+    expect(gsapMock.set).toHaveBeenCalledWith(outgoingCard, {
+      clearProps: 'transform,opacity,visibility,willChange',
+    });
+  });
+
   it('captures one valid touch swipe while releasing page scroll at both deck boundaries', () => {
     const { container } = render(<LongFormProjects playerOpen={false} onOpenProject={vi.fn()} />);
     const deck = container.querySelector('[data-film-deck]') as HTMLElement;
@@ -370,17 +464,41 @@ describe('LongFormProjects card deck', () => {
   it('mounts and plays a preview only for the current card, pausing it before the next card loads', () => {
     const { container } = render(<LongFormProjects playerOpen={false} onOpenProject={vi.fn()} />);
     enterObservedPreviews();
+    const firstDeck = container.querySelector<HTMLElement>('[data-film-deck="selected-films-02-01"]')!;
+    const secondDeck = container.querySelector<HTMLElement>('[data-film-deck="color-grading-02-02"]')!;
 
-    let videos = container.querySelectorAll<HTMLVideoElement>('.long-form-projects__card video');
+    let videos = firstDeck.querySelectorAll<HTMLVideoElement>('.long-form-projects__card video');
     expect(videos).toHaveLength(1);
     expect(videos[0]).toHaveAttribute('src', '/media/projects/long-form/travel/preview-h264.mp4');
+    expect(secondDeck.querySelectorAll('.long-form-projects__card video')).toHaveLength(1);
+    expect(secondDeck.querySelector('video')).toHaveAttribute(
+      'src',
+      '/media/projects/long-form/grading-skate-workshop/preview-h264.mp4',
+    );
 
     fireEvent.click(screen.getByRole('button', { name: '下一张作品' }));
-    videos = container.querySelectorAll<HTMLVideoElement>('.long-form-projects__card video');
+    videos = firstDeck.querySelectorAll<HTMLVideoElement>('.long-form-projects__card video');
     expect(videos).toHaveLength(1);
     expect(videos[0]).toHaveAttribute('src', '/media/projects/long-form/narrative/preview-h264.mp4');
+    expect(secondDeck.querySelectorAll('.long-form-projects__card video')).toHaveLength(1);
     expect(pause).toHaveBeenCalled();
     expect(container.querySelector('video[src*="full-hevc"]')).not.toBeInTheDocument();
+  });
+
+  it('pauses one deck preview without stopping or remounting the other deck preview', () => {
+    const { container } = render(<LongFormProjects playerOpen={false} onOpenProject={vi.fn()} />);
+    enterObservedPreviews();
+    const firstDeck = container.querySelector<HTMLElement>('[data-film-deck="selected-films-02-01"]')!;
+    const secondDeck = container.querySelector<HTMLElement>('[data-film-deck="color-grading-02-02"]')!;
+    const secondFeature = secondDeck.closest<HTMLElement>('[data-card-feature]')!;
+    const firstVideo = firstDeck.querySelector('video');
+
+    fireEvent.click(within(secondFeature).getByRole('button', { name: '暂停预览' }));
+
+    expect(firstDeck.querySelector('video')).toBe(firstVideo);
+    expect(secondDeck.querySelector('video')).not.toBeInTheDocument();
+    expect(within(secondFeature).getByRole('button', { name: '继续预览' }))
+      .toHaveAttribute('aria-pressed', 'true');
   });
 
   it('keeps each incoming preview behind its poster until that video decodes a first frame', () => {
