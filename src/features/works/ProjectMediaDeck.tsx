@@ -335,6 +335,9 @@ export function ProjectMediaDeck({
               '--card-depth': Math.min(3, Math.abs(index - activeIndex)),
             } as CardStyle}
           >
+            <span aria-hidden="true" className="project-media-deck__card-number">
+              {String(index + 1).padStart(2, '0')}
+            </span>
             <button
               aria-label={`播放${project.title}短片 ${String(index + 1).padStart(2, '0')}`}
               disabled={index !== activeIndex}
@@ -355,6 +358,9 @@ export function ProjectMediaDeck({
                 revealAfterFirstFrame
               />
             </button>
+            <span aria-hidden="true" className="project-media-deck__play-label">
+              播放正片
+            </span>
           </article>
         ))}
       </div>

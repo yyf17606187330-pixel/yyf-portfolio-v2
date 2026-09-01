@@ -106,7 +106,7 @@ describe('App', () => {
 
   it('loads full media only after a click and restores the opener after closing', async () => {
     render(<App />);
-    const opener = screen.getByRole('button', { name: '播放净水器完整作品' });
+    const opener = screen.getByRole('button', { name: '播放净水器短片 01' });
 
     expect(document.querySelector('video[src*="full-"]')).not.toBeInTheDocument();
     expect(opener.querySelector('.lazy-preview')).toHaveStyle({ aspectRatio: '9/16' });
@@ -125,7 +125,7 @@ describe('App', () => {
 
   it('keeps the opening player focusable while its real entrance animation is still running', () => {
     render(<App />);
-    fireEvent.click(screen.getByRole('button', { name: '播放净水器完整作品' }));
+    fireEvent.click(screen.getByRole('button', { name: '播放净水器短片 01' }));
 
     const dialog = screen.getByRole('dialog', { hidden: true });
     expect(window.getComputedStyle(dialog).visibility).not.toBe('hidden');

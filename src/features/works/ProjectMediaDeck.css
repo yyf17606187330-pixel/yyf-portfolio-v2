@@ -99,6 +99,42 @@
   opacity: 1;
 }
 
+.project-media-deck__card-number,
+.project-media-deck__play-label {
+  align-items: center;
+  background: rgb(247 242 232 / 92%);
+  color: var(--showcase-ink);
+  display: flex;
+  pointer-events: none;
+  position: absolute;
+  z-index: 12;
+}
+
+.project-media-deck__card-number {
+  border: var(--line) solid rgb(42 34 28 / 24%);
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  height: 2.75rem;
+  justify-content: center;
+  left: 0.75rem;
+  letter-spacing: 0.08em;
+  top: 0.75rem;
+  width: 2.75rem;
+}
+
+.project-media-deck__play-label {
+  border-radius: 999px;
+  bottom: 0.75rem;
+  font-size: 0.76rem;
+  font-weight: 650;
+  justify-content: center;
+  min-height: 2.75rem;
+  min-width: 7.15rem;
+  padding-inline: 1.15rem;
+  right: 0.75rem;
+}
+
 .project-media-deck__controls {
   align-items: center;
   border-bottom: var(--line) solid var(--showcase-rule);

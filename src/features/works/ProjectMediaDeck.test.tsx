@@ -160,7 +160,7 @@ describe('ProjectMediaDeck', () => {
 
   it('keeps the neutral counter and player project aligned without publishing internal descriptions', () => {
     const onOpenProject = vi.fn();
-    render(
+    const { container } = render(
       <ProjectMediaDeck
         baseDescription="既有净水器代表作"
         mediaItems={waterPurifierMediaDeck}
@@ -174,6 +174,9 @@ describe('ProjectMediaDeck', () => {
     const next = screen.getByRole('button', { name: '下一张净水器作品' });
     expect(previous).toBeDisabled();
     expect(screen.queryByText('既有净水器代表作')).not.toBeInTheDocument();
+    const firstCard = container.querySelector('[data-project-media-card="water-purifier"]');
+    expect(firstCard?.querySelector('.project-media-deck__card-number')).toHaveTextContent('01');
+    expect(firstCard?.querySelector('.project-media-deck__play-label')).toHaveTextContent('播放正片');
 
     fireEvent.click(next);
 

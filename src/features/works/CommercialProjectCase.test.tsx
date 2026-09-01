@@ -39,7 +39,7 @@ describe('CommercialProjectCase', () => {
     expect(narrative).toHaveTextContent('从内容结果反推直播表达');
   });
 
-  it('keeps the real 9:16 preview clickable without loading full media early', () => {
+  it('presents the six-card 9:16 media deck without loading full media early', () => {
     const onOpenProject = vi.fn();
     const { container } = render(
       <CommercialProjectCase
@@ -49,11 +49,13 @@ describe('CommercialProjectCase', () => {
         onOpenProject={onOpenProject}
       />,
     );
-    const playButton = screen.getByRole('button', { name: '播放净水器完整作品' });
+    const deck = screen.getByRole('group', { name: '净水器媒体卡组' });
+    const playButton = screen.getByRole('button', { name: '播放净水器短片 01' });
 
+    expect(deck.querySelectorAll('[data-project-media-card]')).toHaveLength(6);
+    expect(screen.getByText('01 / 06')).toBeInTheDocument();
     expect(playButton.querySelector('.lazy-preview')).toHaveStyle({ aspectRatio: '9/16' });
     expect(container.querySelector('video[src*="full-"]')).not.toBeInTheDocument();
-    expect(playButton).toHaveAttribute('aria-describedby', 'water-purifier-description');
     fireEvent.click(playButton);
     expect(onOpenProject).toHaveBeenCalledWith(waterPurifierProject, playButton);
   });

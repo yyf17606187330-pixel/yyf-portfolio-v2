@@ -1,7 +1,6 @@
-import { useState } from 'react';
-import { useMediaQuery } from '../../hooks/useMediaQuery';
+import { waterPurifierMediaDeck } from '../../content/waterPurifierMedia';
 import type { Project } from '../../types/portfolio';
-import { LazyPreview } from './LazyPreview';
+import { ProjectMediaDeck } from './ProjectMediaDeck';
 import './ProjectShowcase.css';
 
 export interface CommercialProjectCaseProps {
@@ -31,8 +30,6 @@ export function CommercialProjectCase({
   playerOpen,
   onOpenProject,
 }: CommercialProjectCaseProps) {
-  const [previewPaused, setPreviewPaused] = useState(false);
-  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const projectTitleId = `${project.slug}-title`;
   const projectDescriptionId = `${project.slug}-description`;
   const tickerItems = [
@@ -97,31 +94,13 @@ export function CommercialProjectCase({
         </div>
 
         <div className="project-showcase__media">
-          <button
-            aria-describedby={projectDescriptionId}
-            aria-label={`播放${project.title}完整作品`}
-            className="project-showcase__play"
-            onClick={(event) => onOpenProject(project, event.currentTarget)}
-            type="button"
-          >
-            <LazyPreview project={project} enabled={!playerOpen && !previewPaused} />
-            <span className="project-showcase__play-mark" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="m8 5 11 7-11 7Z" /></svg>
-              播放正片
-            </span>
-          </button>
-          <div className="project-showcase__preview-bar">
-            <span>{reducedMotion ? '静态封面' : '静音短预览'}</span>
-            {!reducedMotion ? (
-              <button
-                aria-pressed={previewPaused}
-                type="button"
-                onClick={() => setPreviewPaused((paused) => !paused)}
-              >
-                {previewPaused ? '继续预览' : '暂停预览'}
-              </button>
-            ) : null}
-          </div>
+          <ProjectMediaDeck
+            baseDescription={description}
+            mediaItems={waterPurifierMediaDeck}
+            onOpenProject={onOpenProject}
+            playerOpen={playerOpen}
+            project={project}
+          />
 
           <section aria-label="项目关键信息" className="project-showcase__vitals">
             <header>
