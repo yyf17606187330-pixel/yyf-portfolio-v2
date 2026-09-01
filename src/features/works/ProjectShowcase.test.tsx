@@ -65,6 +65,11 @@ describe('ProjectShowcase', () => {
   it('introduces both selected-work groups without exposing internal editorial placeholders', () => {
     render(<ProjectShowcase playerOpen={false} onOpenProject={vi.fn()} />);
 
+    const guide = screen.getByRole('region', { name: '作品区导览' });
+    expect(guide).toHaveTextContent('两组精选影像');
+    expect(guide).toHaveTextContent('8 条素材');
+    expect(guide).not.toHaveTextContent('净水器');
+
     const longFilms = screen.getByRole('region', { name: '长片作品' });
     expect(within(longFilms).getByRole('heading', {
       level: 2,
@@ -103,7 +108,7 @@ describe('ProjectShowcase', () => {
       <ProjectShowcase playerOpen={false} onOpenProject={vi.fn()} />,
     );
     const rules = [...container.querySelectorAll('[data-reveal-rule]')];
-    expect(rules).toHaveLength(1);
+    expect(rules).toHaveLength(2);
     expect(rules[0]).toHaveAttribute('data-revealed', 'false');
     expect(observedOptions.get(rules[0])).toEqual({
       rootMargin: '0px 0px -16% 0px',
@@ -144,7 +149,9 @@ describe('ProjectShowcase', () => {
     );
 
     const rules = [...container.querySelectorAll('[data-reveal-rule]')];
-    expect(rules).toHaveLength(1);
-    expect(rules[0]).toHaveAttribute('data-revealed', 'true');
+    expect(rules).toHaveLength(2);
+    for (const rule of rules) {
+      expect(rule).toHaveAttribute('data-revealed', 'true');
+    }
   });
 });
