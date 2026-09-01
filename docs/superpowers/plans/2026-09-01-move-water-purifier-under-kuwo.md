@@ -284,7 +284,7 @@ git commit -m "feat: place water project under kuwo experience"
 - Modify if needed: `.agent-state/STATUS.md` (local only)
 - Do not modify: `output/`, deployment configuration, media binaries
 
-- [ ] **Step 1: Run the complete automated suite**
+- [x] **Step 1: Run the complete automated suite**
 
 ```powershell
 npm run test:run
@@ -296,11 +296,11 @@ git diff --check
 
 Require zero exit codes. If a command fails, summarize the first relevant error, determine whether this change caused it, fix minimally, and rerun the same command.
 
-- [ ] **Step 2: Verify the protected deck regression path**
+- [x] **Step 2: Verify the protected deck regression path**
 
 Run the existing interaction tests that cover `01→02→03→04→03→02→01`, warmed video identity, and transition playback. Do not alter those assertions to obtain a pass.
 
-- [ ] **Step 3: Inspect the real page at 1440, 960, and 390**
+- [x] **Step 3: Inspect the real page at 1440, 960, and 390**
 
 At `http://127.0.0.1:4184/`, verify:
 
@@ -310,14 +310,14 @@ At `http://127.0.0.1:4184/`, verify:
 - no horizontal overflow, clipped controls, broken scroll, or console/page errors;
 - clicking the moved preview opens the full player and close returns focus to that same button.
 
-- [ ] **Step 4: Confirm no duplicate media requests or IDs**
+- [x] **Step 4: Confirm no duplicate media requests or IDs**
 
 Check that the water preview is requested once and that `#works`, heading IDs, and description IDs are unique.
 
-- [ ] **Step 5: Update the local recovery snapshot**
+- [x] **Step 5: Update the local recovery snapshot**
 
 Overwrite `.agent-state/STATUS.md` with the current branch, HEAD, completed structure, exact verification results, known residual risks, and next action. Do not include credentials or raw chat.
 
-- [ ] **Step 6: Final checkpoint**
+- [x] **Step 6: Final checkpoint**
 
 If verification is fully green, commit only any remaining tracked task files. Do not add `output/`, `.agent-state/`, screenshots, or media. Report the exact commits and keep deployment explicitly out of scope.
