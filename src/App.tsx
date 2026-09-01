@@ -7,6 +7,7 @@ import { ExperienceSection } from './features/experience/ExperienceSection';
 import { Hero } from './features/hero/Hero';
 import { SiteHeader } from './features/navigation/SiteHeader';
 import { PlayerOverlay } from './features/player/PlayerOverlay';
+import { CommercialProjectCase } from './features/works/CommercialProjectCase';
 import { ProjectShowcase } from './features/works/ProjectShowcase';
 import type { Project } from './types/portfolio';
 
@@ -19,6 +20,10 @@ export default function App() {
     scale: 1,
     src: '/assets/hero/hero-candidate-03.webp',
     tone: 'light' as const,
+  };
+  const openProject = (project: Project, opener: HTMLElement) => {
+    openerRef.current = opener;
+    setActiveProject(project);
   };
 
   return (
@@ -36,15 +41,20 @@ export default function App() {
         />
         <AboutSection content={aboutContent} />
         <ProjectShowcase
-          {...waterPurifierCopy}
-          project={waterPurifierProject}
           playerOpen={activeProject !== null}
-          onOpenProject={(project, opener) => {
-            openerRef.current = opener;
-            setActiveProject(project);
-          }}
+          onOpenProject={openProject}
         />
-        <ExperienceSection content={experienceContent} />
+        <ExperienceSection
+          content={experienceContent}
+          renderProject={(entry) => entry.id === 'kuwo' ? (
+            <CommercialProjectCase
+              {...waterPurifierCopy}
+              project={waterPurifierProject}
+              playerOpen={activeProject !== null}
+              onOpenProject={openProject}
+            />
+          ) : null}
+        />
       </main>
       <PlayerOverlay project={activeProject} opener={openerRef.current} onClose={() => setActiveProject(null)} />
     </div>

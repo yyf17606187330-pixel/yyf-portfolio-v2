@@ -15,6 +15,17 @@
   scroll-margin-top: calc(var(--header-height) + 2rem);
 }
 
+.commercial-project {
+  overflow: visible;
+  padding: 0 0 clamp(4rem, 7vw, 7rem);
+  scroll-margin-top: 0;
+}
+
+.commercial-project > .project-showcase__heading,
+.commercial-project > .project-showcase__project {
+  max-width: none;
+}
+
 .project-showcase__transition {
   border-block: var(--line) solid var(--showcase-rule);
   margin-inline: calc(-1 * var(--page-gutter));

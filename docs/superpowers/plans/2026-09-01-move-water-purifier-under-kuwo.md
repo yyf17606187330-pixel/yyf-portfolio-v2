@@ -154,7 +154,7 @@ git commit -m "feat: support projects within experience entries"
 - Modify: `src/features/works/ProjectShowcase.test.tsx`
 - Modify: `src/features/works/ProjectShowcase.css`
 
-- [ ] **Step 1: Create a failing commercial-case test**
+- [x] **Step 1: Create a failing commercial-case test**
 
 Move the existing water-purifier behavior expectations into a test for `CommercialProjectCase`:
 
@@ -173,7 +173,7 @@ npm run test:run -- src/features/works/CommercialProjectCase.test.tsx
 
 Expected: import/module failure because the component has not been created.
 
-- [ ] **Step 2: Extract the existing single-project markup without redesign**
+- [x] **Step 2: Extract the existing single-project markup without redesign**
 
 Create `CommercialProjectCase` with the current water-project props and move these blocks unchanged from `ProjectShowcase`:
 
@@ -185,7 +185,7 @@ Create `CommercialProjectCase` with the current water-project props and move the
 
 The root must have a unique labelled region but no `id="works"`. It may retain the existing `project-showcase__*` child classes to preserve the accepted visuals and reduce CSS churn.
 
-- [ ] **Step 3: Narrow `ProjectShowcase` to selected work**
+- [x] **Step 3: Narrow `ProjectShowcase` to selected work**
 
 Change its public props to only:
 
@@ -198,15 +198,15 @@ interface ProjectShowcaseProps {
 
 Keep the root `section[aria-label="精选作品"]#works` and render only `LongFormProjects`. Remove the water-specific transition rail, heading, article, and state from this component. Do not edit the card component itself.
 
-- [ ] **Step 4: Separate selected-work and commercial-case tests**
+- [x] **Step 4: Separate selected-work and commercial-case tests**
 
 Keep deck source order, eight-preview count, controls, reveal rules, and placeholder checks in `ProjectShowcase.test.tsx`. Keep all water-purifier assertions in `CommercialProjectCase.test.tsx`. Update only assertions whose old responsibility is intentionally removed.
 
-- [ ] **Step 5: Add a local embedded layout modifier**
+- [x] **Step 5: Add a local embedded layout modifier**
 
 Use the existing `ProjectShowcase.css` tokens and child selectors, plus a `.commercial-project` root modifier. When nested under `.experience-entry__project`, remove duplicate outer page gutters, preserve readable project maximum width, and keep the existing 9:16 media interaction. Do not leak selectors outside Experience/Works.
 
-- [ ] **Step 6: Run focused tests and observe GREEN**
+- [x] **Step 6: Run focused tests and observe GREEN**
 
 ```powershell
 npm run test:run -- src/features/works/CommercialProjectCase.test.tsx src/features/works/ProjectShowcase.test.tsx
@@ -214,7 +214,7 @@ npm run test:run -- src/features/works/CommercialProjectCase.test.tsx src/featur
 
 Expected: all focused tests pass and no full media is mounted before a click.
 
-- [ ] **Step 7: Commit the extraction**
+- [x] **Step 7: Commit the extraction**
 
 ```powershell
 git add src/features/works/CommercialProjectCase.tsx src/features/works/CommercialProjectCase.test.tsx src/features/works/ProjectShowcase.tsx src/features/works/ProjectShowcase.test.tsx src/features/works/ProjectShowcase.css
@@ -230,7 +230,7 @@ git commit -m "refactor: separate selected and commercial work"
 - Modify: `src/App.test.tsx`
 - Modify: `src/App.tsx`
 
-- [ ] **Step 1: Write the failing integration structure test**
+- [x] **Step 1: Write the failing integration structure test**
 
 Locate the three `[data-experience-entry]` nodes and assert:
 
@@ -246,7 +246,7 @@ expect(entries[2]).toHaveAttribute('data-experience-id', 'kuwo');
 
 Keep the existing player-open, full-source, scroll-lock, and focus-return test.
 
-- [ ] **Step 2: Run the App test and observe RED**
+- [x] **Step 2: Run the App test and observe RED**
 
 ```powershell
 npm run test:run -- src/App.test.tsx
@@ -254,13 +254,13 @@ npm run test:run -- src/App.test.tsx
 
 Expected: failure because the current water case is still a direct child of `main` before Experience.
 
-- [ ] **Step 3: Implement the App integration**
+- [x] **Step 3: Implement the App integration**
 
 Render the selected works without water props. Pass `ExperienceSection` a render callback that returns `CommercialProjectCase` only for `entry.id === 'kuwo'`, with the current water project/copy and the same shared player callback.
 
 Keep `App` as the sole owner of `activeProject` and `openerRef`. Do not duplicate player state or media nodes.
 
-- [ ] **Step 4: Run the App test and focused feature tests**
+- [x] **Step 4: Run the App test and focused feature tests**
 
 ```powershell
 npm run test:run -- src/App.test.tsx src/features/experience/ExperienceSection.test.tsx src/features/works/CommercialProjectCase.test.tsx src/features/works/ProjectShowcase.test.tsx
@@ -268,7 +268,7 @@ npm run test:run -- src/App.test.tsx src/features/experience/ExperienceSection.t
 
 Expected: water case appears once inside Kuwo, selected work remains before Experience, and player focus returns to the moved button.
 
-- [ ] **Step 5: Commit the integration**
+- [x] **Step 5: Commit the integration**
 
 ```powershell
 git add src/App.tsx src/App.test.tsx

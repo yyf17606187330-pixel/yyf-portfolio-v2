@@ -90,6 +90,20 @@ describe('App', () => {
     expect(section).not.toHaveTextContent(/四个月|2025\.07—11|约8个月/);
   });
 
+  it('places the only water-purifier case inside the Kuwo experience and outside selected work', () => {
+    render(<App />);
+    const works = screen.getByRole('region', { name: '精选作品' });
+    const experience = screen.getByRole('region', { name: '工作经历' });
+    const entries = [...experience.querySelectorAll<HTMLElement>('[data-experience-entry]')];
+    const waterHeadings = screen.getAllByRole('heading', { name: '净水器' });
+
+    expect(waterHeadings).toHaveLength(1);
+    expect(within(works).queryByRole('heading', { name: '净水器' })).not.toBeInTheDocument();
+    expect(entries[2]).toHaveAttribute('data-experience-id', 'kuwo');
+    expect(within(entries[2]).getByRole('heading', { name: '净水器' })).toBe(waterHeadings[0]);
+    expect(experience.querySelectorAll('[data-experience-project]')).toHaveLength(1);
+  });
+
   it('loads full media only after a click and restores the opener after closing', async () => {
     render(<App />);
     const opener = screen.getByRole('button', { name: '播放净水器完整作品' });
