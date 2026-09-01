@@ -6,6 +6,7 @@ import { LongFormProjects } from './LongFormProjects';
 const gsapMock = vi.hoisted(() => {
   const state = {
     autoComplete: true,
+    completionCallbacks: [] as Array<() => void>,
     completionActiveSlugs: [] as Array<string | null>,
   };
   const tween = { kill: vi.fn() };
@@ -15,19 +16,26 @@ const gsapMock = vi.hoisted(() => {
       return { revert: vi.fn() };
     }),
     fromTo: vi.fn((_target: unknown, _from: unknown, to: { onComplete?: () => void }) => {
-      if (state.autoComplete) to.onComplete?.();
+      if (to.onComplete) {
+        if (state.autoComplete) to.onComplete();
+        else state.completionCallbacks.push(to.onComplete);
+      }
       return tween;
     }),
     set: vi.fn(),
     state,
     to: vi.fn((_target: unknown, vars: { onComplete?: () => void }) => {
-      if (state.autoComplete && vars.onComplete) {
-        vars.onComplete();
-        state.completionActiveSlugs.push(
-          document
-            .querySelector('[data-film-card][aria-current="true"]')
-            ?.getAttribute('data-film-card') ?? null,
-        );
+      if (vars.onComplete) {
+        const complete = () => {
+          vars.onComplete?.();
+          state.completionActiveSlugs.push(
+            document
+              .querySelector('[data-film-card][aria-current="true"]')
+              ?.getAttribute('data-film-card') ?? null,
+          );
+        };
+        if (state.autoComplete) complete();
+        else state.completionCallbacks.push(complete);
       }
       return tween;
     }),
@@ -74,6 +82,7 @@ describe('LongFormProjects card deck', () => {
     gsapMock.set.mockClear();
     gsapMock.to.mockClear();
     gsapMock.state.autoComplete = true;
+    gsapMock.state.completionCallbacks.length = 0;
     gsapMock.state.completionActiveSlugs.length = 0;
     vi.useFakeTimers();
     vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(play);
@@ -461,28 +470,130 @@ describe('LongFormProjects card deck', () => {
     fireEvent.touchEnd(deck);
   });
 
-  it('mounts and plays a preview only for the current card, pausing it before the next card loads', () => {
+  it('plays only the current preview while progressively retaining warmed previews', () => {
     const { container } = render(<LongFormProjects playerOpen={false} onOpenProject={vi.fn()} />);
     enterObservedPreviews();
     const firstDeck = container.querySelector<HTMLElement>('[data-film-deck="selected-films-02-01"]')!;
     const secondDeck = container.querySelector<HTMLElement>('[data-film-deck="color-grading-02-02"]')!;
 
     let videos = firstDeck.querySelectorAll<HTMLVideoElement>('.long-form-projects__card video');
-    expect(videos).toHaveLength(1);
+    expect(videos).toHaveLength(2);
     expect(videos[0]).toHaveAttribute('src', '/media/projects/long-form/travel/preview-h264.mp4');
-    expect(secondDeck.querySelectorAll('.long-form-projects__card video')).toHaveLength(1);
-    expect(secondDeck.querySelector('video')).toHaveAttribute(
+    expect(videos[0]).not.toHaveAttribute('data-preview-preload');
+    expect(videos[1]).toHaveAttribute('src', '/media/projects/long-form/narrative/preview-h264.mp4');
+    expect(videos[1]).toHaveAttribute('data-preview-preload', 'true');
+    const secondDeckVideos = secondDeck.querySelectorAll<HTMLVideoElement>(
+      '.long-form-projects__card video',
+    );
+    expect(secondDeckVideos).toHaveLength(2);
+    expect(secondDeckVideos[0]).toHaveAttribute(
       'src',
       '/media/projects/long-form/grading-skate-workshop/preview-h264.mp4',
     );
+    expect(secondDeckVideos[1]).toHaveAttribute('data-preview-preload', 'true');
 
     fireEvent.click(screen.getByRole('button', { name: '下一张作品' }));
     videos = firstDeck.querySelectorAll<HTMLVideoElement>('.long-form-projects__card video');
-    expect(videos).toHaveLength(1);
-    expect(videos[0]).toHaveAttribute('src', '/media/projects/long-form/narrative/preview-h264.mp4');
-    expect(secondDeck.querySelectorAll('.long-form-projects__card video')).toHaveLength(1);
+    expect(videos).toHaveLength(3);
+    expect(videos[0]).toHaveAttribute('src', '/media/projects/long-form/travel/preview-h264.mp4');
+    expect(videos[0]).toHaveAttribute('data-preview-preload', 'true');
+    expect(videos[1]).toHaveAttribute('src', '/media/projects/long-form/narrative/preview-h264.mp4');
+    expect(videos[1]).not.toHaveAttribute('data-preview-preload');
+    expect(videos[2]).toHaveAttribute('src', '/media/projects/long-form/dark-room/preview-h264.mp4');
+    expect(videos[2]).toHaveAttribute('data-preview-preload', 'true');
+    expect(secondDeck.querySelectorAll('.long-form-projects__card video')).toHaveLength(2);
     expect(pause).toHaveBeenCalled();
     expect(container.querySelector('video[src*="full-hevc"]')).not.toBeInTheDocument();
+  });
+
+  it('composites and starts the decoded incoming frame before its tween, then keeps it playing', () => {
+    gsapMock.state.autoComplete = false;
+    const { container } = render(
+      <LongFormProjects playerOpen={false} onOpenProject={vi.fn()} />,
+    );
+    enterObservedPreviews();
+    const firstDeck = container.querySelector<HTMLElement>(
+      '[data-film-deck="selected-films-02-01"]',
+    )!;
+    const secondDeck = container.querySelector<HTMLElement>(
+      '[data-film-deck="color-grading-02-02"]',
+    )!;
+    let firstDeckVideos = [...firstDeck.querySelectorAll<HTMLVideoElement>('video')];
+    expect(firstDeckVideos).toHaveLength(2);
+    expect(secondDeck.querySelectorAll('video')).toHaveLength(2);
+    const incomingVideo = firstDeckVideos.find((video) => (
+      video.getAttribute('src')?.includes('/narrative/preview-h264.mp4')
+    ));
+    expect(incomingVideo).toHaveAttribute('preload', 'auto');
+    expect(incomingVideo).toHaveAttribute('data-preview-preload', 'true');
+    expect(incomingVideo).toHaveAttribute('data-preview-ready', 'false');
+
+    fireEvent.loadedData(incomingVideo as HTMLVideoElement);
+    expect(incomingVideo).toHaveAttribute('data-preview-ready', 'true');
+    const playCallsBeforeTransition = play.mock.calls.length;
+
+    fireEvent.click(screen.getByRole('button', { name: '下一张作品' }));
+
+    firstDeckVideos = [...firstDeck.querySelectorAll<HTMLVideoElement>('video')];
+    expect(firstDeckVideos).toHaveLength(2);
+    expect(firstDeckVideos).toContain(incomingVideo);
+    expect(play).toHaveBeenCalledTimes(playCallsBeforeTransition + 1);
+
+    const completeTransition = gsapMock.state.completionCallbacks.shift();
+    expect(completeTransition).toBeTypeOf('function');
+    act(() => completeTransition?.());
+
+    firstDeckVideos = [...firstDeck.querySelectorAll<HTMLVideoElement>('video')];
+    expect(firstDeckVideos).toHaveLength(3);
+    expect(firstDeckVideos).toContain(incomingVideo);
+    expect(incomingVideo).not.toHaveAttribute('data-preview-preload');
+    expect(incomingVideo).toHaveAttribute('data-preview-ready', 'true');
+    expect(firstDeckVideos[0]).toHaveAttribute('data-preview-preload', 'true');
+    expect(firstDeckVideos[2]).toHaveAttribute('src', '/media/projects/long-form/dark-room/preview-h264.mp4');
+    expect(firstDeckVideos[2]).toHaveAttribute('data-preview-preload', 'true');
+    expect(play).toHaveBeenCalledTimes(playCallsBeforeTransition + 1);
+  });
+
+  it('retains every decoded preview node after traversal so reverse navigation stays warm', () => {
+    const { container } = render(
+      <LongFormProjects playerOpen={false} onOpenProject={vi.fn()} />,
+    );
+    enterObservedPreviews();
+    const deck = container.querySelector<HTMLElement>(
+      '[data-film-deck="selected-films-02-01"]',
+    )!;
+    const feature = deck.closest<HTMLElement>('[data-card-feature]')!;
+    const next = within(feature).getByRole('button', { name: '下一张作品' });
+    const previous = within(feature).getByRole('button', { name: '上一张作品' });
+    const travelVideo = deck.querySelector<HTMLVideoElement>(
+      'video[src="/media/projects/long-form/travel/preview-h264.mp4"]',
+    )!;
+    const narrativeVideo = deck.querySelector<HTMLVideoElement>(
+      'video[src="/media/projects/long-form/narrative/preview-h264.mp4"]',
+    )!;
+
+    fireEvent.loadedData(travelVideo);
+    fireEvent.loadedData(narrativeVideo);
+    fireEvent.click(next);
+    fireEvent.click(next);
+    fireEvent.click(next);
+
+    expect(activeSlug(deck)).toBe('film-2025-06-15');
+    expect(deck.querySelectorAll('video')).toHaveLength(4);
+
+    fireEvent.click(previous);
+    fireEvent.click(previous);
+    fireEvent.click(previous);
+
+    expect(activeSlug(deck)).toBe('travel-vlog');
+    expect(deck.querySelector<HTMLVideoElement>(
+      'video[src="/media/projects/long-form/travel/preview-h264.mp4"]',
+    )).toBe(travelVideo);
+    expect(deck.querySelector<HTMLVideoElement>(
+      'video[src="/media/projects/long-form/narrative/preview-h264.mp4"]',
+    )).toBe(narrativeVideo);
+    expect(travelVideo).toHaveAttribute('data-preview-ready', 'true');
+    expect(narrativeVideo).toHaveAttribute('data-preview-ready', 'true');
   });
 
   it('pauses one deck preview without stopping or remounting the other deck preview', () => {
@@ -501,19 +612,23 @@ describe('LongFormProjects card deck', () => {
       .toHaveAttribute('aria-pressed', 'true');
   });
 
-  it('keeps each incoming preview behind its poster until that video decodes a first frame', () => {
+  it('keeps each newly warmed preview behind its poster and retains readiness on return', () => {
     const { container } = render(<LongFormProjects playerOpen={false} onOpenProject={vi.fn()} />);
     enterObservedPreviews();
+    const activeVideo = () => container.querySelector<HTMLVideoElement>(
+      '.long-form-projects__card[aria-current="true"] video',
+    );
 
-    let video = container.querySelector<HTMLVideoElement>('.long-form-projects__card video');
+    let video = activeVideo();
     expect(video).toHaveAttribute('src', '/media/projects/long-form/travel/preview-h264.mp4');
     expect(video).toHaveAttribute('data-preview-ready', 'false');
+    const travelVideo = video;
 
     fireEvent.loadedData(video as HTMLVideoElement);
     expect(video).toHaveAttribute('data-preview-ready', 'true');
 
     fireEvent.click(screen.getByRole('button', { name: '下一张作品' }));
-    video = container.querySelector<HTMLVideoElement>('.long-form-projects__card video');
+    video = activeVideo();
     expect(video).toHaveAttribute('src', '/media/projects/long-form/narrative/preview-h264.mp4');
     expect(video).toHaveAttribute('data-preview-ready', 'false');
 
@@ -521,9 +636,10 @@ describe('LongFormProjects card deck', () => {
     expect(video).toHaveAttribute('data-preview-ready', 'true');
 
     fireEvent.click(screen.getByRole('button', { name: '上一张作品' }));
-    video = container.querySelector<HTMLVideoElement>('.long-form-projects__card video');
+    video = activeVideo();
     expect(video).toHaveAttribute('src', '/media/projects/long-form/travel/preview-h264.mp4');
-    expect(video).toHaveAttribute('data-preview-ready', 'false');
+    expect(video).toBe(travelVideo);
+    expect(video).toHaveAttribute('data-preview-ready', 'true');
   });
 
   it('opens only the current project and passes frozen full media only after activation', () => {

@@ -149,6 +149,8 @@ function LongFilmCard({
   descriptionId,
   film,
   index,
+  preloadPreview,
+  previewPlaying,
   previewEnabled,
   playerOpen,
   stackState,
@@ -160,6 +162,8 @@ function LongFilmCard({
   descriptionId: string;
   film: LongFilmRecord;
   index: number;
+  preloadPreview: boolean;
+  previewPlaying: boolean;
   previewEnabled: boolean;
   playerOpen: boolean;
   stackState: 'active' | 'future' | 'past';
@@ -195,7 +199,8 @@ function LongFilmCard({
         type="button"
       >
         <LazyPreview
-          enabled={active && previewEnabled && !playerOpen}
+          enabled={previewPlaying && previewEnabled && !playerOpen}
+          preload={preloadPreview && !playerOpen}
           project={film.project}
           revealAfterFirstFrame
         />
@@ -264,6 +269,10 @@ function LongFilmDeck({
   previewLabel,
 }: LongFilmDeckProps) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [warmedIndices, setWarmedIndices] = useState<ReadonlySet<number>>(() => (
+    new Set(films.length > 1 ? [0, 1] : [0])
+  ));
+  const [transitioningIndex, setTransitioningIndex] = useState<number | null>(null);
   const [previewPaused, setPreviewPaused] = useState(false);
   const activeIndexRef = useRef(0);
   const animationContextRef = useRef<ReturnType<typeof gsap.context> | null>(null);
@@ -282,9 +291,20 @@ function LongFilmDeck({
   const commitIndex = useCallback((nextIndex: number) => {
     activeIndexRef.current = nextIndex;
     setActiveIndex(nextIndex);
+    setTransitioningIndex(null);
+    setWarmedIndices((current) => {
+      const followingIndex = nextIndex + 1;
+      if (current.has(nextIndex) && (followingIndex >= films.length || current.has(followingIndex))) {
+        return current;
+      }
+      const next = new Set(current);
+      next.add(nextIndex);
+      if (followingIndex < films.length) next.add(followingIndex);
+      return next;
+    });
     setPreviewPaused(false);
     isAnimatingRef.current = false;
-  }, []);
+  }, [films.length]);
 
   const cancelOutgoingStyleRelease = useCallback((releaseStyles = false) => {
     if (outgoingReleaseFrameRef.current !== null) {
@@ -337,6 +357,13 @@ function LongFilmDeck({
     }
 
     isAnimatingRef.current = true;
+    setTransitioningIndex(nextIndex);
+    setWarmedIndices((current) => {
+      if (current.has(nextIndex)) return current;
+      const next = new Set(current);
+      next.add(nextIndex);
+      return next;
+    });
     cancelOutgoingStyleRelease(true);
     animationContextRef.current?.revert();
     animationContextRef.current = gsap.context(() => {
@@ -539,6 +566,12 @@ function LongFilmDeck({
               key={film.project.slug}
               onOpenProject={onOpenProject}
               playerOpen={playerOpen}
+              preloadPreview={warmedIndices.has(index)
+                && index !== activeIndex
+                && index !== transitioningIndex
+                && !previewPaused
+                && !reducedMotion}
+              previewPlaying={index === activeIndex || index === transitioningIndex}
               previewEnabled={!previewPaused && !reducedMotion}
               stackState={index < activeIndex
                 ? 'past'

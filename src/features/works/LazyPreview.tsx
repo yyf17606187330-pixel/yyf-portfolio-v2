@@ -6,12 +6,14 @@ import type { Project } from '../../types/portfolio';
 interface LazyPreviewProps {
   project: Project;
   enabled?: boolean;
+  preload?: boolean;
   revealAfterFirstFrame?: boolean;
 }
 
 export function LazyPreview({
   project,
   enabled = true,
+  preload = false,
   revealAfterFirstFrame = false,
 }: LazyPreviewProps) {
   const frameRef = useRef<HTMLDivElement>(null);
@@ -24,7 +26,7 @@ export function LazyPreview({
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const posterUrl = resolveMediaUrl(project.poster);
   const previewUrl = resolveMediaUrl(project.previewSrc);
-  const showVideo = enabled
+  const showVideo = (enabled || preload)
     && hasEnteredViewport
     && previewUrl
     && !reducedMotion
@@ -32,8 +34,8 @@ export function LazyPreview({
   const previewReady = !revealAfterFirstFrame || readySource === previewUrl;
 
   useEffect(() => {
-    if (!enabled && revealAfterFirstFrame) setReadySource(null);
-  }, [enabled, revealAfterFirstFrame]);
+    if (!enabled && !preload && revealAfterFirstFrame) setReadySource(null);
+  }, [enabled, preload, revealAfterFirstFrame]);
 
   useEffect(() => {
     const frame = frameRef.current;
@@ -87,14 +89,17 @@ export function LazyPreview({
       {showVideo && previewUrl ? (
         <video
           aria-hidden="true"
-          data-preview-ready={revealAfterFirstFrame ? String(previewReady) : undefined}
+          data-preview-preload={preload && !enabled ? 'true' : undefined}
+          data-preview-ready={revealAfterFirstFrame
+            ? String(previewReady && (enabled || preload))
+            : undefined}
           key={previewUrl}
           ref={videoRef}
           loop
           muted
           playsInline
           poster={posterUrl ?? undefined}
-          preload="metadata"
+          preload={preload && !enabled ? 'auto' : 'metadata'}
           src={previewUrl}
           tabIndex={-1}
           onError={() => setFailedSource(previewUrl)}
