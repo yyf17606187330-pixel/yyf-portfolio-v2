@@ -206,6 +206,11 @@
   min-width: 0;
 }
 
+.experience-entry__project {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
 .experience-entry__header {
   padding-bottom: clamp(1.25rem, 2vw, 2rem);
 }
@@ -528,6 +533,10 @@
   }
 
   .experience-entry__body {
+    margin-top: 3rem;
+  }
+
+  .experience-entry__project {
     margin-top: 3rem;
   }
 

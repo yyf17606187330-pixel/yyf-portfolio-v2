@@ -1,11 +1,13 @@
-import type { ExperienceContent } from '../../content/experience';
+import type { ReactNode } from 'react';
+import type { ExperienceContent, ExperienceEntry } from '../../content/experience';
 import './ExperienceSection.css';
 
 export interface ExperienceSectionProps {
   content: ExperienceContent;
+  renderProject?: (entry: ExperienceEntry) => ReactNode;
 }
 
-export function ExperienceSection({ content }: ExperienceSectionProps) {
+export function ExperienceSection({ content, renderProject }: ExperienceSectionProps) {
   const topMetrics = content.topMetrics ?? [];
 
   return (
@@ -48,14 +50,16 @@ export function ExperienceSection({ content }: ExperienceSectionProps) {
       <div className="experience-list">
         {content.experiences.map((entry, index) => {
           const number = String(index + 1).padStart(2, '0');
-          const headingId = `experience-company-${number}`;
+          const headingId = `experience-company-${entry.id}`;
+          const project = renderProject?.(entry) ?? null;
 
           return (
             <article
               className="experience-entry"
               data-experience-entry
+              data-experience-id={entry.id}
               aria-labelledby={headingId}
-              key={`${entry.company}-${entry.displayPeriod}`}
+              key={entry.id}
             >
               <aside className="experience-entry__meta" aria-label={`${entry.company}基本信息`}>
                 <div className="experience-entry__number">
@@ -121,6 +125,11 @@ export function ExperienceSection({ content }: ExperienceSectionProps) {
                   ))}
                 </footer>
               </div>
+              {project ? (
+                <div className="experience-entry__project" data-experience-project>
+                  {project}
+                </div>
+              ) : null}
             </article>
           );
         })}

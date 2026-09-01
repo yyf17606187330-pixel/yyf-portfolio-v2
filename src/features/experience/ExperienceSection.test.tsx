@@ -60,4 +60,22 @@ describe('ExperienceSection', () => {
     expect(entries[2]).toHaveTextContent('0→约6元／BPM约6000');
     expect(container).not.toHaveTextContent(/四个月|2025\.07—11|约8个月/);
   });
+
+  it('renders an optional project only inside its owning experience entry', () => {
+    const { container } = render(
+      <ExperienceSection
+        content={experienceContent}
+        renderProject={(entry) => entry.id === 'kuwo' ? (
+          <section aria-label="酷我贸易代表项目">净水器项目</section>
+        ) : null}
+      />,
+    );
+    const entries = [...container.querySelectorAll<HTMLElement>('[data-experience-entry]')];
+
+    expect(within(entries[0]).queryByLabelText('酷我贸易代表项目')).not.toBeInTheDocument();
+    expect(within(entries[1]).queryByLabelText('酷我贸易代表项目')).not.toBeInTheDocument();
+    expect(within(entries[2]).getByLabelText('酷我贸易代表项目')).toBeInTheDocument();
+    expect(entries[2].lastElementChild).toHaveClass('experience-entry__project');
+    expect(container.querySelectorAll('[data-experience-project]')).toHaveLength(1);
+  });
 });

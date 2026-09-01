@@ -86,7 +86,7 @@ git commit -m "feat: identify experience entries"
 - Modify: `src/features/experience/ExperienceSection.tsx`
 - Modify: `src/features/experience/ExperienceSection.css`
 
-- [ ] **Step 1: Write the failing slot test**
+- [x] **Step 1: Write the failing slot test**
 
 Render `ExperienceSection` with a callback that returns a labelled test project only for `entry.id === 'kuwo'`. Assert:
 
@@ -99,7 +99,7 @@ expect(entries[2].lastElementChild).toHaveClass('experience-entry__project');
 
 Also assert that no empty `.experience-entry__project` wrappers exist for the first two entries.
 
-- [ ] **Step 2: Run the focused test and observe RED**
+- [x] **Step 2: Run the focused test and observe RED**
 
 ```powershell
 npm run test:run -- src/features/experience/ExperienceSection.test.tsx
@@ -107,7 +107,7 @@ npm run test:run -- src/features/experience/ExperienceSection.test.tsx
 
 Expected: failure because `ExperienceSection` ignores the render callback.
 
-- [ ] **Step 3: Implement the optional render callback**
+- [x] **Step 3: Implement the optional render callback**
 
 Add the prop:
 
@@ -127,15 +127,15 @@ For each entry, evaluate it once and append a project wrapper only when the resu
 
 Use `entry.id` for the React key and heading ID so employer identity does not depend on display copy.
 
-- [ ] **Step 4: Add local responsive placement styles**
+- [x] **Step 4: Add local responsive placement styles**
 
 Make the slot span the full entry grid on desktop and flow naturally beneath the entry body on narrow screens. Do not alter the existing experience copy grid, mobile column order, or global page gutter.
 
-- [ ] **Step 5: Run the focused test and observe GREEN**
+- [x] **Step 5: Run the focused test and observe GREEN**
 
 Run the same focused command and require all Experience tests to pass.
 
-- [ ] **Step 6: Commit the slot**
+- [x] **Step 6: Commit the slot**
 
 ```powershell
 git add src/features/experience/ExperienceSection.tsx src/features/experience/ExperienceSection.css src/features/experience/ExperienceSection.test.tsx
