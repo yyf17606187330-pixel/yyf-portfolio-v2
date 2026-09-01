@@ -10,7 +10,10 @@ export interface ExperienceMetric {
   context: string;
 }
 
+export type ExperienceId = 'xinghai' | 'zhepin' | 'kuwo';
+
 export interface ExperienceEntry {
+  id: ExperienceId;
   company: string;
   brand: string;
   division: string;
@@ -57,6 +60,7 @@ export const experienceContent: ExperienceContent = {
   ],
   experiences: [
     {
+      id: 'xinghai',
       company: '兴海集团',
       brand: '兴海·颐华、兴海·唯璞',
       division: '商业创新事业部',
@@ -112,6 +116,7 @@ export const experienceContent: ExperienceContent = {
       ],
     },
     {
+      id: 'zhepin',
       company: '广州哲品家居用品有限公司',
       brand: '公道杯／游侠纯钛外出与露营茶具',
       division: '商业内容项目',
@@ -157,6 +162,7 @@ export const experienceContent: ExperienceContent = {
       ],
     },
     {
+      id: 'kuwo',
       company: '酷我贸易（徐州）有限公司',
       brand: '碧云泉官方旗舰店',
       division: '新媒体内容运营',

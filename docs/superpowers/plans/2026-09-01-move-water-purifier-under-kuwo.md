@@ -28,7 +28,7 @@
 - Modify: `src/content/experience.test.ts`
 - Modify: `src/content/experience.ts`
 
-- [ ] **Step 1: Write the failing content test**
+- [x] **Step 1: Write the failing content test**
 
 Add an assertion that the reverse-chronological entries expose the exact stable IDs:
 
@@ -40,7 +40,7 @@ expect(experienceContent.experiences.map((entry) => entry.id)).toEqual([
 ]);
 ```
 
-- [ ] **Step 2: Run the focused test and observe RED**
+- [x] **Step 2: Run the focused test and observe RED**
 
 Run:
 
@@ -50,7 +50,7 @@ npm run test:run -- src/content/experience.test.ts
 
 Expected: failure because the three entries do not yet expose `id`.
 
-- [ ] **Step 3: Add the minimal stable-ID model**
+- [x] **Step 3: Add the minimal stable-ID model**
 
 Add a constrained ID type and the property to `ExperienceEntry`:
 
@@ -65,11 +65,11 @@ export interface ExperienceEntry {
 
 Add the matching ID to each existing entry without changing copy or order.
 
-- [ ] **Step 4: Run the focused test and observe GREEN**
+- [x] **Step 4: Run the focused test and observe GREEN**
 
 Run the same command and require a zero exit code.
 
-- [ ] **Step 5: Commit the stable identity change**
+- [x] **Step 5: Commit the stable identity change**
 
 ```powershell
 git add src/content/experience.ts src/content/experience.test.ts

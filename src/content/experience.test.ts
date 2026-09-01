@@ -6,6 +6,11 @@ describe('experience content', () => {
   it('provides a long-form structure that can be trimmed later', () => {
     expect(experienceContent.sectionNumber).toBe('03');
     expect(experienceContent.experiences).toHaveLength(3);
+    expect(experienceContent.experiences.map((experience) => experience.id)).toEqual([
+      'xinghai',
+      'zhepin',
+      'kuwo',
+    ]);
     expect(experienceContent.topMetrics).toBeDefined();
 
     for (const experience of experienceContent.experiences) {
