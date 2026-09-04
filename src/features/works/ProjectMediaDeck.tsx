@@ -8,7 +8,6 @@ import {
 } from 'react';
 import { flushSync } from 'react-dom';
 import gsap from 'gsap';
-import type { WaterPurifierMediaItem } from '../../content/waterPurifierMedia';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import type { Project } from '../../types/portfolio';
 import { LazyPreview } from './LazyPreview';
@@ -20,10 +19,23 @@ type CardStyle = CSSProperties & {
 
 export interface ProjectMediaDeckProps {
   baseDescription: string;
-  mediaItems: readonly WaterPurifierMediaItem[];
+  mediaItems: readonly ProjectMediaDeckSourceItem[];
   onOpenProject: (project: Project, opener: HTMLElement) => void;
   playerOpen: boolean;
   project: Project;
+}
+
+export interface ProjectMediaDeckSourceItem {
+  slug: string;
+  aspectRatio: Project['aspectRatio'];
+  preview: {
+    selectionReason: string;
+    asset: { path: string };
+  };
+  poster: {
+    asset: { path: string };
+  };
+  full: { path: string };
 }
 
 export interface ProjectMediaDeckItem {
@@ -34,7 +46,7 @@ export interface ProjectMediaDeckItem {
 export function createProjectMediaDeckItems(
   project: Project,
   baseDescription: string,
-  mediaItems: readonly WaterPurifierMediaItem[],
+  mediaItems: readonly ProjectMediaDeckSourceItem[],
 ): readonly ProjectMediaDeckItem[] {
   return [
     { description: baseDescription, project },
@@ -312,7 +324,7 @@ export function ProjectMediaDeck({
   }, [cancelOutgoingStyleRelease]);
 
   return (
-    <div className="project-media-deck">
+    <div className="project-media-deck project-media-deck--spacious">
       <div
         aria-label={`${project.title}媒体卡组`}
         className="project-media-deck__stack"

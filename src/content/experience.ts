@@ -121,7 +121,7 @@ export const experienceContent: ExperienceContent = {
       brand: '公道杯／游侠纯钛外出与露营茶具',
       division: '商业内容项目',
       role: '商业内容编导／全流程影像制作',
-      displayPeriod: '2025 · 短期项目',
+      displayPeriod: '2025.07—2025.11',
       scope: '负责布景、拍摄、剪辑、调色、包装、上传和千川投放，不涉及直播。',
       summaries: [
         '在 2025 年的短期项目中，我负责从布景、拍摄到后期、上传和千川投放的完整执行，不涉及直播。内容既要解决产品的使用场景，也要通过光影、材质和画面完成品牌价值表达。',

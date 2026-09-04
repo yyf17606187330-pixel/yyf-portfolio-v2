@@ -1,6 +1,5 @@
 :root {
   --color-paper: #e9e6de;
-  --color-paper-translucent: rgb(233 230 222 / 88%);
   --color-surface: #d8d4ca;
   --color-placeholder: #c7c2b7;
   --color-ink: #171715;
@@ -12,16 +11,22 @@
   --color-overlay-translucent: rgb(21 21 19 / 92%);
   --color-inverse: #f2efe7;
   --color-inverse-muted: #aaa79f;
-  --color-focus: #f8f5ed;
   --font-display: '苹方-简', 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
   --font-body: var(--font-display);
-  --font-weight-regular: 430;
   --font-weight-medium: 590;
+  --font-weight-editorial-body: 300;
+  --font-weight-editorial-heading: 650;
+  --font-weight-editorial-label: 650;
   --tracking-tight: -0.055em;
   --tracking-label: 0.09em;
-  --type-leading-body: 1.8;
   --type-leading-heading: 1.08;
   --type-leading-label: 1.5;
+  --type-leading-editorial-display: 0.88;
+  --type-leading-editorial-heading: 1.15;
+  --type-leading-editorial-body: 1.65;
+  --type-size-body-adjustment: 1px;
+  --type-tracking-editorial-body: 0;
+  --type-tracking-editorial-heading: -0.02em;
   --type-tracking-body: 0;
   --type-tracking-heading: -0.025em;
   --type-tracking-label: 0.05em;

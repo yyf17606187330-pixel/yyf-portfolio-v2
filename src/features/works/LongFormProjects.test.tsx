@@ -596,6 +596,44 @@ describe('LongFormProjects card deck', () => {
     expect(narrativeVideo).toHaveAttribute('data-preview-ready', 'true');
   });
 
+  it('keeps warmed preview nodes mounted but paused while the global player is open', () => {
+    const onOpenProject = vi.fn();
+    const { container, rerender } = render(
+      <LongFormProjects playerOpen={false} onOpenProject={onOpenProject} />,
+    );
+    enterObservedPreviews();
+    const deck = container.querySelector<HTMLElement>(
+      '[data-film-deck="selected-films-02-01"]',
+    )!;
+    const activeVideo = deck.querySelector<HTMLVideoElement>(
+      'video[src="/media/projects/long-form/travel/preview-h264.mp4"]',
+    )!;
+    const warmedVideo = deck.querySelector<HTMLVideoElement>(
+      'video[src="/media/projects/long-form/narrative/preview-h264.mp4"]',
+    )!;
+    fireEvent.loadedData(activeVideo);
+    fireEvent.loadedData(warmedVideo);
+    const playCallsBeforeOpen = play.mock.calls.length;
+
+    rerender(<LongFormProjects playerOpen onOpenProject={onOpenProject} />);
+
+    expect(deck.querySelector('video[src="/media/projects/long-form/travel/preview-h264.mp4"]'))
+      .toBe(activeVideo);
+    expect(deck.querySelector('video[src="/media/projects/long-form/narrative/preview-h264.mp4"]'))
+      .toBe(warmedVideo);
+    expect(pause).toHaveBeenCalled();
+    expect(play).toHaveBeenCalledTimes(playCallsBeforeOpen);
+
+    rerender(<LongFormProjects playerOpen={false} onOpenProject={onOpenProject} />);
+
+    expect(deck.querySelector('video[src="/media/projects/long-form/travel/preview-h264.mp4"]'))
+      .toBe(activeVideo);
+    expect(deck.querySelector('video[src="/media/projects/long-form/narrative/preview-h264.mp4"]'))
+      .toBe(warmedVideo);
+    expect(activeVideo).toHaveAttribute('data-preview-ready', 'true');
+    expect(warmedVideo).toHaveAttribute('data-preview-ready', 'true');
+  });
+
   it('pauses one deck preview without stopping or remounting the other deck preview', () => {
     const { container } = render(<LongFormProjects playerOpen={false} onOpenProject={vi.fn()} />);
     enterObservedPreviews();

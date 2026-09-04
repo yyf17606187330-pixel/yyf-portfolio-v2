@@ -158,6 +158,23 @@ describe('ProjectMediaDeck', () => {
     ]);
   });
 
+  it('marks the deck for the spacious desktop treatment', () => {
+    render(
+      <ProjectMediaDeck
+        baseDescription="既有净水器代表作"
+        mediaItems={waterPurifierMediaDeck}
+        onOpenProject={vi.fn()}
+        playerOpen={false}
+        project={waterPurifierProject}
+      />,
+    );
+
+    const stack = screen.getByRole('group', { name: '净水器媒体卡组' });
+    const deck = stack.closest('.project-media-deck');
+
+    expect(deck).toHaveClass('project-media-deck--spacious');
+  });
+
   it('keeps the neutral counter and player project aligned without publishing internal descriptions', () => {
     const onOpenProject = vi.fn();
     const { container } = render(

@@ -24,7 +24,7 @@ describe('ExperienceSection', () => {
       '酷我贸易（徐州）有限公司',
     ]);
     expect(entries.map((entry) => entry.querySelector('[data-experience-period]')?.textContent))
-      .toEqual(['2025.11—至今', '2025 · 短期项目', '2022.10—2025.06']);
+      .toEqual(['2025.11—至今', '2025.07—2025.11', '2022.10—2025.06']);
   });
 
   it('keeps the full long-form source visible for the first reduction pass', () => {

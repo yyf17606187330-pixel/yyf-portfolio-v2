@@ -1,6 +1,8 @@
-import { waterPurifierMediaDeck } from '../../content/waterPurifierMedia';
 import type { Project } from '../../types/portfolio';
-import { ProjectMediaDeck } from './ProjectMediaDeck';
+import {
+  ProjectMediaDeck,
+  type ProjectMediaDeckSourceItem,
+} from './ProjectMediaDeck';
 import './ProjectShowcase.css';
 
 export interface CommercialProjectCaseProps {
@@ -8,9 +10,8 @@ export interface CommercialProjectCaseProps {
   label: string;
   description: string;
   durationLabel: string;
-  contentTitle: string;
-  contentSummary: string;
   statusLabel: string;
+  mediaItems: readonly ProjectMediaDeckSourceItem[];
   process: Array<{
     stage: string;
     title: string;
@@ -26,6 +27,7 @@ export function CommercialProjectCase({
   description,
   durationLabel,
   statusLabel,
+  mediaItems,
   process,
   playerOpen,
   onOpenProject,
@@ -93,30 +95,30 @@ export function CommercialProjectCase({
           </div>
         </div>
 
-        <div className="project-showcase__media">
+        <div className="project-showcase__media project-showcase__media--deck-focus">
           <ProjectMediaDeck
             baseDescription={description}
-            mediaItems={waterPurifierMediaDeck}
+            mediaItems={mediaItems}
             onOpenProject={onOpenProject}
             playerOpen={playerOpen}
             project={project}
           />
-
-          <section aria-label="项目关键信息" className="project-showcase__vitals">
-            <header>
-              <h3>Project vitals</h3>
-              <span>{project.year}</span>
-            </header>
-            <dl>
-              <div><dt>类别 / TYPE</dt><dd>{label}</dd></div>
-              <div><dt>职责 / ROLE</dt><dd>{roleSummary}</dd></div>
-              <div><dt>画幅 / LENGTH</dt><dd>9 / 16 · {durationLabel}</dd></div>
-              <div><dt>品牌 / BRAND</dt><dd>{project.client}</dd></div>
-              <div><dt>周期 / PERIOD</dt><dd>{project.year}</dd></div>
-              <div><dt>状态 / STATUS</dt><dd>{statusLabel}</dd></div>
-            </dl>
-          </section>
         </div>
+
+        <section aria-label="项目关键信息" className="project-showcase__vitals">
+          <header>
+            <h3>Project vitals</h3>
+            <span>{project.year}</span>
+          </header>
+          <dl>
+            <div><dt>类别 / TYPE</dt><dd>{label}</dd></div>
+            <div><dt>职责 / ROLE</dt><dd>{roleSummary}</dd></div>
+            <div><dt>画幅 / LENGTH</dt><dd>9 / 16 · {durationLabel}</dd></div>
+            <div><dt>品牌 / BRAND</dt><dd>{project.client}</dd></div>
+            <div><dt>周期 / PERIOD</dt><dd>{project.year}</dd></div>
+            <div><dt>状态 / STATUS</dt><dd>{statusLabel}</dd></div>
+          </dl>
+        </section>
 
         <div aria-label={`${project.title}项目说明`} className="project-showcase__copy">
           <div className="project-showcase__process-heading">

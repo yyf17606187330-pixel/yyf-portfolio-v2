@@ -150,6 +150,7 @@ function LongFilmCard({
   film,
   index,
   preloadPreview,
+  retainPreview,
   previewPlaying,
   previewEnabled,
   playerOpen,
@@ -163,6 +164,7 @@ function LongFilmCard({
   film: LongFilmRecord;
   index: number;
   preloadPreview: boolean;
+  retainPreview: boolean;
   previewPlaying: boolean;
   previewEnabled: boolean;
   playerOpen: boolean;
@@ -200,7 +202,7 @@ function LongFilmCard({
       >
         <LazyPreview
           enabled={previewPlaying && previewEnabled && !playerOpen}
-          preload={preloadPreview && !playerOpen}
+          preload={preloadPreview || (playerOpen && retainPreview)}
           project={film.project}
           revealAfterFirstFrame
         />
@@ -571,6 +573,11 @@ function LongFilmDeck({
                 && index !== transitioningIndex
                 && !previewPaused
                 && !reducedMotion}
+              retainPreview={!previewPaused
+                && !reducedMotion
+                && (warmedIndices.has(index)
+                  || index === activeIndex
+                  || index === transitioningIndex)}
               previewPlaying={index === activeIndex || index === transitioningIndex}
               previewEnabled={!previewPaused && !reducedMotion}
               stackState={index < activeIndex

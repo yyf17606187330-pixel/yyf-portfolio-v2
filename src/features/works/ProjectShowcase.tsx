@@ -10,7 +10,7 @@ interface ProjectShowcaseProps {
 
 export function ProjectShowcase({ playerOpen, onOpenProject }: ProjectShowcaseProps) {
   return (
-    <section aria-label="精选作品" className="project-showcase" id="works">
+    <section aria-label="精选作品" className="project-showcase" id="works" tabIndex={-1}>
       <div
         aria-label="作品区导览"
         className="project-showcase__transition"

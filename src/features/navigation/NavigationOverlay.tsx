@@ -1,4 +1,10 @@
-import { useCallback, useLayoutEffect, useRef } from 'react';
+import {
+  useCallback,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+} from 'react';
 import { createPortal } from 'react-dom';
 import gsap from 'gsap';
 import { profile } from '../../content/profile';
@@ -25,10 +31,16 @@ const capabilities = [
 ];
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const targetSectionIds: Record<Exclude<NavigationTarget, 'top'>, string> = {
+  capabilities: 'navigation-capabilities',
+  about: 'navigation-about',
+  contact: 'navigation-contact',
+};
 
 export function NavigationOverlay({ open, opener, onClose, target = 'top' }: NavigationOverlayProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const [currentTarget, setCurrentTarget] = useState<NavigationTarget>(target);
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const handleClose = useCallback(() => onClose(), [onClose]);
   const portraitUrl = resolveMediaUrl(profile.portrait);
@@ -40,15 +52,48 @@ export function NavigationOverlay({ open, opener, onClose, target = 'top' }: Nav
   useFocusTrap(dialogRef, open, handleClose, closeRef, opener);
 
   useLayoutEffect(() => {
+    if (open) setCurrentTarget(target);
+  }, [open, target]);
+
+  useLayoutEffect(() => {
     const dialog = dialogRef.current;
 
     if (!open || !dialog) {
       return;
     }
 
-    const section = target === 'top' ? null : dialog.querySelector<HTMLElement>(`#${target}`);
+    const section = target === 'top'
+      ? null
+      : dialog.querySelector<HTMLElement>(`#${targetSectionIds[target]}`);
     dialog.scrollTop = section?.offsetTop ?? 0;
   }, [open, target]);
+
+  const handleSectionNavigation = useCallback((
+    event: ReactMouseEvent<HTMLAnchorElement>,
+    nextTarget: Exclude<NavigationTarget, 'top'>,
+  ) => {
+    event.preventDefault();
+    const dialog = dialogRef.current;
+    const section = dialog?.querySelector<HTMLElement>(`#${targetSectionIds[nextTarget]}`);
+    setCurrentTarget(nextTarget);
+    if (dialog) dialog.scrollTop = section?.offsetTop ?? 0;
+    section?.focus({ preventScroll: true });
+  }, []);
+
+  const handleWorkNavigation = useCallback((event: ReactMouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    const destination = document.getElementById('works');
+    handleClose();
+    window.history.replaceState(
+      null,
+      '',
+      `${window.location.pathname}${window.location.search}#works`,
+    );
+    window.setTimeout(() => {
+      destination?.scrollIntoView?.({ block: 'start' });
+      destination?.focus({ preventScroll: true });
+    }, 0);
+  }, [handleClose]);
 
   useLayoutEffect(() => {
     const dialog = dialogRef.current;
@@ -80,7 +125,7 @@ export function NavigationOverlay({ open, opener, onClose, target = 'top' }: Nav
   return createPortal(
     <div
       aria-label="全站导航"
-      aria-describedby={target === 'top' ? undefined : `${target}-title`}
+      aria-describedby={currentTarget === 'top' ? undefined : `${targetSectionIds[currentTarget]}-title`}
       aria-modal="true"
       className="navigation-overlay"
       data-lenis-prevent
@@ -98,15 +143,33 @@ export function NavigationOverlay({ open, opener, onClose, target = 'top' }: Nav
 
       <div className="navigation-overlay__layout">
         <nav className="navigation-overlay__nav" aria-label="覆盖层导航">
-          <a href="#work" onClick={handleClose}>WORK</a>
-          <a aria-current={target === 'capabilities' ? 'location' : undefined} href="#capabilities">CAPABILITIES</a>
-          <a aria-current={target === 'about' ? 'location' : undefined} href="#about">ABOUT</a>
-          <a aria-current={target === 'contact' ? 'location' : undefined} href="#contact">CONTACT</a>
+          <a href="#works" onClick={handleWorkNavigation}>WORK</a>
+          <a
+            aria-current={currentTarget === 'capabilities' ? 'location' : undefined}
+            href="#navigation-capabilities"
+            onClick={(event) => handleSectionNavigation(event, 'capabilities')}
+          >
+            CAPABILITIES
+          </a>
+          <a
+            aria-current={currentTarget === 'about' ? 'location' : undefined}
+            href="#navigation-about"
+            onClick={(event) => handleSectionNavigation(event, 'about')}
+          >
+            ABOUT
+          </a>
+          <a
+            aria-current={currentTarget === 'contact' ? 'location' : undefined}
+            href="#navigation-contact"
+            onClick={(event) => handleSectionNavigation(event, 'contact')}
+          >
+            CONTACT
+          </a>
         </nav>
 
         <div className="navigation-overlay__details">
-          <section id="capabilities" aria-labelledby="capabilities-title" tabIndex={-1}>
-            <p className="eyebrow" id="capabilities-title">CAPABILITIES / 能力</p>
+          <section id="navigation-capabilities" aria-labelledby="navigation-capabilities-title" tabIndex={-1}>
+            <p className="eyebrow" id="navigation-capabilities-title">CAPABILITIES / 能力</p>
             <div className="navigation-overlay__capabilities">
               {capabilities.map((capability) => (
                 <div className="navigation-overlay__capability" key={capability.index}>
@@ -118,7 +181,7 @@ export function NavigationOverlay({ open, opener, onClose, target = 'top' }: Nav
             </div>
           </section>
 
-          <section className="navigation-overlay__about" id="about" aria-labelledby="about-title" tabIndex={-1}>
+          <section className="navigation-overlay__about" id="navigation-about" aria-labelledby="navigation-about-title" tabIndex={-1}>
             {portraitUrl ? (
               <div className="navigation-overlay__portrait">
                 <img alt={`${profile.name}个人肖像`} src={portraitUrl} />
@@ -130,16 +193,16 @@ export function NavigationOverlay({ open, opener, onClose, target = 'top' }: Nav
               </div>
             )}
             <div>
-              <p className="eyebrow" id="about-title">ABOUT / 关于</p>
+              <p className="eyebrow" id="navigation-about-title">ABOUT / 关于</p>
               <h2>{profile.name}</h2>
               <p>{profile.positioning}</p>
               <p>{profile.bio}</p>
             </div>
           </section>
 
-          <section className="navigation-overlay__contact" id="contact" aria-labelledby="contact-title" tabIndex={-1}>
+          <section className="navigation-overlay__contact" id="navigation-contact" aria-labelledby="navigation-contact-title" tabIndex={-1}>
             <div>
-              <p className="eyebrow" id="contact-title">CONTACT / 联系</p>
+              <p className="eyebrow" id="navigation-contact-title">CONTACT / 联系</p>
               {emailHref ? <a href={emailHref}>{email}</a> : <p>{profile.email || '邮箱待补充'}</p>}
             </div>
             {wechatQrUrl ? (

@@ -50,6 +50,7 @@ function NavigationHarness({ onClose }: { onClose: () => void }) {
         打开菜单
       </button>
       <a href="#outside">外部链接</a>
+      <section id="works" tabIndex={-1}>作品区</section>
       <NavigationOverlay
         open={open}
         opener={openerRef.current}
@@ -170,12 +171,51 @@ describe('NavigationOverlay', () => {
     expect(screen.getByText('PS 合成 · 平面修改与设计')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'AI & Creative Tech' })).toBeInTheDocument();
     expect(screen.getByText('AI 视频 · 工作流 · AI 前端')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'WORK' })).toHaveAttribute('href', '#works');
+  });
+
+  it('updates the active internal section, focus, and description without leaking an overlay hash', () => {
+    window.history.replaceState(null, '', '/#outside');
+    render(<NavigationOverlay open opener={null} onClose={vi.fn()} target="contact" />);
+
+    const dialog = screen.getByRole('dialog', { name: '全站导航' });
+    const aboutLink = screen.getByRole('link', { name: 'ABOUT' });
+    const contactLink = screen.getByRole('link', { name: 'CONTACT' });
+    const aboutSection = document.getElementById('navigation-about') as HTMLElement;
+    Object.defineProperty(aboutSection, 'offsetTop', { configurable: true, value: 640 });
+
+    fireEvent.click(aboutLink);
+
+    expect(aboutLink).toHaveAttribute('aria-current', 'location');
+    expect(contactLink).not.toHaveAttribute('aria-current');
+    expect(dialog).toHaveAttribute('aria-describedby', 'navigation-about-title');
+    expect(dialog.scrollTop).toBe(640);
+    expect(aboutSection).toHaveFocus();
+    expect(window.location.hash).toBe('#outside');
+
+    fireEvent.keyDown(document, { key: 'Tab' });
+    expect(screen.getByRole('button', { name: '关闭菜单' })).toHaveFocus();
+
+    aboutSection.focus();
+    fireEvent.keyDown(document, { key: 'Tab', shiftKey: true });
+    expect(contactLink).toHaveFocus();
+  });
+
+  it('closes WORK navigation and transfers focus to the real works section', async () => {
+    render(<NavigationHarness onClose={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: '打开菜单' }));
+    const worksSection = document.getElementById('works') as HTMLElement;
+
+    fireEvent.click(await screen.findByRole('link', { name: 'WORK' }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: '全站导航' })).not.toBeInTheDocument());
+    await waitFor(() => expect(worksSection).toHaveFocus());
   });
 
   it('positions a requested section without moving initial focus away from close', async () => {
     const focus = vi.spyOn(HTMLElement.prototype, 'focus');
     vi.spyOn(HTMLElement.prototype, 'offsetTop', 'get').mockImplementation(function getOffsetTop(this: HTMLElement) {
-      return this.id === 'about' ? 640 : 0;
+      return this.id === 'navigation-about' ? 640 : 0;
     });
 
     render(<NavigationOverlay open opener={null} onClose={vi.fn()} target="about" />);
@@ -183,7 +223,7 @@ describe('NavigationOverlay', () => {
     const dialog = screen.getByRole('dialog', { name: '全站导航' });
     const closeButton = screen.getByRole('button', { name: '关闭菜单' });
     expect(dialog.scrollTop).toBe(640);
-    expect(dialog).toHaveAttribute('aria-describedby', 'about-title');
+    expect(dialog).toHaveAttribute('aria-describedby', 'navigation-about-title');
     expect(screen.getByRole('link', { name: 'ABOUT' })).toHaveAttribute('aria-current', 'location');
     await waitFor(() => expect(closeButton).toHaveFocus());
     expect(focus.mock.contexts).toContain(closeButton);

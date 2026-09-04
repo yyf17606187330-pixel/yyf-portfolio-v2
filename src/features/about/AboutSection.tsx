@@ -8,9 +8,10 @@ export type { AboutContent } from '../../content/about';
 
 interface AboutSectionProps {
   content: AboutContent;
+  paused?: boolean;
 }
 
-export function AboutSection({ content }: AboutSectionProps) {
+export function AboutSection({ content, paused = false }: AboutSectionProps) {
   const titleId = 'about-title';
   const portraitFrameRef = useRef<HTMLDivElement>(null);
   const portraitVideoRef = useRef<HTMLVideoElement>(null);
@@ -49,6 +50,7 @@ export function AboutSection({ content }: AboutSectionProps) {
     && failedPortraitHoverSource !== portraitHoverSource;
   portraitPrimaryCanPlayRef.current = portraitInViewport
     && pageVisible
+    && !paused
     && showPortraitVideo
     && !portraitCompleted;
 
@@ -103,7 +105,7 @@ export function AboutSection({ content }: AboutSectionProps) {
   const startPortraitHover = () => {
     const frame = portraitFrameRef.current;
     const video = portraitHoverVideoRef.current;
-    if (!frame || !video || !portraitHoverActiveRef.current) return;
+    if (!frame || !video || paused || !portraitHoverActiveRef.current) return;
 
     portraitHoverPendingRef.current = false;
     if (portraitHoverShouldRestartRef.current) {
@@ -122,7 +124,7 @@ export function AboutSection({ content }: AboutSectionProps) {
   const handlePortraitPointerEnter = (event: ReactPointerEvent<HTMLDivElement>) => {
     const frame = portraitFrameRef.current;
     const video = portraitHoverVideoRef.current;
-    if (!frame || !video || !showPortraitHoverVideo || event.pointerType === 'touch') return;
+    if (!frame || !video || paused || !showPortraitHoverVideo || event.pointerType === 'touch') return;
 
     const bounds = frame.getBoundingClientRect();
     const x = Math.min(bounds.width, Math.max(0, event.clientX - bounds.left));
@@ -204,10 +206,10 @@ export function AboutSection({ content }: AboutSectionProps) {
     }
 
     return () => video.pause();
-  }, [pageVisible, portraitCompleted, portraitInViewport, showPortraitVideo]);
+  }, [pageVisible, paused, portraitCompleted, portraitInViewport, showPortraitVideo]);
 
   useEffect(() => {
-    if (portraitInViewport && pageVisible) return;
+    if (portraitInViewport && pageVisible && !paused) return;
 
     portraitHoverActiveRef.current = false;
     portraitHoverRetractingRef.current = false;
@@ -219,7 +221,7 @@ export function AboutSection({ content }: AboutSectionProps) {
       portraitHoverAnimationRef.current = null;
     }
     setPortraitHoverRadius(0);
-  }, [pageVisible, portraitInViewport]);
+  }, [pageVisible, paused, portraitInViewport]);
 
   useEffect(() => () => {
     if (portraitHoverAnimationRef.current !== null) {
@@ -337,6 +339,10 @@ export function AboutSection({ content }: AboutSectionProps) {
                   portraitHoverShouldRestartRef.current = true;
                 }}
                 onError={() => {
+                  if (portraitHoverAnimationRef.current !== null) {
+                    cancelAnimationFrame(portraitHoverAnimationRef.current);
+                    portraitHoverAnimationRef.current = null;
+                  }
                   portraitHoverActiveRef.current = false;
                   portraitHoverRetractingRef.current = false;
                   portraitHoverPendingRef.current = false;
@@ -344,6 +350,7 @@ export function AboutSection({ content }: AboutSectionProps) {
                   setPortraitHoverActive(false);
                   setPortraitHoverRadius(0);
                   setFailedPortraitHoverSource(portraitHoverSource);
+                  resumePrimaryPortrait();
                 }}
               />
             ) : null}

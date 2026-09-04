@@ -210,6 +210,66 @@ describe('AboutSection', () => {
     expect(screen.getByRole('img', { name: '杨玉峰个人肖像视频' })).toBeInTheDocument();
   });
 
+  it('resumes the primary portrait immediately when an active hover video fails', () => {
+    let intersect: IntersectionObserverCallback | undefined;
+    const cancelAnimationFrame = vi.fn();
+    vi.stubGlobal('requestAnimationFrame', vi.fn(() => 1));
+    vi.stubGlobal('cancelAnimationFrame', cancelAnimationFrame);
+    vi.stubGlobal('IntersectionObserver', vi.fn((callback: IntersectionObserverCallback) => {
+      intersect = callback;
+      return {
+        observe: vi.fn(),
+        unobserve: vi.fn(),
+        disconnect: vi.fn(),
+        takeRecords: vi.fn(),
+        root: null,
+        rootMargin: '',
+        thresholds: [],
+      };
+    }));
+
+    const { container } = render(<AboutSection content={fixture} />);
+    act(() => intersect?.(
+      [{ isIntersecting: true } as IntersectionObserverEntry],
+      {} as IntersectionObserver,
+    ));
+    const frame = container.querySelector('.about-section__portrait-frame') as HTMLDivElement;
+    const primaryVideo = container.querySelector('.about-section__portrait-video') as HTMLVideoElement;
+    const hoverVideo = container.querySelector('.about-section__portrait-hover-video') as HTMLVideoElement;
+    const primaryPlay = vi.fn().mockResolvedValue(undefined);
+    const primaryPause = vi.fn();
+    Object.defineProperty(primaryVideo, 'play', { configurable: true, value: primaryPlay });
+    Object.defineProperty(primaryVideo, 'pause', { configurable: true, value: primaryPause });
+    Object.defineProperty(hoverVideo, 'play', {
+      configurable: true,
+      value: vi.fn().mockResolvedValue(undefined),
+    });
+    Object.defineProperty(hoverVideo, 'readyState', { configurable: true, value: 4 });
+    vi.spyOn(frame, 'getBoundingClientRect').mockReturnValue({
+      bottom: 470,
+      height: 450,
+      left: 10,
+      right: 310,
+      top: 20,
+      width: 300,
+      x: 10,
+      y: 20,
+      toJSON: () => ({}),
+    });
+    primaryVideo.currentTime = 1.75;
+
+    fireEvent.pointerEnter(frame, { clientX: 110, clientY: 170, pointerType: 'mouse' });
+    expect(primaryPause).toHaveBeenCalledTimes(1);
+
+    fireEvent.error(hoverVideo);
+
+    expect(container.querySelector('.about-section__portrait-hover-video')).not.toBeInTheDocument();
+    expect(frame).toHaveAttribute('data-hover-reveal', 'inactive');
+    expect(cancelAnimationFrame).toHaveBeenCalledWith(1);
+    expect(primaryPlay).toHaveBeenCalledTimes(1);
+    expect(primaryVideo.currentTime).toBe(1.75);
+  });
+
   it('pauses the portrait video offscreen and falls back after a decoding error', () => {
     let intersect: IntersectionObserverCallback | undefined;
     const play = vi.mocked(HTMLMediaElement.prototype.play);
@@ -247,6 +307,55 @@ describe('AboutSection', () => {
     fireEvent.error(video);
     expect(container.querySelector('video')).not.toBeInTheDocument();
     expect(screen.getByRole('img', { name: '杨玉峰个人肖像视频' })).toBeInTheDocument();
+  });
+
+  it('suspends both portrait layers while a global overlay is open and resumes afterward', () => {
+    let intersect: IntersectionObserverCallback | undefined;
+    vi.stubGlobal('IntersectionObserver', vi.fn((callback: IntersectionObserverCallback) => {
+      intersect = callback;
+      return {
+        observe: vi.fn(),
+        unobserve: vi.fn(),
+        disconnect: vi.fn(),
+        takeRecords: vi.fn(),
+        root: null,
+        rootMargin: '',
+        thresholds: [],
+      };
+    }));
+
+    const { container, rerender } = render(<AboutSection content={fixture} />);
+    act(() => intersect?.(
+      [{ isIntersecting: true } as IntersectionObserverEntry],
+      {} as IntersectionObserver,
+    ));
+
+    const frame = container.querySelector('.about-section__portrait-frame') as HTMLDivElement;
+    const primaryVideo = container.querySelector('.about-section__portrait-video') as HTMLVideoElement;
+    const hoverVideo = container.querySelector('.about-section__portrait-hover-video') as HTMLVideoElement;
+    const primaryPlay = vi.fn().mockResolvedValue(undefined);
+    const primaryPause = vi.fn();
+    const hoverPause = vi.fn();
+    Object.defineProperty(primaryVideo, 'play', { configurable: true, value: primaryPlay });
+    Object.defineProperty(primaryVideo, 'pause', { configurable: true, value: primaryPause });
+    Object.defineProperty(hoverVideo, 'play', {
+      configurable: true,
+      value: vi.fn().mockResolvedValue(undefined),
+    });
+    Object.defineProperty(hoverVideo, 'pause', { configurable: true, value: hoverPause });
+    Object.defineProperty(hoverVideo, 'readyState', { configurable: true, value: 4 });
+
+    fireEvent.pointerEnter(frame, { clientX: 10, clientY: 10, pointerType: 'mouse' });
+    expect(frame).toHaveAttribute('data-hover-reveal', 'active');
+
+    rerender(<AboutSection content={fixture} paused />);
+
+    expect(primaryPause.mock.calls.length).toBeGreaterThan(1);
+    expect(hoverPause).toHaveBeenCalledTimes(1);
+    expect(frame).toHaveAttribute('data-hover-reveal', 'inactive');
+
+    rerender(<AboutSection content={fixture} />);
+    expect(primaryPlay).toHaveBeenCalledTimes(1);
   });
 
   it('plays one viewport-triggered cycle and does not restart after it ends', () => {
@@ -375,7 +484,9 @@ describe('AboutSection', () => {
   it('keeps the portrait videos mutually exclusive and resumes the primary only after retraction', () => {
     let intersect: IntersectionObserverCallback | undefined;
     let nextAnimationFrameId = 0;
+    const animationStartTime = 1_000;
     const animationFrames = new Map<number, FrameRequestCallback>();
+    vi.spyOn(performance, 'now').mockReturnValue(animationStartTime);
     const cancelAnimationFrame = vi.fn((id: number) => animationFrames.delete(id));
     vi.stubGlobal('requestAnimationFrame', vi.fn((callback: FrameRequestCallback) => {
       nextAnimationFrameId += 1;
@@ -443,15 +554,14 @@ describe('AboutSection', () => {
     expect(primaryPlay).not.toHaveBeenCalled();
     expect(hoverPlay).toHaveBeenCalledTimes(1);
 
-    const retractStartTime = performance.now();
     fireEvent.pointerLeave(frame, { pointerType: 'mouse' });
     expect(hoverPause).toHaveBeenCalledTimes(1);
     expect(primaryPlay).not.toHaveBeenCalled();
 
-    act(() => runNextAnimationFrame(retractStartTime + 799));
+    act(() => runNextAnimationFrame(animationStartTime + 799));
     expect(primaryPlay).not.toHaveBeenCalled();
 
-    act(() => runNextAnimationFrame(retractStartTime + 801));
+    act(() => runNextAnimationFrame(animationStartTime + 801));
     expect(primaryPlay).toHaveBeenCalledTimes(1);
     expect(primaryVideo.currentTime).toBe(1.75);
 
