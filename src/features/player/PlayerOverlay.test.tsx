@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Project } from '../../types/portfolio';
 import { PlayerOverlay } from './PlayerOverlay';
@@ -66,10 +66,12 @@ const secondPlayableProject: Project = {
 
 function deferredPromise() {
   let resolve!: () => void;
-  const promise = new Promise<void>((resolvePromise) => {
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<void>((resolvePromise, rejectPromise) => {
     resolve = resolvePromise;
+    reject = rejectPromise;
   });
-  return { promise, resolve };
+  return { promise, resolve, reject };
 }
 
 function PlayerHarness({ project, onClose }: { project: Project; onClose: () => void }) {
@@ -106,7 +108,7 @@ describe('PlayerOverlay', () => {
     play.mockReset().mockResolvedValue();
     pause.mockClear();
     load.mockClear();
-    requestFullscreen.mockClear();
+    requestFullscreen.mockReset().mockResolvedValue();
     vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(play);
     vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(pause);
     vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(load);
@@ -257,6 +259,35 @@ describe('PlayerOverlay', () => {
     expect(screen.getByRole('button', { name: '取消静音' })).toBeInTheDocument();
   });
 
+  it('reflects native mute changes in the custom mute control', () => {
+    render(<PlayerOverlay project={playableProject} opener={null} onClose={vi.fn()} />);
+    const video = document.body.querySelector('video') as HTMLVideoElement;
+
+    video.muted = true;
+    fireEvent.volumeChange(video);
+    expect(screen.getByRole('button', { name: '取消静音' })).toBeInTheDocument();
+
+    video.muted = false;
+    fireEvent.volumeChange(video);
+    expect(screen.getByRole('button', { name: '静音' })).toBeInTheDocument();
+  });
+
+  it('preserves a native mute choice when the current work falls back to a compatible source', async () => {
+    render(<PlayerOverlay
+      project={{ ...playableProject, fallbackSrc: 'videos/film-a-h264.mp4' }}
+      opener={null}
+      onClose={vi.fn()}
+    />);
+    const primaryVideo = document.body.querySelector('video') as HTMLVideoElement;
+    primaryVideo.muted = true;
+    fireEvent.volumeChange(primaryVideo);
+    fireEvent.error(primaryVideo);
+
+    await waitFor(() => expect(document.body.querySelector('video'))
+      .toHaveAttribute('src', '/media/videos/film-a-h264.mp4'));
+    expect((document.body.querySelector('video') as HTMLVideoElement).muted).toBe(true);
+  });
+
   it('keeps the custom controls in fullscreen by requesting fullscreen on the dialog when supported', async () => {
     render(<PlayerOverlay project={playableProject} opener={null} onClose={vi.fn()} />);
     const dialog = screen.getByRole('dialog');
@@ -266,6 +297,47 @@ describe('PlayerOverlay', () => {
     fireEvent.click(screen.getByRole('button', { name: '全屏' }));
     expect(dialogFullscreen).toHaveBeenCalledOnce();
     expect(requestFullscreen).not.toHaveBeenCalled();
+  });
+
+  it('ignores a fullscreen rejection from the previous project after another work opens', async () => {
+    const pendingFullscreen = deferredPromise();
+    requestFullscreen.mockImplementationOnce(() => pendingFullscreen.promise);
+    const { rerender } = render(
+      <PlayerOverlay project={playableProject} opener={null} onClose={vi.fn()} />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: '全屏' }));
+
+    rerender(<PlayerOverlay project={secondPlayableProject} opener={null} onClose={vi.fn()} />);
+    await act(async () => {
+      pendingFullscreen.reject(new DOMException('Request no longer active', 'NotAllowedError'));
+    });
+
+    expect(screen.getByRole('dialog', { name: '播放作品：AI 项目 B' })).toBeInTheDocument();
+    expect(screen.queryByText(/当前环境无法进入全屏/)).not.toBeInTheDocument();
+  });
+
+  it('ignores an older fullscreen rejection after a newer request succeeds for the same work', async () => {
+    const pendingFullscreen = deferredPromise();
+    requestFullscreen.mockImplementationOnce(() => pendingFullscreen.promise);
+    render(<PlayerOverlay project={playableProject} opener={null} onClose={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: '全屏' }));
+    fireEvent.click(screen.getByRole('button', { name: '全屏' }));
+
+    await act(async () => {
+      pendingFullscreen.reject(new DOMException('Older request superseded', 'NotAllowedError'));
+    });
+
+    expect(screen.queryByText(/当前环境无法进入全屏/)).not.toBeInTheDocument();
+  });
+
+  it('clears an earlier fullscreen failure when a deliberate retry succeeds', async () => {
+    requestFullscreen.mockRejectedValueOnce(new DOMException('Request denied', 'NotAllowedError'));
+    render(<PlayerOverlay project={playableProject} opener={null} onClose={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: '全屏' }));
+    await screen.findByText(/当前环境无法进入全屏/);
+
+    fireEvent.click(screen.getByRole('button', { name: '全屏' }));
+    await waitFor(() => expect(screen.queryByText(/当前环境无法进入全屏/)).not.toBeInTheDocument());
   });
 
   it('renders a designed fallback and no empty video source when full media is missing', () => {

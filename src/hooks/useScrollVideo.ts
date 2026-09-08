@@ -103,17 +103,63 @@ export function useScrollVideo({
     const resolvedScrollDistance = Number.isFinite(scrollDistance) && scrollDistance > 0
       ? scrollDistance
       : DEFAULT_SCROLL_DISTANCE;
+    let anchorFrame: number | null = null;
+    let initialProgress = 0;
     let seekFrame: number | null = null;
     let targetProgress = 0;
     let targetTime = 0;
+    const captureAlignedHashTarget = () => {
+      const hash = window.location.hash;
+      const target = document.getElementById(hash.slice(1));
+      if (!target) {
+        return null;
+      }
+
+      const targetTop = target.getBoundingClientRect().top;
+      const scrollMargin = Number.parseFloat(window.getComputedStyle(target).scrollMarginTop) || 0;
+      if (Math.abs(targetTop - scrollMargin) > 1) {
+        return null;
+      }
+
+      return { hash, scrollY: window.scrollY, target };
+    };
+    let pendingHashTarget = captureAlignedHashTarget();
+    const queueHashTargetRestore = () => {
+      const snapshot = pendingHashTarget;
+      pendingHashTarget = null;
+      if (!snapshot) {
+        return;
+      }
+
+      if (anchorFrame !== null) {
+        window.cancelAnimationFrame(anchorFrame);
+      }
+
+      anchorFrame = window.requestAnimationFrame(() => {
+        anchorFrame = null;
+        if (
+          window.location.hash !== snapshot.hash
+          || window.scrollY !== snapshot.scrollY
+          || !snapshot.target.isConnected
+        ) {
+          return;
+        }
+
+        snapshot.target.scrollIntoView({ behavior: 'auto', block: 'start' });
+      });
+    };
     const context = gsap.context(() => {
-      ScrollTrigger.create({
+      const scrollTrigger = ScrollTrigger.create({
         trigger,
         pin,
         start: 'top top',
         end: () => `+=${resolvedScrollDistance}`,
         scrub: true,
         invalidateOnRefresh: true,
+        onRefreshInit: () => {
+          pendingHashTarget = captureAlignedHashTarget();
+        },
+        onRefresh: queueHashTargetRestore,
         onUpdate: ({ progress }) => {
           targetProgress = progress;
           targetTime = mapScrollProgressToTime(progress, duration);
@@ -133,10 +179,16 @@ export function useScrollVideo({
           });
         },
       });
+      initialProgress = scrollTrigger.progress;
     }, trigger);
-    onProgressRef.current?.(0);
+    queueHashTargetRestore();
+    onProgressRef.current?.(initialProgress);
 
     return () => {
+      if (anchorFrame !== null) {
+        window.cancelAnimationFrame(anchorFrame);
+      }
+
       if (seekFrame !== null) {
         window.cancelAnimationFrame(seekFrame);
       }

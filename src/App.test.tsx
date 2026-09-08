@@ -1,6 +1,7 @@
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
+import { aboutContent } from './content/about';
 
 const useScrollVideoMock = vi.hoisted(() => vi.fn());
 vi.mock('./hooks/useScrollVideo', () => ({ useScrollVideo: useScrollVideoMock }));
@@ -42,107 +43,77 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: '杨玉峰' })).toBeInTheDocument();
     const hero = screen.getByRole('region', { name: '杨玉峰' });
     expect(within(hero).getByText('查看作品').closest('a')).toHaveAttribute('href', '#works');
-    expect(screen.getByRole('region', { name: '精选作品' })).toHaveAttribute('id', 'works');
+    expect(screen.getByRole('region', { name: '影像与调色作品' })).toHaveAttribute('id', 'works');
     expect(screen.getByRole('heading', { name: '净水器' })).toBeInTheDocument();
     expect(screen.queryByText('待补充影像项目 01')).not.toBeInTheDocument();
     expect(container.querySelectorAll('main > section')).toHaveLength(6);
   });
 
-  it('exposes real WORK and ABOUT links and opens CONTACT in the existing navigation dialog', async () => {
+  it('keeps only live navigation links after retiring the placeholder contact panel', () => {
     const { container } = render(<App />);
     const nav = container.querySelector<HTMLElement>('nav[aria-label="主导航"]')!;
+    const links = within(nav).getAllByRole('link', { hidden: true });
 
-    expect(nav.querySelector('a[href="#works"]')).toHaveTextContent('WORK');
-    expect(nav.querySelector('a[href="#about"]')).toHaveTextContent('ABOUT');
-    const contact = nav.querySelector('button') as HTMLButtonElement;
-    expect(contact).toHaveTextContent('CONTACT');
-    fireEvent.click(contact);
-
-    const dialog = await screen.findByRole('dialog', { name: '全站导航' });
-    expect(dialog).toHaveAttribute('aria-describedby', 'navigation-contact-title');
-    const ids = [...container.ownerDocument.querySelectorAll<HTMLElement>('[id]')]
-      .map((element) => element.id);
-    expect(new Set(ids).size).toBe(ids.length);
-
-    fireEvent.keyDown(document, { key: 'Escape' });
-    await waitFor(() => expect(screen.queryByRole('dialog', { name: '全站导航' }))
-      .not.toBeInTheDocument());
-    expect(contact).toHaveFocus();
-    expect(document.body.style.position).toBe('');
+    expect(links.map((link) => link.textContent)).toEqual(['WORK', 'ABOUT']);
+    for (const link of links) {
+      expect(container.querySelector(link.getAttribute('href')!)).toBeInTheDocument();
+    }
+    expect(within(nav).queryByRole('button')).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: '全站导航' })).not.toBeInTheDocument();
+    expect(screen.queryByText(/待补充邮箱|待补充个人简介|微信二维码待替换/))
+      .not.toBeInTheDocument();
   });
 
-  it('pauses an active AI hover preview while the navigation overlay obscures the page', async () => {
+  it('pauses an active AI hover preview while the player obscures the page', async () => {
     const { container } = render(<App />);
     const card = container.querySelector<HTMLElement>(
       '[data-ai-video-card="ai-video-landscape"]',
     )!;
-    const contact = container.querySelector<HTMLButtonElement>(
-      'nav[aria-label="主导航"] button',
-    )!;
+    const projectOpener = screen.getByRole('button', { name: '播放净水器短片 01' });
     const pause = vi.mocked(HTMLMediaElement.prototype.pause);
 
     fireEvent.pointerEnter(card, { pointerType: 'mouse' });
     expect(card.querySelector('video')).toBeInTheDocument();
 
-    fireEvent.click(contact);
-    await screen.findByRole('dialog', { name: '全站导航' });
+    fireEvent.click(projectOpener);
+    await screen.findByRole('dialog', { name: '播放作品：净水器' });
 
     await waitFor(() => expect(card.querySelector('video')).not.toBeInTheDocument());
     expect(pause).toHaveBeenCalled();
   });
 
-  it('keeps navigation and player overlays mutually exclusive in either opening order', async () => {
-    const { container } = render(<App />);
-    const contact = container.querySelector<HTMLButtonElement>(
-      'nav[aria-label="主导航"] button',
-    )!;
-    const projectOpener = screen.getByRole('button', { name: '播放净水器短片 01' });
-
-    fireEvent.click(contact);
-    await screen.findByRole('dialog', { name: '全站导航' });
-    fireEvent.click(projectOpener);
-
-    await screen.findByRole('dialog', { name: '播放作品：净水器' });
-    await waitFor(() => expect(screen.queryByRole('dialog', { name: '全站导航' }))
-      .not.toBeInTheDocument());
-    expect(screen.getAllByRole('dialog')).toHaveLength(1);
-
-    fireEvent.click(contact);
-    await screen.findByRole('dialog', { name: '全站导航' });
-    await waitFor(() => expect(screen.queryByRole('dialog', { name: '播放作品：净水器' }))
-      .not.toBeInTheDocument());
-    expect(screen.getAllByRole('dialog')).toHaveLength(1);
-
-    fireEvent.keyDown(document, { key: 'Escape' });
-    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-    expect(document.body.style.position).toBe('');
-    expect(contact).toHaveFocus();
-  });
-
-  it('places About, Skills, Works and Experience after the Hero in document order', () => {
+  it('keeps the interactive portrait before the compact work decks without a duplicate work wall', () => {
     const { container } = render(<App />);
     const sections = container.querySelectorAll('main > section');
 
     expect(sections).toHaveLength(6);
-    expect(sections[1]).toHaveAttribute('id', 'about');
-    expect(sections[2]).toHaveAttribute('id', 'skills');
-    expect(sections[3]).toHaveAttribute('id', 'ai-video');
-    expect(sections[4]).toHaveAttribute('id', 'works');
-    expect(sections[5]).toHaveAttribute('id', 'experience');
-    expect(sections[1].querySelector('a[href="#works"]')).toBeInTheDocument();
-    expect(screen.getByRole('region', { name: '关于我与工作方式' })).toBe(sections[1]);
-    expect(screen.getByRole('region', { name: '技能与工具' })).toBe(sections[2]);
-    expect(screen.getByRole('region', { name: 'AI 视频能力' })).toBe(sections[3]);
-    expect(screen.getByRole('region', { name: '工作经历' })).toBe(sections[5]);
-    expect(within(sections[1] as HTMLElement).getByText('45万元')).toBeInTheDocument();
-    expect(sections[1]).toHaveTextContent('单条素材单月最高投放消耗');
-    expect(sections[1]).toHaveTextContent('投产比 1:5');
-    expect(sections[1]).toHaveTextContent('UV 价值从 0 提升至约 6 元');
-    expect(within(sections[1] as HTMLElement).getByRole('img', {
-      name: '杨玉峰个人肖像视频',
-    })).toBeInTheDocument();
+    expect([...sections].slice(1).map(section => section.id)).toEqual([
+      'about', 'works', 'ai-video', 'web-projects', 'experience',
+    ]);
+    expect(screen.getByRole('region', { name: '影像与调色作品' })).toBe(sections[2]);
+    expect(container.querySelector('[data-featured-project]')).not.toBeInTheDocument();
+    const ai = screen.getByRole('region', { name: 'AI 创作与内容生产' });
+    const website = screen.getByRole('region', { name: '网站与交互' });
+    expect(website).not.toContainElement(ai);
+    expect(ai).not.toContainElement(website);
+    expect(website).toHaveTextContent('官网建设中 · 暂未公开');
+    expect(website).toHaveTextContent('实景照片可随鼠标响应');
+    expect(website.querySelector('a, button, video')).toBeNull();
+    expect(screen.queryByRole('region', { name: '技能与工具' })).not.toBeInTheDocument();
+    expect(screen.queryByText(/预留四张卡片|AI 视频媒体待接入/)).not.toBeInTheDocument();
+    const about = sections[1] as HTMLElement;
+    expect(about.querySelector('a[href="#works"]')).toBeInTheDocument();
+    expect(within(about).getByRole('list', { name: '能力范围' }).children).toHaveLength(6);
+    for (const group of aboutContent.capabilityGroups) {
+      fireEvent.click(within(about).getByRole('button', { name: group.title }));
+      const link = within(about).getByRole('link', { name: `${group.evidence!.label}：${group.title}` });
+      expect(container.querySelector(link.getAttribute('href')!)).toBeInTheDocument();
+    }
+    expect(about).toHaveTextContent('单条素材单月最高投放消耗');
+    expect(about).toHaveTextContent('投产比 1:5');
+    expect(about).toHaveTextContent('UV 价值从 0 提升至约 6 元');
+    expect(within(about).getByRole('img', { name: '杨玉峰个人肖像视频' })).toBeInTheDocument();
   });
-
   it('renders the complete verified experience source without crossing metric ownership', () => {
     render(<App />);
     const section = screen.getByRole('region', { name: '工作经历' });
@@ -165,9 +136,9 @@ describe('App', () => {
     expect(section).not.toHaveTextContent(/四个月|2025\.07—11|约8个月/);
   });
 
-  it('places each commercial case inside its owning experience and outside selected work', () => {
+  it('keeps the full commercial cases with their owning experience', () => {
     render(<App />);
-    const works = screen.getByRole('region', { name: '精选作品' });
+    const works = screen.getByRole('region', { name: '影像与调色作品' });
     const experience = screen.getByRole('region', { name: '工作经历' });
     const entries = [...experience.querySelectorAll<HTMLElement>('[data-experience-entry]')];
     const waterHeadings = screen.getAllByRole('heading', { name: '净水器' });
@@ -207,11 +178,11 @@ describe('App', () => {
 
   it('uses the one shared player for AI work and restores the exact card button on close', async () => {
     render(<App />);
-    const opener = screen.getByRole('button', { name: '打开横版 AI 视频全屏预览' });
+    const opener = screen.getByRole('button', { name: '打开时间线｜AI 剧情样片全屏预览' });
 
     fireEvent.click(opener);
 
-    const dialogs = screen.getAllByRole('dialog', { name: '播放作品：横版 AI 视频' });
+    const dialogs = screen.getAllByRole('dialog', { name: '播放作品：时间线｜AI 剧情样片' });
     expect(dialogs).toHaveLength(1);
     expect(dialogs[0].querySelector('video')).toHaveAttribute(
       'src',

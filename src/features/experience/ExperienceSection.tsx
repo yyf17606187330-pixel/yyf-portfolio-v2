@@ -1,39 +1,53 @@
 import type { ReactNode } from 'react';
 import type { ExperienceContent, ExperienceEntry } from '../../content/experience';
+import { InformationMarquee } from '../navigation/InformationMarquee';
 import './ExperienceSection.css';
 
 export interface ExperienceSectionProps {
   content: ExperienceContent;
+  paused?: boolean;
   renderProject?: (entry: ExperienceEntry) => ReactNode;
 }
 
-export function ExperienceSection({ content, renderProject }: ExperienceSectionProps) {
+export function ExperienceSection({ content, renderProject, paused = false }: ExperienceSectionProps) {
   const topMetrics = content.topMetrics ?? [];
 
   return (
     <section className="experience-section" id="experience" aria-label={content.eyebrow}>
-      {topMetrics.length > 0 ? (
-        <div className="experience-results" aria-label="工作成果概览">
-          <dl className="experience-results__inner">
-            {topMetrics.map((metric, index) => (
-              <div
-                className="experience-results__item"
-                data-experience-top-metric
-                key={`${metric.label}-${metric.value}`}
-              >
-                <dt>
-                  <span>{String(index + 1).padStart(2, '0')}</span>
-                  {metric.label}
-                </dt>
-                <dd>
-                  <strong>{metric.value}</strong>
-                  <span>{metric.context}</span>
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-      ) : null}
+      <div className="experience-overview">
+        <InformationMarquee
+          items={['BUSINESS & DELIVERY', '商业内容', '品牌传播', '运营投放', '团队协作', '项目交付']}
+          label="商业实践导览"
+          paused={paused}
+          tone="inverse"
+        />
+        {topMetrics.length > 0 ? (
+          <div className="experience-results" aria-label="工作成果概览">
+            <header className="experience-results__heading">
+              <h2>项目成果</h2>
+              <p>SELECTED OUTCOMES</p>
+            </header>
+            <dl className="experience-results__inner">
+              {topMetrics.map((metric, index) => (
+                <div
+                  className="experience-results__item"
+                  data-experience-top-metric
+                  key={`${metric.label}-${metric.value}`}
+                >
+                  <dt>
+                    <span>{String(index + 1).padStart(2, '0')}</span>
+                    {metric.label}
+                  </dt>
+                  <dd>
+                    <strong>{metric.value}</strong>
+                    <span>{metric.context}</span>
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        ) : null}
+      </div>
 
       <header className="experience-heading">
         <div className="experience-heading__chapter">
@@ -41,10 +55,13 @@ export function ExperienceSection({ content, renderProject }: ExperienceSectionP
           <i aria-hidden="true" />
           <p>{content.eyebrow} / EXPERIENCE</p>
         </div>
-        <h2 aria-label={`${content.title.primary} ${content.title.accent}`}>
-          <span>{content.title.primary}</span>
-          <em>{content.title.accent}</em>
-        </h2>
+        <div className="experience-heading__intro">
+          <h2 aria-label={`${content.title.primary}${content.title.accent}`}>
+            <span>{content.title.primary}</span>
+            <em>{content.title.accent}</em>
+          </h2>
+          <p>{content.intro}</p>
+        </div>
       </header>
 
       <div className="experience-list">
@@ -55,6 +72,7 @@ export function ExperienceSection({ content, renderProject }: ExperienceSectionP
 
           return (
             <article
+              id={`experience-${entry.id}`}
               className="experience-entry"
               data-experience-entry
               data-experience-id={entry.id}

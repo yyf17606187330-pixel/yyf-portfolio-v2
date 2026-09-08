@@ -10,10 +10,16 @@ describe('ExperienceSection', () => {
     const entries = [...container.querySelectorAll<HTMLElement>('[data-experience-entry]')];
 
     expect(section).toHaveAttribute('id', 'experience');
-    expect(within(section).getByRole('heading', {
+    const heading = within(section).getByRole('heading', {
       level: 2,
-      name: '内容运营与影像创作 从策划到交付',
-    })).toBeInTheDocument();
+      name: '工作经历内容、影像与团队协作',
+    });
+    const introduction = within(section).getByText(experienceContent.intro);
+    const results = within(section).getByLabelText('工作成果概览');
+    expect(heading).toBeInTheDocument();
+    expect(results.compareDocumentPosition(heading)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(results.compareDocumentPosition(introduction)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(results.closest('.experience-overview')).not.toContainElement(heading);
     expect(container.querySelectorAll('[data-experience-top-metric]')).toHaveLength(3);
     expect(section).toHaveTextContent('45万元／1:5');
     expect(section).toHaveTextContent('80万元／1:7');
@@ -31,7 +37,7 @@ describe('ExperienceSection', () => {
     const { container } = render(<ExperienceSection content={experienceContent} />);
 
     expect(container.querySelectorAll('[data-experience-summary]')).toHaveLength(6);
-    expect(container.querySelectorAll('[data-experience-detail]')).toHaveLength(14);
+    expect(container.querySelectorAll('[data-experience-detail]')).toHaveLength(13);
     expect(container.querySelectorAll('[data-experience-metric]')).toHaveLength(5);
     expect(container.querySelectorAll('[data-experience-note]')).toHaveLength(6);
 

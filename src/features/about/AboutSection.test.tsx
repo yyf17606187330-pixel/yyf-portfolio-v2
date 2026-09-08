@@ -1,6 +1,5 @@
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { aboutContent } from '../../content/about';
 import { AboutSection, type AboutContent } from './AboutSection';
 
 const fixture: AboutContent = {
@@ -36,12 +35,12 @@ const fixture: AboutContent = {
   ],
   signature: { name: '杨玉峰', role: '内容运营与影像创作者' },
   capabilityGroups: [
-    { id: 'content-operations', title: '内容与运营', description: '人群分析与平台运营。' },
-    { id: 'image-and-graphic', title: '影像与平面', description: '影像全流程与平面制作。' },
-    { id: 'ai-visual-production', title: 'AI视觉制作', description: '生图、融合改图与海报。' },
-    { id: 'ai-environment', title: 'AI环境搭建', description: '工具环境与账号订阅问题处理。' },
-    { id: 'web-and-agents', title: '网站与多Agent协作', description: '前端、部署与任务分工。' },
-    { id: 'management-and-efficiency', title: '管理与效率', description: '多维表格与结果导向协作。' },
+    { id: 'content-operations', title: '内容与运营', description: '人群分析与平台运营。', tags: ['人群分析'] },
+    { id: 'image-and-graphic', title: '影像与平面', description: '影像全流程与平面制作。', tags: ['拍摄'] },
+    { id: 'ai-visual-production', title: 'AI视觉制作', description: '生图、融合改图与海报。', tags: ['生图'] },
+    { id: 'ai-environment', title: 'AI环境搭建', description: '工具环境与账号订阅问题处理。', tags: ['工具环境'] },
+    { id: 'web-and-agents', title: '网站与多Agent协作', description: '前端、部署与任务分工。', tags: ['前端'] },
+    { id: 'management-and-efficiency', title: '管理与效率', description: '多维表格与结果导向协作。', tags: ['任务协作'] },
   ],
   outcomes: [
     { id: 'commercial-content', label: '商业内容', value: '45万元', description: '单条素材单月最高投放消耗。' },
@@ -87,14 +86,8 @@ afterEach(() => {
 });
 
 describe('AboutSection', () => {
-  it('uses the approved English primary title with the Chinese AI accent title', () => {
-    expect(aboutContent.title).toEqual({
-      primary: 'CONTENT STRATEGY & VISUAL PRODUCTION',
-      accent: 'AI应用与运营实践',
-    });
-  });
 
-  it('renders the approved 01 section with complete 8 / 6 / 3 information', () => {
+  it('renders the supplied biography with work phases and verified outcomes', () => {
     render(<AboutSection content={fixture} />);
 
     const section = screen.getByRole('region', { name: '关于我与工作方式' });
@@ -104,7 +97,7 @@ describe('AboutSection', () => {
       level: 2,
       name: '内容策划与影像创作 AI应用与运营实践',
     })).toBeInTheDocument();
-    expect(within(section).getAllByRole('listitem', { name: /能力：/ })).toHaveLength(8);
+    expect(within(section).queryByRole('list', { name: '核心能力' })).not.toBeInTheDocument();
     expect(within(section).getByRole('list', { name: '能力范围' }).children).toHaveLength(6);
     expect(section.querySelectorAll('dl[aria-label="实践与成果"] > div')).toHaveLength(3);
     expect(section).not.toHaveTextContent('content-operations');
@@ -112,17 +105,6 @@ describe('AboutSection', () => {
     expect(within(section).getByRole('link', { name: '进入作品集' })).toHaveAttribute('href', '#works');
   });
 
-  it('places a four-part editorial transition rail before the About title', () => {
-    const { container } = render(<AboutSection content={fixture} />);
-
-    const transition = screen.getByRole('complementary', { name: '关于我导览' });
-    expect(within(transition).getByText("NOW · AUG '26")).toBeInTheDocument();
-    expect(transition.querySelectorAll('dl > div')).toHaveLength(4);
-    expect(within(transition).getByText('新媒体内容运营')).toBeInTheDocument();
-    expect(within(transition).getByText('影像制作')).toBeInTheDocument();
-    expect(container.querySelector('[data-about-order="transition"]')?.nextElementSibling)
-      .toHaveAttribute('data-about-order', 'title');
-  });
 
   it('keeps the approved mobile reading order and stages two silent non-looping portrait videos', () => {
     const { container } = render(<AboutSection content={fixture} />);
@@ -130,13 +112,11 @@ describe('AboutSection', () => {
       .map((element) => element.getAttribute('data-about-order'));
 
     expect(order).toEqual([
-      'transition',
       'title',
-      'capabilities',
       'intro',
+      'scope',
       'portrait',
       'body',
-      'scope',
       'outcomes',
       'link',
     ]);

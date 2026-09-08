@@ -4,7 +4,7 @@ export interface ColorGradingWorkItem {
   slug: string;
   title: string;
   category: ProjectCategory;
-  categoryLabel: '调色练习';
+  categoryLabel: '调色作品';
   roles: readonly string[];
   description: string;
   poster: string;
@@ -26,16 +26,16 @@ export const colorGradingWorkGroup: ColorGradingWorkGroup = {
   id: 'color-grading-02-02',
   chapter: '02.02',
   label: '精选影像 · 第二辑',
-  title: '调色练习',
-  intro: '四支素材围绕不同场景与色彩方向进行调色练习。',
+  title: '调色作品',
+  intro: '通过四组不同场景，展示暗调氛围、橙青对比、肤色处理与高光控制。',
   items: [
     {
       slug: 'grading-skate-workshop',
       title: '滑板工坊',
       category: 'film',
-      categoryLabel: '调色练习',
+      categoryLabel: '调色作品',
       roles: ['调色'],
-      description: '滑板工坊场景，围绕暗调黄绿氛围完成调色练习。',
+      description: '以暗调黄绿处理滑板工坊画面，建立空间氛围。',
       poster: 'projects/long-form/grading-skate-workshop/poster-card.webp',
       previewSrc: 'projects/long-form/grading-skate-workshop/preview-h264.mp4',
       aspectRatio: '16/9',
@@ -45,9 +45,9 @@ export const colorGradingWorkGroup: ColorGradingWorkGroup = {
       slug: 'grading-percussion',
       title: '民族器乐',
       category: 'film',
-      categoryLabel: '调色练习',
+      categoryLabel: '调色作品',
       roles: ['调色'],
-      description: '民族器乐场景，围绕高饱和橙青关系完成调色练习。',
+      description: '以高饱和橙青处理民族器乐画面，突出冷暖对比。',
       poster: 'projects/long-form/grading-percussion/poster-card.webp',
       previewSrc: 'projects/long-form/grading-percussion/preview-h264.mp4',
       aspectRatio: '16/9',
@@ -57,9 +57,9 @@ export const colorGradingWorkGroup: ColorGradingWorkGroup = {
       slug: 'grading-dance',
       title: '民族舞蹈',
       category: 'film',
-      categoryLabel: '调色练习',
+      categoryLabel: '调色作品',
       roles: ['调色'],
-      description: '民族舞蹈场景，围绕暖肤色与高光控制完成调色练习。',
+      description: '处理民族舞蹈画面的暖肤色与高光，平衡人物和环境的明暗关系。',
       poster: 'projects/long-form/grading-dance/poster-card.webp',
       previewSrc: 'projects/long-form/grading-dance/preview-h264.mp4',
       aspectRatio: '16/9',
@@ -69,9 +69,9 @@ export const colorGradingWorkGroup: ColorGradingWorkGroup = {
       slug: 'grading-winter-aerial',
       title: '冬日航拍',
       category: 'film',
-      categoryLabel: '调色练习',
+      categoryLabel: '调色作品',
       roles: ['调色'],
-      description: '冬日航拍场景，围绕冷蓝色调完成收尾调色练习。',
+      description: '用冷蓝色调统一冬日航拍画面的整体观感。',
       poster: 'projects/long-form/grading-winter-aerial/poster-card.webp',
       previewSrc: 'projects/long-form/grading-winter-aerial/preview-h264.mp4',
       aspectRatio: '16/9',

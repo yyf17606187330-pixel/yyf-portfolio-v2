@@ -26,8 +26,8 @@ describe('CapabilityBoundarySection', () => {
       .toHaveLength(aboutContent.capabilities.length);
     expect(within(section).getByRole('list', { name: '能力范围清单' }).children)
       .toHaveLength(aboutContent.capabilityGroups.length);
-    expect(within(section).getByText('AI视觉制作')).toBeInTheDocument();
-    expect(within(section).getByText('网站与多Agent协作')).toBeInTheDocument();
+    expect(within(section).getByRole('list', { name: '能力范围清单' }))
+      .toHaveTextContent('运营投放');
   });
 
   it('uses the About capability range hierarchy as its typography contract', () => {

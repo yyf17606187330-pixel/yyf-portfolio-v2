@@ -48,8 +48,7 @@ const selectedFilms: readonly LongFilmRecord[] = [
     formatLabel: '2 : 1 / TRAVEL FILM',
     durationLabel: '04:20',
     summary: [
-      '从 800+ 段素材中梳理内容与节奏，完成剪辑、调色、配乐与人声处理。',
-      '在未参与拍摄的前提下，通过素材筛选、叙事组织与声音处理完成成片表达。',
+      '从 800+ 段素材中梳理叙事与节奏，完成剪辑、调色、配乐与人声处理。',
     ],
   },
   {
@@ -71,8 +70,7 @@ const selectedFilms: readonly LongFilmRecord[] = [
     formatLabel: '16 : 9 / SHORT FILM',
     durationLabel: '03:24',
     summary: [
-      '主导剧情短片从编导、制片、拍摄、剪辑、调色到输出的完整制作链路。',
-      '从前期组织到现场执行与后期完成，围绕人物和叙事推进画面表达。',
+      '从编导、制片到拍摄与后期，主导剧情短片的完整制作。',
     ],
   },
   {
@@ -93,7 +91,7 @@ const selectedFilms: readonly LongFilmRecord[] = [
     chapter: '02.01 / PRODUCT FILM',
     formatLabel: '16 : 9 / PRODUCT STUDY',
     durationLabel: '00:22',
-    summary: ['一支以 MacBook 为主体的 22 秒产品短片。'],
+    summary: ['以 MacBook 为主体的 22 秒自主产品短片。'],
   },
   {
     project: {
@@ -113,7 +111,7 @@ const selectedFilms: readonly LongFilmRecord[] = [
     chapter: '02.01 / SHORT FILM',
     formatLabel: '16 : 9 / NARRATIVE STUDY',
     durationLabel: '01:23',
-    summary: ['一支围绕室内人物与棋局场景展开的 1 分 23 秒剧情影像。'],
+    summary: ['围绕室内人物与棋局展开的 1 分 23 秒剧情短片。'],
   },
 ];
 
@@ -642,13 +640,12 @@ export function LongFormProjects({ playerOpen, onOpenProject }: LongFormProjects
         <p>LONG-FORM / MOVING IMAGE</p>
       </header>
       <div className="long-form-projects__intro">
-        <h2 aria-label="两种影像练习 关于行走与叙事">
-          <span>两种影像练习</span>
-          <em>关于行走与叙事</em>
+        <h2 aria-label="影像作品与调色作品">
+          <span>影像作品</span>
+          <em>与调色作品</em>
         </h2>
         <p>
-          从旅途素材的重新组织，到剧情、产品与人物影像的完整制作，
-          两辑作品呈现我在剪辑、调色、声音与现场执行之间的不同工作方式。
+          两组作品，分别展示完整影像制作与色彩处理能力。
         </p>
       </div>
 
@@ -667,8 +664,8 @@ export function LongFormProjects({ playerOpen, onOpenProject }: LongFormProjects
           previewLabel="8 秒静音预览"
         />
         <LongFilmDeck
-          ariaLabel="调色练习第二辑抽牌浏览"
-          controlLabel="调色练习"
+          ariaLabel="调色作品第二辑抽牌浏览"
+          controlLabel="调色作品"
           deckId={colorGradingWorkGroup.id}
           featureClassName="long-form-projects__feature--narrative"
           films={colorGradingFilms}

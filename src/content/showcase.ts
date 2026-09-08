@@ -1,6 +1,6 @@
 import type { Project } from '../types/portfolio';
 
-// Local preview only. Large media stays outside version control.
+// Approved web derivatives are tracked; MP4 files are restored through Git LFS.
 export const waterPurifierProject: Project = {
   slug: 'water-purifier',
   title: '净水器',
@@ -18,40 +18,40 @@ export const waterPurifierProject: Project = {
 };
 
 export const waterPurifierCopy = {
-  label: 'COMMERCIAL FILM / 商业短视频',
-  description: '从人群分析决定题材，再把内容制作、投放复盘与直播优化连成一条闭环。',
+  label: '商业短视频',
+  description: '从零搭建碧云泉直播间，围绕饮水需求制作短视频，并负责投放、账号运营与数据复盘。',
   durationLabel: '01:16',
   statusLabel: '已完成商业投放',
+  results: [
+    {
+      title: '素材投放',
+      body: '单条素材单月最高投放消耗 45 万元，投产比 1:5。',
+    },
+    {
+      title: '直播间运营',
+      body: '直播间 UV 价值从 0 提升至约 6 元，BPM 约 6000。',
+    },
+  ],
   process: [
     {
-      stage: '项目背景',
-      title: '从零搭起直播间骨架',
-      body: '项目起步时直播间尚未形成稳定的运营基础。我从场布、采购和成本控制入手，完成灯光器材、软装布局、采集传输信号及线上物料准备，并参与主播面试，让直播和内容生产具备可持续执行的基础。',
+      stage: '直播搭建',
+      title: '搭建可以开播的直播间',
+      body: '负责场布、采购与成本控制，配置灯光器材、软装、采集传输信号和线上物料，并参与主播面试。',
     },
     {
       stage: '人群与题材',
-      title: '用人群分析确定饮水安全题材',
-      body: '围绕饮水安全、饮水便捷、桌面陈设与品质生活需求拆分目标人群，并将饮水安全确立为重点题材。',
-    },
-    {
-      stage: '场景与卖点',
-      title: '把产品优势转成痛点开头和内容卖点',
-      body: '根据产品优势设计痛点开头、内容卖点与拍摄方式，让饮水安全、便捷和品质感在画面与话术中有明确落点。',
+      title: '以饮水安全切入产品卖点',
+      body: '围绕饮水安全、便捷、桌面陈设和品质生活拆分人群，将饮水安全作为重点题材，再据产品优势设计痛点开头、内容卖点和拍摄方式。',
     },
     {
       stage: '制作与发布',
-      title: '把策划、制作与发布连成一条链路',
-      body: '围绕千川素材完成策划、编导、拍摄、剪辑、调色、发布投放与数据复盘。',
+      title: '制作并投放千川素材',
+      body: '负责策划、编导、拍摄、剪辑、调色与发布投放，持续复盘千川素材数据。',
     },
     {
-      stage: '投放优化',
-      title: '用投放反馈持续压缩和优化表达',
-      body: '持续压缩文案信息密度、优化主播话术；单条素材单月最高投放消耗 45 万元，投产比 1:5。',
-    },
-    {
-      stage: '结果复盘',
-      title: '从内容结果反推直播表达',
-      body: '在持续迭代素材和直播表达后，直播间 UV 价值从 0 提升至约 6 元，BPM 约 6000。项目中我负责内容链路与账号运营，并承担直播间基础搭建和协作推进。',
+      stage: '表达优化',
+      title: '根据数据调整文案与主播话术',
+      body: '根据投放反馈优化文案信息密度、调整主播话术，持续迭代素材和直播表达。',
     },
   ],
 };

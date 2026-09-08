@@ -15,7 +15,7 @@ describe('ProjectShowcase', () => {
       <ProjectShowcase playerOpen={false} onOpenProject={onOpenProject} />,
     );
 
-    const showcase = screen.getByRole('region', { name: '精选作品' });
+    const showcase = screen.getByRole('region', { name: '影像与调色作品' });
     expect(showcase).toHaveAttribute('id', 'works');
     expect(within(showcase).queryByRole('heading', { name: '净水器' })).not.toBeInTheDocument();
 
@@ -66,14 +66,14 @@ describe('ProjectShowcase', () => {
     render(<ProjectShowcase playerOpen={false} onOpenProject={vi.fn()} />);
 
     const guide = screen.getByRole('region', { name: '作品区导览' });
-    expect(guide).toHaveTextContent('两组精选影像');
-    expect(guide).toHaveTextContent('8 条素材');
+    expect(guide).toHaveTextContent('两组精选作品');
+    expect(guide).toHaveTextContent('8 项作品');
     expect(guide).not.toHaveTextContent('净水器');
 
     const longFilms = screen.getByRole('region', { name: '长片作品' });
     expect(within(longFilms).getByRole('heading', {
       level: 2,
-      name: '两种影像练习 关于行走与叙事',
+      name: '影像作品与调色作品',
     })).toBeInTheDocument();
     expect(longFilms).not.toHaveTextContent(/排版占位|待补|待替换|待确认|当前不代填/);
     expect(longFilms.querySelector('.long-form-projects__heading > span')).toHaveTextContent(
@@ -108,7 +108,7 @@ describe('ProjectShowcase', () => {
       <ProjectShowcase playerOpen={false} onOpenProject={vi.fn()} />,
     );
     const rules = [...container.querySelectorAll('[data-reveal-rule]')];
-    expect(rules).toHaveLength(2);
+    expect(rules).toHaveLength(1);
     expect(rules[0]).toHaveAttribute('data-revealed', 'false');
     expect(observedOptions.get(rules[0])).toEqual({
       rootMargin: '0px 0px -16% 0px',
@@ -149,7 +149,7 @@ describe('ProjectShowcase', () => {
     );
 
     const rules = [...container.querySelectorAll('[data-reveal-rule]')];
-    expect(rules).toHaveLength(2);
+    expect(rules).toHaveLength(1);
     for (const rule of rules) {
       expect(rule).toHaveAttribute('data-revealed', 'true');
     }

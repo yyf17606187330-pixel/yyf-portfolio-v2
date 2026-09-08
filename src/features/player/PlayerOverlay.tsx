@@ -36,6 +36,7 @@ export function PlayerOverlay({ project, opener, onClose }: PlayerOverlayProps) 
   const closeRef = useRef<HTMLButtonElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const playbackGenerationRef = useRef(0);
+  const fullscreenRequestRef = useRef(0);
   const activeSlugRef = useRef<string | null>(null);
   const playbackSessionRef = useRef<string | null>(null);
   const mutedPreferenceRef = useRef(false);
@@ -186,7 +187,7 @@ export function PlayerOverlay({ project, opener, onClose }: PlayerOverlayProps) 
     const nextMuted = !isMuted;
     mutedPreferenceRef.current = nextMuted;
     video.muted = nextMuted;
-    dispatch({ type: 'toggle-muted' });
+    dispatch({ type: 'set-muted', muted: nextMuted });
   };
 
   const seek = (value: number) => {
@@ -207,17 +208,25 @@ export function PlayerOverlay({ project, opener, onClose }: PlayerOverlayProps) 
       return;
     }
 
+    const request = ++fullscreenRequestRef.current;
+    const reportUnavailable = () => {
+      if (fullscreenRequestRef.current === request && isCurrentVideo(video, project.slug)) {
+        setFullscreenUnavailable(true);
+      }
+    };
+    setFullscreenUnavailable(false);
+
     const fullscreenTarget = dialogRef.current?.requestFullscreen ? dialogRef.current : video;
     if (fullscreenTarget.requestFullscreen) {
-      void fullscreenTarget.requestFullscreen().catch(() => setFullscreenUnavailable(true));
+      void fullscreenTarget.requestFullscreen().catch(reportUnavailable);
       return;
     }
 
     try {
       if (video.webkitEnterFullscreen) video.webkitEnterFullscreen();
-      else setFullscreenUnavailable(true);
+      else reportUnavailable();
     } catch {
-      setFullscreenUnavailable(true);
+      reportUnavailable();
     }
   };
 
@@ -313,6 +322,12 @@ export function PlayerOverlay({ project, opener, onClose }: PlayerOverlayProps) 
               onTimeUpdate={(event) => {
                 if (isCurrentVideo(event.currentTarget, project.slug)) {
                   setCurrentTime(event.currentTarget.currentTime);
+                }
+              }}
+              onVolumeChange={(event) => {
+                if (isCurrentVideo(event.currentTarget, project.slug)) {
+                  mutedPreferenceRef.current = event.currentTarget.muted;
+                  dispatch({ type: 'set-muted', muted: event.currentTarget.muted });
                 }
               }}
             />

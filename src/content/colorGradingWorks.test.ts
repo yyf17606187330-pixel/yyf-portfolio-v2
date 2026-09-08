@@ -3,12 +3,12 @@ import { resolveMediaUrl } from '../lib/media';
 import { colorGradingWorkGroup } from './colorGradingWorks';
 
 describe('colorGradingWorkGroup', () => {
-  it('keeps the approved 02.02 group and four-film order', () => {
+  it('keeps the grading group and four-film order within selected work', () => {
     expect(colorGradingWorkGroup).toMatchObject({
       id: 'color-grading-02-02',
       chapter: '02.02',
       label: '精选影像 · 第二辑',
-      title: '调色练习',
+      title: '调色作品',
     });
     expect(colorGradingWorkGroup.items.map((item) => item.slug)).toEqual([
       'grading-skate-workshop',
@@ -46,7 +46,7 @@ describe('colorGradingWorkGroup', () => {
     expect(colorGradingWorkGroup.items.every((item) => (
       item.aspectRatio === '16/9'
       && item.category === 'film'
-      && item.categoryLabel === '调色练习'
+      && item.categoryLabel === '调色作品'
       && item.roles.length === 1
       && item.roles[0] === '调色'
     ))).toBe(true);

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } f
 import type { AboutContent } from '../../content/about';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { resolveMediaUrl } from '../../lib/media';
+import { SkillCards } from './SkillCards';
 import './AboutSection.css';
 
 export type { AboutContent } from '../../content/about';
@@ -235,145 +236,118 @@ export function AboutSection({ content, paused = false }: AboutSectionProps) {
       className="about-section"
       id="about"
     >
-      <aside
-        aria-label="关于我导览"
-        className="about-section__transition"
-        data-about-order="transition"
-      >
-        <div className="about-section__transition-inner">
-          <p className="about-section__now">
-            <span aria-hidden="true">•</span>
-            {content.transition.now}
-            <i aria-hidden="true" />
-          </p>
-          <dl className="about-section__transition-grid">
-            {content.transition.items.map((item) => (
-              <div key={item.id}>
-                <dt>{item.label}</dt>
-                <dd>{item.value}</dd>
-                <small>{item.detail}</small>
-              </div>
-            ))}
-          </dl>
-        </div>
-      </aside>
-
-      <header className="about-section__header" data-about-order="title">
-        <div className="about-section__chapter">
-          <span>{content.sectionNumber}</span>
-          <i aria-hidden="true" />
-          <p>{content.eyebrow}</p>
-        </div>
-        <h2 aria-label={`${content.title.primary} ${content.title.accent}`} id={titleId}>
-          <span>{content.title.primary}</span>
-          <em>{content.title.accent}</em>
-        </h2>
-      </header>
-
-      <div className="about-section__capability-rail" data-about-order="capabilities">
-        <ul aria-label="核心能力">
-          {content.capabilities.map((capability, index) => (
-            <li aria-label={`能力：${capability}`} key={capability}>
-              <span aria-hidden="true">{index === 0 ? '→' : '·'}</span>
-              {capability}
-            </li>
-          ))}
-        </ul>
-      </div>
-
       <div className="about-section__editorial-grid">
+        <header className="about-section__header" data-about-order="title">
+          <div className="about-section__chapter">
+            <span>{content.sectionNumber}</span>
+            <i aria-hidden="true" />
+            <p>{content.eyebrow}</p>
+          </div>
+          <h2 aria-label={`${content.title.primary} ${content.title.accent}`} id={titleId}>
+            <span>{content.title.primary}</span>
+            <em>{content.title.accent}</em>
+          </h2>
+        </header>
         <p className="about-section__intro" data-about-order="intro">
           {content.intro}
         </p>
 
-        <figure className="about-section__portrait" data-about-order="portrait">
-          <div
-            className="about-section__portrait-frame"
-            data-hover-reveal={portraitHoverActive ? 'active' : 'inactive'}
-            onPointerEnter={handlePortraitPointerEnter}
-            onPointerLeave={handlePortraitPointerLeave}
-            ref={portraitFrameRef}
-            style={{ aspectRatio: '2 / 3' }}
-          >
-            {portrait?.type === 'video' && portraitPoster ? (
-              <img
-                alt={portrait.alt}
-                className="about-section__portrait-poster"
-                decoding="async"
-                loading="lazy"
-                src={portraitPoster}
-                style={{ objectPosition: portrait.position ?? 'center' }}
-              />
-            ) : null}
-            {showPortraitVideo && portrait?.type === 'video' && portraitSource ? (
-              <video
-                aria-hidden="true"
-                className="about-section__portrait-video"
-                muted
-                playsInline
-                poster={portraitPoster ?? undefined}
-                preload="metadata"
-                ref={portraitVideoRef}
-                src={portraitSource}
-                style={{ objectPosition: portrait.position ?? 'center' }}
-                tabIndex={-1}
-                onEnded={() => setPortraitCompleted(true)}
-                onError={() => setFailedPortraitSource(portraitSource)}
-              />
-            ) : null}
-            {showPortraitHoverVideo && portrait?.type === 'video' && portraitHoverSource ? (
-              <video
-                aria-hidden="true"
-                className="about-section__portrait-hover-video"
-                muted
-                playsInline
-                preload="auto"
-                ref={portraitHoverVideoRef}
-                src={portraitHoverSource}
-                style={{ objectPosition: portrait.hover?.position ?? portrait.position ?? 'center' }}
-                tabIndex={-1}
-                onCanPlay={() => {
-                  if (portraitHoverPendingRef.current) startPortraitHover();
-                }}
-                onEnded={() => {
-                  portraitHoverShouldRestartRef.current = true;
-                }}
-                onError={() => {
-                  if (portraitHoverAnimationRef.current !== null) {
-                    cancelAnimationFrame(portraitHoverAnimationRef.current);
-                    portraitHoverAnimationRef.current = null;
-                  }
-                  portraitHoverActiveRef.current = false;
-                  portraitHoverRetractingRef.current = false;
-                  portraitHoverPendingRef.current = false;
-                  portraitHoverShouldRestartRef.current = true;
-                  setPortraitHoverActive(false);
-                  setPortraitHoverRadius(0);
-                  setFailedPortraitHoverSource(portraitHoverSource);
-                  resumePrimaryPortrait();
-                }}
-              />
-            ) : null}
-            {portrait?.type === 'image' && portraitSource ? (
-              <img
-                alt={portrait.alt}
-                src={portraitSource}
-                style={{ objectPosition: portrait.position ?? 'center' }}
-              />
-            ) : null}
-            {!portrait ? (
+        <section className="about-section__scope" data-about-order="scope">
+          <header>
+            <h3>技能与工作方式</h3>
+            <p>CAPABILITIES / 06</p>
+          </header>
+          <SkillCards groups={content.capabilityGroups} paused={paused}>
+            <figure className="about-section__portrait" data-about-order="portrait">
               <div
-                aria-label={content.portraitPlaceholder}
-                className="about-section__portrait-placeholder"
-                role="img"
+                className="about-section__portrait-frame"
+                data-hover-reveal={portraitHoverActive ? 'active' : 'inactive'}
+                onPointerEnter={handlePortraitPointerEnter}
+                onPointerLeave={handlePortraitPointerLeave}
+                ref={portraitFrameRef}
+                style={{ aspectRatio: '2 / 3' }}
               >
-                <span>2 : 3 / PORTRAIT</span>
-                <strong>{content.portraitPlaceholder}</strong>
+                {portrait?.type === 'video' && portraitPoster ? (
+                  <img
+                    alt={portrait.alt}
+                    className="about-section__portrait-poster"
+                    decoding="async"
+                    loading="lazy"
+                    src={portraitPoster}
+                    style={{ objectPosition: portrait.position ?? 'center' }}
+                  />
+                ) : null}
+                {showPortraitVideo && portrait?.type === 'video' && portraitSource ? (
+                  <video
+                    aria-hidden="true"
+                    className="about-section__portrait-video"
+                    muted
+                    playsInline
+                    poster={portraitPoster ?? undefined}
+                    preload="metadata"
+                    ref={portraitVideoRef}
+                    src={portraitSource}
+                    style={{ objectPosition: portrait.position ?? 'center' }}
+                    tabIndex={-1}
+                    onEnded={() => setPortraitCompleted(true)}
+                    onError={() => setFailedPortraitSource(portraitSource)}
+                  />
+                ) : null}
+                {showPortraitHoverVideo && portrait?.type === 'video' && portraitHoverSource ? (
+                  <video
+                    aria-hidden="true"
+                    className="about-section__portrait-hover-video"
+                    muted
+                    playsInline
+                    preload="auto"
+                    ref={portraitHoverVideoRef}
+                    src={portraitHoverSource}
+                    style={{ objectPosition: portrait.hover?.position ?? portrait.position ?? 'center' }}
+                    tabIndex={-1}
+                    onCanPlay={() => {
+                      if (portraitHoverPendingRef.current) startPortraitHover();
+                    }}
+                    onEnded={() => {
+                      portraitHoverShouldRestartRef.current = true;
+                    }}
+                    onError={() => {
+                      if (portraitHoverAnimationRef.current !== null) {
+                        cancelAnimationFrame(portraitHoverAnimationRef.current);
+                        portraitHoverAnimationRef.current = null;
+                      }
+                      portraitHoverActiveRef.current = false;
+                      portraitHoverRetractingRef.current = false;
+                      portraitHoverPendingRef.current = false;
+                      portraitHoverShouldRestartRef.current = true;
+                      setPortraitHoverActive(false);
+                      setPortraitHoverRadius(0);
+                      setFailedPortraitHoverSource(portraitHoverSource);
+                      resumePrimaryPortrait();
+                    }}
+                  />
+                ) : null}
+                {portrait?.type === 'image' && portraitSource ? (
+                  <img
+                    alt={portrait.alt}
+                    src={portraitSource}
+                    style={{ objectPosition: portrait.position ?? 'center' }}
+                  />
+                ) : null}
+                {!portrait ? (
+                  <div
+                    aria-label={content.portraitPlaceholder}
+                    className="about-section__portrait-placeholder"
+                    role="img"
+                  >
+                    <span>2 : 3 / PORTRAIT</span>
+                    <strong>{content.portraitPlaceholder}</strong>
+                  </div>
+                ) : null}
               </div>
-            ) : null}
-          </div>
-          <figcaption>PORTRAIT / WORKING IMAGE</figcaption>
-        </figure>
+              <figcaption>PORTRAIT / WORKING IMAGE</figcaption>
+            </figure>
+          </SkillCards>
+        </section>
 
         <div className="about-section__body" data-about-order="body">
           {content.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
@@ -383,24 +357,6 @@ export function AboutSection({ content, paused = false }: AboutSectionProps) {
             <span>{content.signature.role}</span>
           </p>
         </div>
-
-        <section className="about-section__scope" data-about-order="scope">
-          <header>
-            <p>CAPABILITY RANGE</p>
-            <h3>能力范围</h3>
-          </header>
-          <ol aria-label="能力范围">
-            {content.capabilityGroups.map((group, index) => (
-              <li key={group.id}>
-                <span>{String(index + 1).padStart(2, '0')}</span>
-                <div>
-                  <strong>{group.title}</strong>
-                  <p>{group.description}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </section>
 
         <section className="about-section__outcomes" data-about-order="outcomes">
           <header>
@@ -422,6 +378,8 @@ export function AboutSection({ content, paused = false }: AboutSectionProps) {
             ))}
           </dl>
         </section>
+
+
 
         <footer className="about-section__footer" data-about-order="link">
           <div>

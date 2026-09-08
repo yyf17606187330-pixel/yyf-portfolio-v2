@@ -16,16 +16,6 @@ export interface Project {
   aspectRatio: `${number}/${number}`;
 }
 
-export interface SiteProfile {
-  name: string;
-  latinName: string;
-  positioning: string;
-  bio: string;
-  portrait: string;
-  email: string;
-  wechatQr: string;
-}
-
 export interface FluidEffectConfig {
   colors: [string, string, string];
   intensity: number;

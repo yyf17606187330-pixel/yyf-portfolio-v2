@@ -15,4 +15,10 @@ public/media/ai-video/*
 !public/media/ai-video/landscape-poster.webp
 !public/media/ai-video/landscape-preview-h264.mp4
 !public/media/ai-video/landscape-full-h264.mp4
+!public/media/ai-video/collage-poster.webp
+!public/media/ai-video/collage-preview-h264.mp4
+!public/media/ai-video/collage-full-h264.mp4
+!public/media/ai-video/ski-poster.webp
+!public/media/ai-video/ski-preview-h264.mp4
+!public/media/ai-video/ski-full-h264.mp4
 .worktrees/

@@ -37,6 +37,7 @@ describe('Hero', () => {
   });
 
   afterEach(() => {
+    window.history.replaceState({}, '', '/');
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
@@ -58,13 +59,13 @@ describe('Hero', () => {
     expect(screen.getByText('懂运营，也能把内容从脚本拍到成片。')).toBeInTheDocument();
     expect(
       screen.getByText(
-        '我以新媒体运营为核心，独立完成选题策划、脚本编导、拍摄剪辑、发布投放与数据复盘。既懂内容怎么做，也懂内容为什么有效；AI 则是我提升创意和生产效率的一部分。',
+        '负责内容策划、拍摄剪辑与调色，也制作 AI 影像。商业项目中，我把内容制作、发布投放和数据复盘连起来。',
       ),
     ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '查看作品' })).toHaveAttribute('href', '#top');
     expect(screen.getByLabelText('微信联系标识')).toBeInTheDocument();
     expect(screen.getByText('Y.')).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: '微信' })).toHaveAttribute(
+    expect(screen.getByAltText('微信')).toHaveAttribute(
       'src',
       '/assets/icons/wechat.svg',
     );
@@ -90,7 +91,7 @@ describe('Hero', () => {
 
     expect(screen.getByText('肖像待替换')).toBeInTheDocument();
     expect(screen.queryByRole('img', { name: '杨玉峰个人肖像' })).not.toBeInTheDocument();
-    expect(screen.getByRole('img', { name: '微信' })).toBeInTheDocument();
+    expect(screen.getByAltText('微信')).toBeInTheDocument();
   });
 
   it('keeps the complete static narrative before the call to action', () => {
@@ -105,7 +106,7 @@ describe('Hero', () => {
       />,
     );
     const bio = screen.getByText(
-      '我以新媒体运营为核心，独立完成选题策划、脚本编导、拍摄剪辑、发布投放与数据复盘。既懂内容怎么做，也懂内容为什么有效；AI 则是我提升创意和生产效率的一部分。',
+      '负责内容策划、拍摄剪辑与调色，也制作 AI 影像。商业项目中，我把内容制作、发布投放和数据复盘连起来。',
     );
     const cta = screen.getByText('查看作品');
 
@@ -427,13 +428,83 @@ describe('Hero', () => {
     rerender(<Page />);
     expect(screen.getByRole('link', { name: '查看作品' })).toBeVisible();
     expect(screen.getByRole('link', { name: '返回页面顶部' })).toBeVisible();
-    expect(screen.getByLabelText('微信联系标识')).toBeVisible();
+    expect(screen.getByLabelText('微信联系标识')).not.toBeVisible();
 
     unmount();
     for (const control of controls) {
       expect(control.style.opacity).toBe('');
       expect(control.style.visibility).toBe('');
     }
+  });
+
+  it('keeps the marker outside Hero and reveals it through static-page scrolling without losing its initial state', () => {
+    let scrollPosition = 0;
+    vi.spyOn(window, 'scrollY', 'get').mockImplementation(() => scrollPosition);
+    const frames = new Map<number, FrameRequestCallback>();
+    let frameId = 0;
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+      frames.set(++frameId, callback);
+      return frameId;
+    });
+    vi.stubGlobal('cancelAnimationFrame', (id: number) => frames.delete(id));
+    const portrait = { objectPosition: '64% 43%', scale: 1, src: '/portrait.webp', tone: 'light' as const };
+    const { container, rerender, unmount } = render(<Hero portrait={portrait} />);
+    const marker = screen.getByLabelText('微信联系标识');
+    expect(container.querySelector('.hero')).not.toContainElement(marker);
+    expect(marker.parentElement).toBe(document.body);
+    expect(marker).not.toBeVisible();
+    const scroll = (position: number) => {
+      scrollPosition = position;
+      fireEvent.scroll(window);
+      act(() => {
+        const pending = [...frames.values()];
+        frames.clear();
+        pending.forEach((callback) => callback(performance.now()));
+      });
+    };
+    scroll(window.innerHeight * 0.36);
+    expect(Number(marker.style.opacity)).toBeGreaterThan(0);
+    expect(Number(marker.style.opacity)).toBeLessThan(1);
+    scroll(window.innerHeight * 3);
+    expect(marker).toHaveStyle({ opacity: '1' });
+    rerender(<Hero paused portrait={portrait} />);
+    expect(marker).toHaveAttribute('hidden');
+    rerender(<Hero portrait={portrait} />);
+    expect(marker).toBeVisible();
+    scroll(0);
+    expect(marker).not.toBeVisible();
+    unmount();
+    expect(document.body).not.toContainElement(marker);
+  });
+
+  it('keeps navigation visible before metadata when the page opened on a valid anchor after Hero', () => {
+    const about = document.createElement('section');
+    about.id = 'about';
+    document.body.appendChild(about);
+    window.history.replaceState({}, '', '/#about');
+    useScrollVideoMock.mockImplementation(({ poster }: { poster: string }) => ({
+      motionEligible: true,
+      motionEnabled: false,
+      videoProps: { poster, muted: true, playsInline: true },
+    }));
+    const headerRef = createRef<HTMLElement>();
+    const { container, unmount } = render(
+      <>
+        <SiteHeader headerRef={headerRef} />
+        <Hero
+          headerRef={headerRef}
+          portrait={{ objectPosition: '64% 43%', scale: 1, src: '/assets/hero/hero-candidate-03.webp', tone: 'light' }}
+          scrollVideo={{ poster: '/media/hero/hero-poster.webp', source: '/media/hero/hero-scroll.mp4' }}
+        />
+      </>,
+    );
+
+    expect(container.querySelector('.site-header')).toBeVisible();
+    expect(screen.getByLabelText('微信联系标识')).toBeVisible();
+    expect(screen.getByRole('link', { name: '查看作品' })).toBeVisible();
+
+    unmount();
+    about.remove();
   });
 
   it('reserves the persistent CTA space before enabling the pinned story', () => {

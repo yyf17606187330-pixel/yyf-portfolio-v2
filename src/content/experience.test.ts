@@ -41,7 +41,8 @@ describe('experience content', () => {
     expect(zepin.company).toBe('广州哲品家居用品有限公司');
     expect(zepin.displayPeriod).toBe('2025.07—2025.11');
     expect(zepin.metrics.some((metric) => metric.value.includes('80万元') && metric.value.includes('1:7'))).toBe(true);
-    expect(zepin.publicNotes.join('')).not.toMatch(/四个月|2025\.07|2025\.11/);
+    expect(zepin.publicNotes.join('')).toContain('2025.07—2025.11');
+    expect(zepin.publicNotes.join('')).not.toMatch(/四个月|2025 · 短期项目/);
 
     expect(biyunquan.brand).toBe('碧云泉官方旗舰店');
     expect(biyunquan.displayPeriod).toBe('2022.10—2025.06');

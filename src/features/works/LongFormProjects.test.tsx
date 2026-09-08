@@ -128,9 +128,9 @@ describe('LongFormProjects card deck', () => {
 
     expect(screen.getByRole('heading', {
       level: 2,
-      name: '两种影像练习 关于行走与叙事',
+      name: '影像作品与调色作品',
     })).toBeInTheDocument();
-    expect(container).toHaveTextContent('从 800+ 段素材中梳理内容与节奏');
+    expect(container).toHaveTextContent('从 800+ 段素材中梳理叙事与节奏');
     expect(cards.map((card) => card.dataset.filmCard)).toEqual([
       'travel-vlog',
       'narrative-film',
@@ -184,7 +184,7 @@ describe('LongFormProjects card deck', () => {
     ]);
 
     const secondFeature = decks[1].closest<HTMLElement>('[data-card-feature]')!;
-    fireEvent.click(within(secondFeature).getByRole('button', { name: '下一张调色练习' }));
+    fireEvent.click(within(secondFeature).getByRole('button', { name: '下一张调色作品' }));
     expect(activeSlug(decks[0])).toBe('travel-vlog');
     expect(activeSlug(decks[1])).toBe('grading-percussion');
     expect(decks[0].closest('[data-card-feature]')).toHaveTextContent('旅拍 Vlog');
@@ -244,12 +244,12 @@ describe('LongFormProjects card deck', () => {
     const copySlot = container.querySelector('[data-active-film-copy]');
 
     expect(copySlot).toHaveTextContent('旅拍 Vlog');
-    expect(copySlot).toHaveTextContent('从 800+ 段素材中梳理内容与节奏');
+    expect(copySlot).toHaveTextContent('从 800+ 段素材中梳理叙事与节奏');
     fireEvent.click(screen.getByRole('button', { name: '下一张作品' }));
 
     expect(container.querySelector('[data-active-film-copy]')).toBe(copySlot);
     expect(copySlot).toHaveTextContent('剧情短片');
-    expect(copySlot).toHaveTextContent('主导剧情短片从编导、制片、拍摄、剪辑、调色到输出');
+    expect(copySlot).toHaveTextContent('从编导、制片到拍摄与后期，主导剧情短片的完整制作');
     expect(container.querySelectorAll('.long-form-projects__editorial-grid')).toHaveLength(1);
   });
 
@@ -402,7 +402,7 @@ describe('LongFormProjects card deck', () => {
     const gradingFeature = gradingDeck.closest<HTMLElement>('[data-card-feature]')!;
     const outgoingCard = gradingDeck.querySelector('[data-film-card="grading-skate-workshop"]');
 
-    fireEvent.click(within(gradingFeature).getByRole('button', { name: '下一张调色练习' }));
+    fireEvent.click(within(gradingFeature).getByRole('button', { name: '下一张调色作品' }));
 
     expect(activeSlug(container.querySelector('[data-film-deck="selected-films-02-01"]')!))
       .toBe('travel-vlog');

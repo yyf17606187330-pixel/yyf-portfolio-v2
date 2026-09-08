@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { CSSProperties, RefObject } from 'react';
+import { createPortal } from 'react-dom';
 import gsap from 'gsap';
 import { useScrollVideo } from '../../hooks/useScrollVideo';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
 
 export interface HeroPortrait {
   objectPosition: string;
@@ -14,13 +16,14 @@ interface HeroProps {
   headerRef?: RefObject<HTMLElement | null>;
   worksHref?: string;
   portrait: HeroPortrait;
+  paused?: boolean;
   scrollVideo?: {
     poster: string;
     source: string;
   };
 }
 
-export function Hero({ headerRef, portrait, scrollVideo, worksHref = '#top' }: HeroProps) {
+export function Hero({ headerRef, portrait, scrollVideo, worksHref = '#top', paused = false }: HeroProps) {
   const heroRef = useRef<HTMLElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
   const mediaRef = useRef<HTMLDivElement>(null);
@@ -31,6 +34,7 @@ export function Hero({ headerRef, portrait, scrollVideo, worksHref = '#top' }: H
   const videoRef = useRef<HTMLVideoElement>(null);
   const [fitsViewport, setFitsViewport] = useState(true);
   const [failedPoster, setFailedPoster] = useState<string | null>(null);
+  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const poster = scrollVideo?.poster && failedPoster !== scrollVideo.poster
     ? scrollVideo.poster
     : portrait.src;
@@ -197,8 +201,20 @@ export function Hero({ headerRef, portrait, scrollVideo, worksHref = '#top' }: H
   });
 
   useLayoutEffect(() => {
+    const hashTarget = document.getElementById(window.location.hash.slice(1));
+    const openedPastHero = window.location.hash !== '#top'
+      && Boolean(hashTarget)
+      && !heroRef.current?.contains(hashTarget);
+
     if (!motionEligible) {
       return undefined;
+    }
+
+    if (openedPastHero) {
+      const context = gsap.context(() => {
+        gsap.set(markerRef.current, { autoAlpha: 1, x: 0 });
+      }, heroRef);
+      return () => context.revert();
     }
 
     // Hide before the first paint, not only after asynchronous video metadata arrives.
@@ -213,6 +229,40 @@ export function Hero({ headerRef, portrait, scrollVideo, worksHref = '#top' }: H
       context.revert();
     };
   }, [clearStoryAnimation, headerRef, motionEligible]);
+
+  useLayoutEffect(() => {
+    const marker = markerRef.current;
+    if (motionEligible || !marker) return undefined;
+    let animation: gsap.core.Tween;
+    const context = gsap.context(() => {
+      animation = gsap.fromTo(marker, { autoAlpha: 0, x: 14 }, {
+        autoAlpha: 1, x: 0, duration: 1, ease: 'sine.inOut', paused: true,
+      });
+    }, heroRef);
+    let initial = true;
+    let frame: number | null = null;
+    const update = () => {
+      frame = null;
+      const target = document.getElementById(window.location.hash.slice(1));
+      const openedPastHero = initial && window.location.hash !== '#top'
+        && Boolean(target) && !heroRef.current?.contains(target);
+      const progress = Math.min(1, Math.max(0, (window.scrollY / window.innerHeight - 0.16) / 0.4));
+      animation.progress(openedPastHero ? 1 : reducedMotion ? Number(window.scrollY > 0) : progress);
+      initial = false;
+    };
+    const schedule = () => {
+      if (frame === null) frame = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    return () => {
+      if (frame !== null) cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', schedule);
+      window.removeEventListener('resize', schedule);
+      context.revert();
+    };
+  }, [motionEligible, reducedMotion]);
 
   const heroStyle = {
     '--hero-image-position': portrait.objectPosition,
@@ -256,8 +306,7 @@ export function Hero({ headerRef, portrait, scrollVideo, worksHref = '#top' }: H
             <p className="hero__positioning hero__story-line">新媒体内容运营 × 影像创作者</p>
             <p className="hero__emphasis hero__story-line">懂运营，也能把内容从脚本拍到成片。</p>
             <p className="hero__bio hero__story-line">
-              我以新媒体运营为核心，独立完成选题策划、脚本编导、拍摄剪辑、发布投放与数据复盘。既懂内容怎么做，也懂内容为什么有效；AI
-              则是我提升创意和生产效率的一部分。
+              负责内容策划、拍摄剪辑与调色，也制作 AI 影像。商业项目中，我把内容制作、发布投放和数据复盘连起来。
             </p>
             <a className="hero__cta" href={worksHref} ref={ctaRef}>查看作品</a>
           </div>
@@ -287,14 +336,17 @@ export function Hero({ headerRef, portrait, scrollVideo, worksHref = '#top' }: H
           </div>
         </div>
       </div>
-      <div aria-label="微信联系标识" className="hero__marker" ref={markerRef}>
-        <span className="hero__marker-initial">Y.</span>
-        <img
-          alt="微信"
-          className="hero__marker-wechat"
-          src="/assets/icons/wechat.svg"
-        />
-      </div>
+      {createPortal(
+        <div aria-label="微信联系标识" className="hero__marker" hidden={paused} ref={markerRef}>
+          <a aria-label="回到开场" className="hero__marker-initial" href="#top">Y.</a>
+          <img
+            alt="微信"
+            className="hero__marker-wechat"
+            src="/assets/icons/wechat.svg"
+          />
+        </div>,
+        document.body,
+      )}
     </section>
   );
 }

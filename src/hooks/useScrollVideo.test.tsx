@@ -39,6 +39,8 @@ const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 interface MockScrollTriggerConfig {
   end: () => string;
   invalidateOnRefresh: boolean;
+  onRefresh?: () => void;
+  onRefreshInit?: () => void;
   onUpdate: (trigger: { progress: number }) => void;
   pin: Element;
   scrub: boolean;
@@ -112,6 +114,7 @@ describe('useScrollVideo', () => {
     gsapMock.context.mockClear();
     gsapMock.revert.mockClear();
     scrollTriggerMock.create.mockClear();
+    scrollTriggerMock.create.mockReturnValue({ progress: 0 });
     setMediaPreferences();
     frameCallbacks.clear();
     nextFrameId = 1;
@@ -127,6 +130,8 @@ describe('useScrollVideo', () => {
   });
 
   afterEach(() => {
+    window.history.replaceState({}, '', '/');
+    document.querySelectorAll('[data-hash-test-target]').forEach((target) => target.remove());
     vi.unstubAllGlobals();
   });
 
@@ -261,6 +266,279 @@ describe('useScrollVideo', () => {
     expect(video.currentTime).toBe(1.5);
   });
 
+  it.each(['about', 'works'])('restores an initially aligned #%s anchor after creating the pin', (id) => {
+    const target = document.createElement('section');
+    const scrollIntoView = vi.fn();
+    let targetTop = 96;
+    target.id = id;
+    target.dataset.hashTestTarget = 'true';
+    target.style.scrollMarginTop = '96px';
+    Object.defineProperty(target, 'scrollIntoView', {
+      configurable: true,
+      value: scrollIntoView.mockImplementation(() => {
+        targetTop = 96;
+      }),
+    });
+    vi.spyOn(target, 'getBoundingClientRect').mockImplementation(() => ({
+      bottom: targetTop + 100,
+      height: 100,
+      left: 0,
+      right: 100,
+      top: targetTop,
+      width: 100,
+      x: 0,
+      y: targetTop,
+      toJSON: () => ({}),
+    }));
+    document.body.appendChild(target);
+    window.history.replaceState({}, '', `/#${id}`);
+    scrollTriggerMock.create.mockImplementationOnce((config: MockScrollTriggerConfig) => {
+      config.onRefreshInit?.();
+      targetTop += 1600;
+      config.onRefresh?.();
+      return { progress: 1 };
+    });
+    const { getByTestId } = render(<ScrollVideoHarness />);
+    const video = getByTestId('scroll-video') as HTMLVideoElement;
+    flushAnimationFrame();
+    Object.defineProperty(video, 'duration', { configurable: true, value: 6 });
+
+    fireEvent.loadedMetadata(video);
+    flushAnimationFrame();
+
+    expect(scrollIntoView).toHaveBeenCalledOnce();
+    expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'auto', block: 'start' });
+    expect(target.getBoundingClientRect().top).toBe(96);
+  });
+
+  it('does not restore the hash anchor when the user has already scrolled away before the pin is created', () => {
+    const target = document.createElement('section');
+    const scrollIntoView = vi.fn();
+    target.id = 'about';
+    target.dataset.hashTestTarget = 'true';
+    Object.defineProperty(target, 'scrollIntoView', { configurable: true, value: scrollIntoView });
+    vi.spyOn(target, 'getBoundingClientRect').mockReturnValue({
+      bottom: 340,
+      height: 100,
+      left: 0,
+      right: 100,
+      top: 240,
+      width: 100,
+      x: 0,
+      y: 240,
+      toJSON: () => ({}),
+    });
+    document.body.appendChild(target);
+    window.history.replaceState({}, '', '/#about');
+    const { getByTestId } = render(<ScrollVideoHarness />);
+    const video = getByTestId('scroll-video') as HTMLVideoElement;
+    flushAnimationFrame();
+    Object.defineProperty(video, 'duration', { configurable: true, value: 6 });
+
+    fireEvent.loadedMetadata(video);
+    flushAnimationFrame();
+
+    expect(scrollIntoView).not.toHaveBeenCalled();
+  });
+
+  it('does not restore the hash anchor when scrolling continues while the pin correction is pending', () => {
+    const target = document.createElement('section');
+    const scrollIntoView = vi.fn();
+    target.id = 'about';
+    target.dataset.hashTestTarget = 'true';
+    Object.defineProperty(target, 'scrollIntoView', { configurable: true, value: scrollIntoView });
+    vi.spyOn(target, 'getBoundingClientRect').mockReturnValue({
+      bottom: 100,
+      height: 100,
+      left: 0,
+      right: 100,
+      top: 0,
+      width: 100,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
+    document.body.appendChild(target);
+    window.history.replaceState({}, '', '/#about');
+    vi.stubGlobal('scrollY', 320);
+    const { getByTestId } = render(<ScrollVideoHarness />);
+    const video = getByTestId('scroll-video') as HTMLVideoElement;
+    flushAnimationFrame();
+    Object.defineProperty(video, 'duration', { configurable: true, value: 6 });
+
+    fireEvent.loadedMetadata(video);
+    vi.stubGlobal('scrollY', 420);
+    flushAnimationFrame();
+
+    expect(scrollIntoView).not.toHaveBeenCalled();
+  });
+
+  it('does not restore a pending anchor after the hash changes', () => {
+    const target = document.createElement('section');
+    const scrollIntoView = vi.fn();
+    target.id = 'about';
+    target.dataset.hashTestTarget = 'true';
+    Object.defineProperty(target, 'scrollIntoView', { configurable: true, value: scrollIntoView });
+    vi.spyOn(target, 'getBoundingClientRect').mockReturnValue({
+      bottom: 100,
+      height: 100,
+      left: 0,
+      right: 100,
+      top: 0,
+      width: 100,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
+    document.body.appendChild(target);
+    window.history.replaceState({}, '', '/#about');
+    const { getByTestId } = render(<ScrollVideoHarness />);
+    const video = getByTestId('scroll-video') as HTMLVideoElement;
+    flushAnimationFrame();
+    Object.defineProperty(video, 'duration', { configurable: true, value: 6 });
+
+    fireEvent.loadedMetadata(video);
+    window.history.replaceState({}, '', '/#works');
+    flushAnimationFrame();
+
+    expect(scrollIntoView).not.toHaveBeenCalled();
+  });
+
+  it('does not restore a pending anchor after its target is removed', () => {
+    const target = document.createElement('section');
+    const scrollIntoView = vi.fn();
+    target.id = 'about';
+    target.dataset.hashTestTarget = 'true';
+    Object.defineProperty(target, 'scrollIntoView', { configurable: true, value: scrollIntoView });
+    vi.spyOn(target, 'getBoundingClientRect').mockReturnValue({
+      bottom: 100,
+      height: 100,
+      left: 0,
+      right: 100,
+      top: 0,
+      width: 100,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
+    document.body.appendChild(target);
+    window.history.replaceState({}, '', '/#about');
+    const { getByTestId } = render(<ScrollVideoHarness />);
+    const video = getByTestId('scroll-video') as HTMLVideoElement;
+    flushAnimationFrame();
+    Object.defineProperty(video, 'duration', { configurable: true, value: 6 });
+
+    fireEvent.loadedMetadata(video);
+    target.remove();
+    flushAnimationFrame();
+
+    expect(scrollIntoView).not.toHaveBeenCalled();
+  });
+
+  it('restores a later native hash navigation when the existing pin is refreshed', () => {
+    const { getByTestId } = render(<ScrollVideoHarness />);
+    const video = getByTestId('scroll-video') as HTMLVideoElement;
+    flushAnimationFrame();
+    Object.defineProperty(video, 'duration', { configurable: true, value: 6 });
+    fireEvent.loadedMetadata(video);
+    const config = scrollTriggerMock.create.mock.calls[0]?.[0] as MockScrollTriggerConfig;
+    const target = document.createElement('section');
+    const scrollIntoView = vi.fn();
+    target.id = 'works';
+    target.dataset.hashTestTarget = 'true';
+    Object.defineProperty(target, 'scrollIntoView', { configurable: true, value: scrollIntoView });
+    vi.spyOn(target, 'getBoundingClientRect').mockReturnValue({
+      bottom: 100,
+      height: 100,
+      left: 0,
+      right: 100,
+      top: 0,
+      width: 100,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
+    document.body.appendChild(target);
+    window.history.replaceState({}, '', '/#works');
+
+    act(() => {
+      config.onRefreshInit?.();
+      config.onRefresh?.();
+    });
+    flushAnimationFrame();
+
+    expect(scrollIntoView).toHaveBeenCalledOnce();
+  });
+
+  it('publishes the pin instance progress instead of resetting an aligned deep link to the top', () => {
+    const onProgress = vi.fn();
+    const target = document.createElement('section');
+    target.id = 'about';
+    target.dataset.hashTestTarget = 'true';
+    Object.defineProperty(target, 'scrollIntoView', { configurable: true, value: vi.fn() });
+    vi.spyOn(target, 'getBoundingClientRect').mockReturnValue({
+      bottom: 100,
+      height: 100,
+      left: 0,
+      right: 100,
+      top: 0,
+      width: 100,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
+    document.body.appendChild(target);
+    window.history.replaceState({}, '', '/#about');
+    scrollTriggerMock.create.mockReturnValueOnce({ progress: 1 });
+    const { getByTestId } = render(<ScrollVideoHarness onProgress={onProgress} />);
+    const video = getByTestId('scroll-video') as HTMLVideoElement;
+    flushAnimationFrame();
+    Object.defineProperty(video, 'duration', { configurable: true, value: 6 });
+
+    fireEvent.loadedMetadata(video);
+
+    expect(onProgress).toHaveBeenLastCalledWith(1);
+    expect(onProgress).not.toHaveBeenCalledWith(0);
+  });
+
+  it('restores #top safely and ignores a hash with no matching element', () => {
+    const target = document.createElement('main');
+    const scrollIntoView = vi.fn();
+    target.id = 'top';
+    target.dataset.hashTestTarget = 'true';
+    Object.defineProperty(target, 'scrollIntoView', { configurable: true, value: scrollIntoView });
+    vi.spyOn(target, 'getBoundingClientRect').mockReturnValue({
+      bottom: 100,
+      height: 100,
+      left: 0,
+      right: 100,
+      top: 0,
+      width: 100,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
+    document.body.appendChild(target);
+    window.history.replaceState({}, '', '/#top');
+    const firstRender = render(<ScrollVideoHarness />);
+    const firstVideo = firstRender.getByTestId('scroll-video') as HTMLVideoElement;
+    flushAnimationFrame();
+    Object.defineProperty(firstVideo, 'duration', { configurable: true, value: 6 });
+    fireEvent.loadedMetadata(firstVideo);
+    flushAnimationFrame();
+    expect(scrollIntoView).toHaveBeenCalledOnce();
+
+    firstRender.unmount();
+    target.remove();
+    window.history.replaceState({}, '', '/#missing');
+    const secondRender = render(<ScrollVideoHarness />);
+    const secondVideo = secondRender.getByTestId('scroll-video') as HTMLVideoElement;
+    flushAnimationFrame();
+    Object.defineProperty(secondVideo, 'duration', { configurable: true, value: 6 });
+    expect(() => fireEvent.loadedMetadata(secondVideo)).not.toThrow();
+    expect(scrollTriggerMock.create).toHaveBeenCalledTimes(2);
+  });
+
   it('coalesces rapid scroll updates into one seek per animation frame', () => {
     const { getByTestId } = render(<ScrollVideoHarness />);
     const video = getByTestId('scroll-video') as HTMLVideoElement;
@@ -328,18 +606,37 @@ describe('useScrollVideo', () => {
   });
 
   it('cancels a pending seek and reverts the GSAP context when unmounted', () => {
+    const target = document.createElement('section');
+    target.id = 'about';
+    target.dataset.hashTestTarget = 'true';
+    Object.defineProperty(target, 'scrollIntoView', { configurable: true, value: vi.fn() });
+    vi.spyOn(target, 'getBoundingClientRect').mockReturnValue({
+      bottom: 100,
+      height: 100,
+      left: 0,
+      right: 100,
+      top: 0,
+      width: 100,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
+    document.body.appendChild(target);
+    window.history.replaceState({}, '', '/#about');
     const { getByTestId, unmount } = render(<ScrollVideoHarness />);
     const video = getByTestId('scroll-video') as HTMLVideoElement;
     flushAnimationFrame();
     Object.defineProperty(video, 'duration', { configurable: true, value: 6 });
     fireEvent.loadedMetadata(video);
     const config = scrollTriggerMock.create.mock.calls[0]?.[0] as MockScrollTriggerConfig;
+    const pendingAnchorFrame = vi.mocked(window.requestAnimationFrame).mock.results.at(-1)?.value;
 
     act(() => config.onUpdate({ progress: 0.5 }));
     const pendingSeekFrame = vi.mocked(window.requestAnimationFrame).mock.results.at(-1)?.value;
     unmount();
     flushAnimationFrame();
 
+    expect(window.cancelAnimationFrame).toHaveBeenCalledWith(pendingAnchorFrame);
     expect(window.cancelAnimationFrame).toHaveBeenCalledWith(pendingSeekFrame);
     expect(gsapMock.revert).toHaveBeenCalledOnce();
     expect(video.currentTime).toBe(0);

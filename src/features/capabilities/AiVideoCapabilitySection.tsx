@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type MouseEvent } from 'react';
-import type { AiVideoCapabilityItem } from '../../content/aiVideoCapability';
+import { aiProductionContent, type AiVideoCapabilityItem } from '../../content/aiVideoCapability';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { resolveMediaUrl } from '../../lib/media';
 import type { Project } from '../../types/portfolio';
@@ -69,12 +69,13 @@ function AiVideoMedia({ item, active, reducedMotion, onOpenFullscreen }: AiVideo
     : item.previewSrc
       ? '悬停加载预览'
       : 'AI 视频媒体待接入';
-  const ratioLabel = item.aspectRatio ?? 'FORMAT TBD';
+  const ratioLabel = item.aspectRatio === '1472/632' ? '2.33 : 1' : item.aspectRatio?.replace('/', ' : ') ?? 'FORMAT TBD';
 
   return (
     <div
       className="ai-video-capability__media"
       data-media-ratio={item.aspectRatio ?? 'pending'}
+      style={{ aspectRatio: item.aspectRatio ?? '16/9' }}
     >
       {posterUrl ? (
         <img alt={`${item.title}封面`} decoding="async" loading="lazy" src={posterUrl} />
@@ -96,7 +97,7 @@ function AiVideoMedia({ item, active, reducedMotion, onOpenFullscreen }: AiVideo
           {item.previewSrc ? '悬停后加载预览' : 'AI 视频媒体待接入'}
         </span>
       ) : null}
-      <span className="ai-video-capability__ratio">{ratioLabel.replace('/', ' : ')}</span>
+      <span className="ai-video-capability__ratio">{ratioLabel}</span>
       {hasPlayableMedia ? (
         <button
           aria-label={`打开${item.title}全屏预览`}
@@ -104,7 +105,7 @@ function AiVideoMedia({ item, active, reducedMotion, onOpenFullscreen }: AiVideo
           type="button"
           onClick={onOpenFullscreen}
         >
-          全屏预览
+          <span>观看视频</span>
         </button>
       ) : (
         <span className="ai-video-capability__status">{status}</span>
@@ -120,6 +121,8 @@ export function AiVideoCapabilitySection({
 }: AiVideoCapabilitySectionProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
+  const featuredItem = items.find((item) => item.featured);
+  const supportingItems = items.filter((item) => item !== featuredItem);
 
   const openFullscreen = (
     item: AiVideoCapabilityItem,
@@ -132,77 +135,106 @@ export function AiVideoCapabilitySection({
     onOpenProject(toPlayerProject(item, index), opener);
   };
 
+  const renderProjectCard = (item: AiVideoCapabilityItem) => {
+    const hasMedia = Boolean(item.poster && item.fullSrc);
+
+    return (
+      <article
+        aria-labelledby={`ai-project-${item.id}`}
+        className={`ai-video-capability__card ai-video-capability__card--${item.featured ? 'featured' : 'supporting'}${hasMedia ? '' : ' ai-video-capability__card--text'}`}
+        data-ai-video-card={item.id}
+        data-orientation={item.orientation}
+        data-has-preview={item.previewSrc ? 'true' : 'false'}
+        key={item.id}
+        onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+            setActiveId((current) => (current === item.id ? null : current));
+          }
+        }}
+        onFocus={() => {
+          if (!paused && item.previewSrc && !reducedMotion) setActiveId(item.id);
+        }}
+        onPointerEnter={(event) => {
+          if (!paused && event.pointerType !== 'touch' && item.previewSrc && !reducedMotion) {
+            setActiveId(item.id);
+          }
+        }}
+        onPointerLeave={(event) => {
+          if (event.pointerType !== 'touch') {
+            setActiveId((current) => (current === item.id ? null : current));
+          }
+        }}
+      >
+        {hasMedia ? (
+          <AiVideoMedia
+            active={!paused && activeId === item.id}
+            item={item}
+            reducedMotion={reducedMotion}
+            onOpenFullscreen={(event) => openFullscreen(item, items.indexOf(item), event.currentTarget)}
+          />
+        ) : null}
+        <div className="ai-video-capability__meta">
+          <div className="ai-video-capability__meta-topline">
+            <p>{item.label}</p>
+            {item.aspectRatio ? <span>{item.aspectRatio === '1472/632' ? '2.33:1' : item.aspectRatio.replace('/', ':')}</span> : null}
+          </div>
+          <h3 id={`ai-project-${item.id}`}>{item.title}</h3>
+          <p>{item.description}</p>
+        </div>
+        {item.result ? (
+          <dl className="ai-video-capability__practice-result">
+            <div>
+              <dt>{item.result.label}</dt>
+              <dd>{item.result.value}</dd>
+            </div>
+          </dl>
+        ) : null}
+      </article>
+    );
+  };
+
   return (
     <section
-      aria-label="AI 视频能力"
+      aria-label={aiProductionContent.title}
       className="ai-video-capability"
       id="ai-video"
     >
       <div className="ai-video-capability__inner">
         <div className="ai-video-capability__chapter" aria-hidden="true">
-          <span>INDEPENDENT CAPABILITY</span>
+          <span>AI CREATION</span>
           <i />
-          <p>AI 视频 / AI VIDEO</p>
+          <p>影像创作与内容生产</p>
         </div>
 
         <header className="ai-video-capability__heading-grid">
           <h2 id="ai-video-capability-title">
-            <span>横竖两种画幅</span>
-            <em>独立 AI 视频能力</em>
+            <span>{aiProductionContent.title}</span>
           </h2>
-          <p>
-            把 AI 视频单独放在能力区：先预留四张卡片，横版与竖版各自保留合适的展示比例；悬停当前卡片才加载预览。
-          </p>
+          <p>{aiProductionContent.intro}</p>
         </header>
 
-        <div className="ai-video-capability__media-grid" aria-label="AI 视频能力作品">
-          {items.map((item, index) => (
-            <article
-              className={`ai-video-capability__card ai-video-capability__card--${item.orientation}`}
-              data-ai-video-card={item.id}
-              data-has-preview={item.previewSrc ? 'true' : 'false'}
-              key={item.id}
-              onBlur={(event) => {
-                if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
-                  setActiveId((current) => (current === item.id ? null : current));
-                }
-              }}
-              onFocus={() => {
-                if (!paused && item.previewSrc && !reducedMotion) {
-                  setActiveId(item.id);
-                }
-              }}
-              onPointerEnter={(event) => {
-                if (!paused
-                  && event.pointerType !== 'touch'
-                  && item.previewSrc
-                  && !reducedMotion) {
-                  setActiveId(item.id);
-                }
-              }}
-              onPointerLeave={(event) => {
-                if (event.pointerType !== 'touch') {
-                  setActiveId((current) => (current === item.id ? null : current));
-                }
-              }}
-            >
-              <AiVideoMedia
-                active={!paused && activeId === item.id}
-                item={item}
-                reducedMotion={reducedMotion}
-                onOpenFullscreen={(event) => openFullscreen(item, index, event.currentTarget)}
-              />
-              <div className="ai-video-capability__meta">
-                <div className="ai-video-capability__meta-topline">
-                  <p>{item.label}</p>
-                  <span>{item.aspectRatio ?? 'FORMAT TBD'}</span>
-                </div>
-                <h3>{item.title}</h3>
-                <p>{item.description}</p>
+        <div className="ai-video-capability__practice-grid">
+          {featuredItem ? renderProjectCard(featuredItem) : null}
+          <article className="ai-video-capability__practice" aria-labelledby="ai-delivery-title">
+            <div>
+              <p className="ai-video-capability__practice-label">{aiProductionContent.delivery.label}</p>
+              <h3 id="ai-delivery-title">{aiProductionContent.delivery.title}</h3>
+              <p className="ai-video-capability__practice-description">{aiProductionContent.delivery.description}</p>
+            </div>
+            <dl className="ai-video-capability__practice-result">
+              <div>
+                <dt>{aiProductionContent.delivery.resultLabel}</dt>
+                <dd>{aiProductionContent.delivery.result}</dd>
               </div>
-            </article>
-          ))}
+            </dl>
+          </article>
         </div>
+
+        {supportingItems.length > 0 ? (
+          <div className="ai-video-capability__media-grid" aria-label="AI 影像作品">
+            {supportingItems.map(renderProjectCard)}
+          </div>
+        ) : null}
       </div>
     </section>
   );

@@ -113,7 +113,7 @@
 .project-media-deck__card-number {
   border: var(--line) solid rgb(42 34 28 / 24%);
   border-radius: 999px;
-  font-size: 0.72rem;
+  font-size: var(--type-content-label);
   font-weight: 700;
   height: 2.75rem;
   justify-content: center;
@@ -126,7 +126,7 @@
 .project-media-deck__play-label {
   border-radius: 999px;
   bottom: 0.75rem;
-  font-size: 0.76rem;
+  font-size: var(--type-content-note);
   font-weight: 650;
   justify-content: center;
   min-height: 2.75rem;
@@ -145,7 +145,7 @@
 
 .project-media-deck__counter {
   color: var(--showcase-clay-text);
-  font-size: 0.68rem;
+  font-size: var(--type-content-label);
   font-weight: 650;
   letter-spacing: 0.1em;
   margin: 0;

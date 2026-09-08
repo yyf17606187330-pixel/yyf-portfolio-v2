@@ -12,6 +12,10 @@ export interface CommercialProjectCaseProps {
   durationLabel: string;
   statusLabel: string;
   mediaItems: readonly ProjectMediaDeckSourceItem[];
+  results: Array<{
+    title: string;
+    body: string;
+  }>;
   process: Array<{
     stage: string;
     title: string;
@@ -28,18 +32,13 @@ export function CommercialProjectCase({
   durationLabel,
   statusLabel,
   mediaItems,
+  results,
   process,
   playerOpen,
   onOpenProject,
 }: CommercialProjectCaseProps) {
   const projectTitleId = `${project.slug}-title`;
   const projectDescriptionId = `${project.slug}-description`;
-  const tickerItems = [
-    { label: '类别', value: label },
-    ...project.roles.map((role, index) => ({ label: index === 0 ? '职责' : '', value: role })),
-    { label: '片长', value: durationLabel },
-  ];
-  const roleSummary = project.roles.join(' · ');
 
   return (
     <section
@@ -54,45 +53,35 @@ export function CommercialProjectCase({
         <h2 aria-label={project.title} id={projectTitleId}>
           {project.title}<span aria-hidden="true">项目</span>
         </h2>
-        <p className="project-showcase__statement">
-          <em id={projectDescriptionId}>{description}</em>
+        <p className="project-showcase__statement" id={projectDescriptionId}>
+          {description}
         </p>
       </header>
 
-      <article className="project-showcase__project" aria-labelledby={projectTitleId}>
-        <div className="project-showcase__meta">
-          <div aria-label="作品信息" className="project-showcase__meta-summary">
-            <div className="project-showcase__meta-group project-showcase__meta-category">
-              <span>类别</span>
-              <strong>{label}</strong>
-            </div>
-            <div className="project-showcase__meta-group project-showcase__meta-roles">
-              <span>职责</span>
-              <ul aria-label="本项目职责">
-                {project.roles.map((role) => <li key={role}>{role}</li>)}
-              </ul>
-            </div>
-            <div className="project-showcase__meta-group project-showcase__meta-duration">
-              <span>片长</span>
-              <strong>{durationLabel}</strong>
-            </div>
-          </div>
+      <article
+        aria-describedby={projectDescriptionId}
+        aria-labelledby={projectTitleId}
+        className="project-showcase__project"
+      >
+        <div className="project-showcase__summary">
+          <section aria-label={`${project.title}项目职责`} className="project-showcase__responsibilities">
+            <h3>项目职责</h3>
+            <ul aria-label="本项目职责">
+              {project.roles.map((role) => <li key={role}>{role}</li>)}
+            </ul>
+          </section>
 
-          <div aria-hidden="true" className="project-showcase__ticker">
-            <div className="project-showcase__ticker-track">
-              {[0, 1].map((copyIndex) => (
-                <div className="project-showcase__ticker-set" key={copyIndex}>
-                  {tickerItems.map((item, itemIndex) => (
-                    <span className="project-showcase__ticker-item" key={`${item.label}-${item.value}`}>
-                      {item.label ? <span>{item.label}</span> : null}
-                      <strong>{item.value}</strong>
-                      <i>{itemIndex === tickerItems.length - 1 ? '—' : '·'}</i>
-                    </span>
-                  ))}
+          <section aria-label={`${project.title}项目结果`} className="project-showcase__results">
+            <h3>项目结果</h3>
+            <dl>
+              {results.map((result) => (
+                <div key={result.title}>
+                  <dt>{result.title}</dt>
+                  <dd>{result.body}</dd>
                 </div>
               ))}
-            </div>
-          </div>
+            </dl>
+          </section>
         </div>
 
         <div className="project-showcase__media project-showcase__media--deck-focus">
@@ -105,35 +94,34 @@ export function CommercialProjectCase({
           />
         </div>
 
-        <section aria-label="项目关键信息" className="project-showcase__vitals">
-          <header>
-            <h3>Project vitals</h3>
-            <span>{project.year}</span>
-          </header>
-          <dl>
-            <div><dt>类别 / TYPE</dt><dd>{label}</dd></div>
-            <div><dt>职责 / ROLE</dt><dd>{roleSummary}</dd></div>
-            <div><dt>画幅 / LENGTH</dt><dd>9 / 16 · {durationLabel}</dd></div>
-            <div><dt>品牌 / BRAND</dt><dd>{project.client}</dd></div>
-            <div><dt>周期 / PERIOD</dt><dd>{project.year}</dd></div>
-            <div><dt>状态 / STATUS</dt><dd>{statusLabel}</dd></div>
-          </dl>
-        </section>
-
-        <div aria-label={`${project.title}项目说明`} className="project-showcase__copy">
-          <div className="project-showcase__process-heading">
-            <strong>/ {project.title}项目 · 创作过程</strong>
-            <span>PROCESS NOTES</span>
+        <section aria-label={`${project.title}项目说明`} className="project-showcase__copy">
+          <div className="project-showcase__process">
+            <h3>制作过程</h3>
+            <ol aria-label={`${project.title}项目创作过程`} className="project-showcase__timeline">
+              {process.map((item, index) => (
+                <li key={item.title}>
+                  <span className="project-showcase__stage">
+                    {String(index + 1).padStart(2, '0')} / {item.stage}
+                  </span>
+                  <h4>{item.title}</h4>
+                  <p>{item.body}</p>
+                </li>
+              ))}
+            </ol>
           </div>
-          <ol aria-label={`${project.title}项目创作过程`} className="project-showcase__timeline">
-            {process.map((item, index) => (
-              <li key={item.title}>
-                <span className="project-showcase__stage">0{index + 1} / {item.stage}</span>
-                <p><strong>{item.title}</strong>{item.body}</p>
-              </li>
-            ))}
-          </ol>
-        </div>
+
+          <section aria-label="项目关键信息" className="project-showcase__vitals">
+            <h3>关键信息</h3>
+            <dl>
+              <div><dt>类别</dt><dd>{label}</dd></div>
+              <div>
+                <dt>画幅 · 片长</dt>
+                <dd>{project.aspectRatio.replace('/', ' : ')} · {durationLabel}</dd>
+              </div>
+              <div><dt>状态</dt><dd>{statusLabel}</dd></div>
+            </dl>
+          </section>
+        </section>
       </article>
     </section>
   );

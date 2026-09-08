@@ -10,52 +10,47 @@ afterEach(() => {
 });
 
 describe('AiVideoCapabilitySection', () => {
-  it('renders four rounded-card slots without inventing media requests', () => {
+  it('groups the real AI projects and delivery work without attaching unrelated media', () => {
     const { container } = render(
       <AiVideoCapabilitySection items={aiVideoCapabilityItems} onOpenProject={vi.fn()} />,
     );
-    const section = screen.getByRole('region', { name: 'AI 视频能力' });
-
+    const section = screen.getByRole('region', { name: 'AI 创作与内容生产' });
     expect(section).toHaveAttribute('id', 'ai-video');
-    expect(within(section).getByRole('heading', { name: '横竖两种画幅独立 AI 视频能力' }))
-      .toBeInTheDocument();
-    expect(section.querySelectorAll('[data-ai-video-card]')).toHaveLength(4);
-    expect(section.querySelector('[data-ai-video-card="ai-video-landscape"] .ai-video-capability__media'))
-      .toHaveAttribute('data-media-ratio', '16/9');
-    expect(section.querySelector('[data-ai-video-card="ai-video-landscape"] img'))
+    expect(within(section).getByRole('heading', { name: 'AI 创作与内容生产' })).toBeInTheDocument();
+    expect(section.querySelectorAll('[data-ai-video-card]')).toHaveLength(3);
+    expect(within(section).getByRole('heading', { name: '图片制作与资料交付' })).toBeInTheDocument();
+    expect(within(section).getAllByRole('button')).toHaveLength(3);
+    const sports = within(section).getByRole('article', { name: '产品 TVC｜运动场景样片' });
+    expect(sports).toHaveTextContent('滑雪、骑行、攀岩');
+    expect(sports.querySelector('img')).toHaveAttribute('src', '/media/ai-video/ski-poster.webp');
+    expect(sports.querySelector('.ai-video-capability__media')).toHaveStyle({ aspectRatio: '1472/632' });
+    expect(sports).not.toHaveTextContent('完整成片');
+    expect(within(section).getByRole('img', { name: '时间线｜AI 剧情样片封面' }))
       .toHaveAttribute('src', '/media/ai-video/landscape-poster.webp');
-    expect(section.querySelector('[data-ai-video-card="ai-video-portrait"] .ai-video-capability__media'))
-      .toHaveAttribute('data-media-ratio', '9/16');
-    expect(section.querySelector('[data-ai-video-card="ai-video-reserved-03"] .ai-video-capability__media'))
-      .toHaveAttribute('data-media-ratio', 'pending');
-    expect(section.querySelector('[data-ai-video-card="ai-video-reserved-04"] .ai-video-capability__media'))
-      .not.toHaveAttribute('style');
+    expect(section).not.toHaveTextContent(/待接入|FORMAT TBD|预留/);
     expect(container.querySelectorAll('video')).toHaveLength(0);
-    expect(section).toHaveTextContent('AI 视频媒体待接入');
-    expect(section).toHaveTextContent('FORMAT TBD');
   });
-
-  it('keeps the supplied titles and format labels visible for later media replacement', () => {
-    render(<AiVideoCapabilitySection items={aiVideoCapabilityItems} onOpenProject={vi.fn()} />);
-
-    expect(screen.getByRole('heading', { name: '横版 AI 视频' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: '竖版复古拼贴' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: '待接入 AI 作品 03' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: '待接入 AI 作品 04' })).toBeInTheDocument();
-    expect(screen.getByText('AI VIDEO / LANDSCAPE')).toBeInTheDocument();
-    expect(screen.getByText('AI VIDEO / PORTRAIT')).toBeInTheDocument();
+  it('retains confirmed project text and delivery work when their media is not yet supplied', () => {
+    const { container } = render(
+      <AiVideoCapabilitySection items={aiVideoCapabilityItems.slice(1).map((item) => ({
+        ...item, poster: null, previewSrc: null, fullSrc: null, aspectRatio: null,
+      }))} onOpenProject={vi.fn()} />,
+    );
+    expect(screen.getByRole('region', { name: 'AI 创作与内容生产' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '产品 TVC｜运动场景样片' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '复古拼贴影像' })).toBeInTheDocument();
+    expect(container.querySelector('img, video, button')).toBeNull();
   });
-
   it('mounts only the hovered preview and stops it when the pointer leaves', () => {
     const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
     const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined);
     const items = aiVideoCapabilityItems.map((item, index) => (
-      index < 2 ? { ...item, previewSrc: `ai-preview-${index}.mp4` } : item
+      index < 2 ? { ...item, poster: `ai-poster-${index}.webp`, previewSrc: `ai-preview-${index}.mp4`, fullSrc: `ai-full-${index}.mp4` } : item
     ));
     const { container } = render(
       <AiVideoCapabilitySection items={items} onOpenProject={vi.fn()} />,
     );
-    const cards = [...container.querySelectorAll<HTMLElement>('[data-ai-video-card]')];
+    const cards = [...container.querySelectorAll<HTMLElement>('[data-ai-video-card][data-has-preview="true"]')];
 
     expect(container.querySelectorAll('video')).toHaveLength(0);
 
@@ -118,13 +113,13 @@ describe('AiVideoCapabilitySection', () => {
     ));
     render(<AiVideoCapabilitySection items={items} onOpenProject={onOpenProject} />);
 
-    const openButton = screen.getByRole('button', { name: '打开横版 AI 视频全屏预览' });
+    const openButton = screen.getByRole('button', { name: '打开时间线｜AI 剧情样片全屏预览' });
     fireEvent.click(openButton);
 
     expect(onOpenProject).toHaveBeenCalledTimes(1);
     expect(onOpenProject).toHaveBeenCalledWith(
       expect.objectContaining({
-        title: '横版 AI 视频',
+        title: '时间线｜AI 剧情样片',
         previewSrc: 'ai-preview-landscape.mp4',
         fullSrc: 'ai-full-landscape.mp4',
       }),
@@ -149,7 +144,7 @@ describe('AiVideoCapabilitySection', () => {
 
     fireEvent.pointerEnter(card, { pointerType: 'mouse' });
     expect(card.querySelector('video')).not.toBeInTheDocument();
-    const openButton = screen.getByRole('button', { name: '打开横版 AI 视频全屏预览' });
+    const openButton = screen.getByRole('button', { name: '打开时间线｜AI 剧情样片全屏预览' });
     fireEvent.click(openButton);
 
     expect(onOpenProject).toHaveBeenCalledWith(

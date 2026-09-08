@@ -4,40 +4,33 @@ import { describe, expect, it } from 'vitest';
 import { aiVideoCapabilityItems } from './aiVideoCapability';
 
 describe('aiVideoCapabilityItems', () => {
-  it('keeps the independent AI video group to four reserved slots', () => {
-    expect(aiVideoCapabilityItems).toHaveLength(4);
-    expect(aiVideoCapabilityItems.slice(0, 2).map((item) => item.orientation)).toEqual([
-      'landscape',
-      'portrait',
+  it('preserves the verified native format of each of the three works', () => {
+    expect(aiVideoCapabilityItems.map((item) => [item.id, item.aspectRatio])).toEqual([
+      ['ai-video-landscape', '16/9'],
+      ['ai-video-portrait', '9/16'],
+      ['ai-video-sports-tvc', '1472/632'],
     ]);
-    expect(aiVideoCapabilityItems.slice(0, 2).map((item) => item.aspectRatio)).toEqual(['16/9', '9/16']);
-    expect(aiVideoCapabilityItems.slice(2).every((item) => item.aspectRatio === null)).toBe(true);
   });
 
-  it('keeps the supplied landscape preview and explicit empty reserved media slots', () => {
-    expect(aiVideoCapabilityItems[0].previewSrc).toBe('ai-video/landscape-preview-h264.mp4');
-    expect(aiVideoCapabilityItems[0].fullSrc).toBe('ai-video/landscape-full-h264.mp4');
-    expect(aiVideoCapabilityItems[0].poster).toBe('ai-video/landscape-poster.webp');
-    expect(aiVideoCapabilityItems.slice(1).every((item) => (
-      item.poster === null && item.previewSrc === null && item.fullSrc === null
-    )))
-      .toBe(true);
+  it('keeps each real work attached to its own poster, preview and player files', () => {
+    const prefixes = ['landscape', 'collage', 'ski'];
+    for (const [index, item] of aiVideoCapabilityItems.entries()) {
+      expect(item.poster).toBe('ai-video/' + prefixes[index] + '-poster.webp');
+      expect(item.previewSrc).toBe('ai-video/' + prefixes[index] + '-preview-h264.mp4');
+      expect(item.fullSrc).toBe('ai-video/' + prefixes[index] + '-full-h264.mp4');
+    }
     expect(aiVideoCapabilityItems.map((item) => item.title)).toEqual([
-      '横版 AI 视频',
-      '竖版复古拼贴',
-      '待接入 AI 作品 03',
-      '待接入 AI 作品 04',
+      '时间线｜AI 剧情样片', '复古拼贴影像', '产品 TVC｜运动场景样片',
     ]);
   });
 
-  it('references checked-in poster, preview, and full-player media', () => {
-    const landscape = aiVideoCapabilityItems[0];
-    const mediaPaths = [landscape.poster, landscape.previewSrc, landscape.fullSrc];
-
-    expect(landscape.previewSrc).not.toBe(landscape.fullSrc);
-    for (const mediaPath of mediaPaths) {
-      expect(mediaPath).not.toBeNull();
-      expect(existsSync(resolve(process.cwd(), 'public/media', mediaPath!))).toBe(true);
+  it('references existing distinct poster, preview and full-player media', () => {
+    for (const item of aiVideoCapabilityItems) {
+      expect(item.previewSrc).not.toBe(item.fullSrc);
+      for (const path of [item.poster, item.previewSrc, item.fullSrc]) {
+        expect(path).not.toBeNull();
+        expect(existsSync(resolve(process.cwd(), 'public/media', path!))).toBe(true);
+      }
     }
   });
 });
