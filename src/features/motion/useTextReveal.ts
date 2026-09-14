@@ -243,7 +243,11 @@ function createTextRevealController(
     observer.observe(unit.element);
   };
 
-  const registerUnit = (element: HTMLElement, targets: HTMLElement[]) => {
+  const registerUnit = (
+    element: HTMLElement,
+    targets: HTMLElement[],
+    allowInitialPositionRestore: boolean,
+  ) => {
     let unit = units.get(element);
     if (!unit) {
       unit = {
@@ -273,12 +277,13 @@ function createTextRevealController(
       setGroupState(unit, 'revealed');
       return;
     }
+    if (unit.state !== 'pending') return;
     setGroupState(unit, unit.state);
-    if (shouldStartVisible(unit)) finishUnit(unit);
+    if (allowInitialPositionRestore && shouldStartVisible(unit)) finishUnit(unit);
     else observePendingUnit(unit);
   };
 
-  const refreshTargets = () => {
+  const refreshTargets = (allowInitialPositionRestore = false) => {
     if (destroyed) return;
     for (const target of [...targetUnits.keys()]) {
       if (!root.contains(target) || !target.matches(TARGET_SELECTOR)) unregisterTarget(target);
@@ -290,10 +295,12 @@ function createTextRevealController(
 
     for (const group of groups) {
       const groupTargets = targets.filter((target) => target.closest(GROUP_SELECTOR) === group);
-      registerUnit(group, groupTargets);
+      registerUnit(group, groupTargets, allowInitialPositionRestore);
     }
     for (const target of targets) {
-      if (!target.closest(GROUP_SELECTOR)) registerUnit(target, [target]);
+      if (!target.closest(GROUP_SELECTOR)) {
+        registerUnit(target, [target], allowInitialPositionRestore);
+      }
     }
   };
 
@@ -344,7 +351,7 @@ function createTextRevealController(
     childList: true,
     subtree: true,
   });
-  refreshTargets();
+  refreshTargets(true);
   revealHashTarget();
 
   return {

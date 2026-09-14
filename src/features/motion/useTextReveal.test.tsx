@@ -93,6 +93,23 @@ function LateMarkerHarness() {
   );
 }
 
+function RefreshingHarness() {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [updated, setUpdated] = useState(false);
+  useTextReveal(rootRef, { enabled: true, paused: false });
+
+  return (
+    <div ref={rootRef}>
+      <button onClick={() => setUpdated(true)} type="button">更新计数</button>
+      <section data-text-reveal-group="refreshing">
+        <h2 data-text-reveal>刷新测试标题</h2>
+        <p data-text-reveal>刷新测试正文</p>
+      </section>
+      {updated ? <span>计数 2</span> : null}
+    </div>
+  );
+}
+
 describe('useTextReveal', () => {
   const observers: Array<{
     callback: IntersectionObserverCallback;
@@ -325,6 +342,40 @@ describe('useTextReveal', () => {
     const animation = gsap.getTweensOf(heading)[0];
     act(() => { animation.totalProgress(1); });
     expect(heading).toHaveAttribute('data-text-reveal-state', 'revealed');
+  });
+
+  it('animates content expanded after restoring a deep scroll position', async () => {
+    vi.spyOn(window, 'scrollY', 'get').mockReturnValue(640);
+    const { container, getByRole, getByText } = render(<DynamicHarness />);
+
+    fireEvent.click(getByRole('button', { name: '展开内容' }));
+    const heading = getByText('动态标题');
+    const group = container.querySelector<HTMLElement>('[data-text-reveal-group="dynamic"]')!;
+
+    await waitFor(() => expect(heading).toHaveAttribute('data-text-reveal-state', 'pending'));
+    enter(group);
+    expect(heading).toHaveAttribute('data-text-reveal-state', 'animating');
+    expect(gsap.getTweensOf(heading)).toHaveLength(1);
+  });
+
+  it('keeps an in-progress reveal intact when later DOM updates refresh the registry', async () => {
+    let scrollY = 0;
+    vi.spyOn(window, 'scrollY', 'get').mockImplementation(() => scrollY);
+    const { container, getByRole, getByText } = render(<RefreshingHarness />);
+    const group = container.querySelector<HTMLElement>('[data-text-reveal-group="refreshing"]')!;
+    const heading = getByText('刷新测试标题');
+
+    enter(group);
+    const animation = gsap.getTweensOf(heading)[0];
+    act(() => { animation.totalProgress(0.25); });
+    scrollY = 640;
+    fireEvent.click(getByRole('button', { name: '更新计数' }));
+
+    await waitFor(() => expect(getByText('计数 2')).toBeInTheDocument());
+    await waitFor(() => expect(heading).toHaveAttribute('data-text-reveal-state', 'animating'));
+    expect(gsap.getTweensOf(heading)).toContain(animation);
+    expect(animation.totalProgress()).toBeGreaterThanOrEqual(0.25);
+    expect(animation.totalProgress()).toBeLessThan(1);
   });
 
   it('registers text when the input marker attribute is added after insertion', async () => {
