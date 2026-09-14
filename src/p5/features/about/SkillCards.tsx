@@ -1,3 +1,4 @@
+import { ArrowIcon } from '../../../features/navigation/ArrowIcon';
 import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import gsap from 'gsap';
 import type { AboutContent } from '../../content/about';
@@ -104,7 +105,7 @@ export function SkillCards({ groups, paused = false, children }: SkillCardsProps
                   <span className="skill-card__title">{group.title}</span>
                   {group.caption ? <span aria-hidden="true" className="skill-card__caption">{group.caption}</span> : null}
                 </span>
-                <span aria-hidden="true" className="skill-card__mark">{selected.id === group.id ? '→' : '↗'}</span>
+                <span aria-hidden="true" className="skill-card__mark"><ArrowIcon direction={selected.id === group.id ? 'right' : 'up-right'} /></span>
               </button>
             </li>
           ))}
@@ -143,7 +144,7 @@ export function SkillCards({ groups, paused = false, children }: SkillCardsProps
         ) : null}
         {selected.evidence ? (
           <a aria-label={selected.evidence.label + '：' + selected.title} className="skill-detail__evidence" href={selected.evidence.href}>
-            {selected.evidence.label}<span aria-hidden="true">↗</span>
+            {selected.evidence.label}<span aria-hidden="true"><ArrowIcon /></span>
           </a>
         ) : null}
       </div>

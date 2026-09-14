@@ -162,7 +162,7 @@ describe('AboutSection', () => {
       .toHaveAttribute('src', '/media/about/about-portrait-poster.webp');
   });
 
-  it('does not load the hover material on devices without hover', () => {
+  it('switches and restores the portrait on touch devices through an accessible tap control', () => {
     vi.stubGlobal('matchMedia', vi.fn((query: string) => ({
       matches: false,
       media: query,
@@ -176,7 +176,14 @@ describe('AboutSection', () => {
 
     const { container } = render(<AboutSection content={fixture} />);
     expect(container.querySelector('.about-section__portrait-video')).toBeInTheDocument();
-    expect(container.querySelector('.about-section__portrait-hover-video')).not.toBeInTheDocument();
+    const alternate = container.querySelector('.about-section__portrait-hover-video')!;
+    expect(alternate).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '切换人物视频' }));
+    expect(container.querySelector('.about-section__portrait-frame')).toHaveAttribute('data-hover-reveal', 'active');
+    expect(HTMLMediaElement.prototype.play).toHaveBeenCalled();
+    fireEvent.canPlay(alternate);
+    fireEvent.click(screen.getByRole('button', { name: '返回人物画面' }));
+    expect(container.querySelector('.about-section__portrait-frame')).toHaveAttribute('data-hover-reveal', 'inactive');
   });
 
   it('keeps the primary portrait when the hover material cannot decode', () => {

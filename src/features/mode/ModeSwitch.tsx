@@ -1,3 +1,4 @@
+import { ArrowIcon } from '../navigation/ArrowIcon';
 import { useEffect, useRef, useState, type MouseEvent } from 'react';
 import { createPortal } from 'react-dom';
 import './ModeSwitch.css';
@@ -56,7 +57,7 @@ export function ModeSwitch({ mode, hidden = false, navigate = (url: string) => w
   }
 
   return <>
-    {!hidden && <a className="mode-switch" data-mode={mode} href={target} onClick={switchMode}
+    {!hidden && <a className="mode-switch" data-text-reveal-skip data-mode={mode} href={target} onClick={switchMode}
       aria-label={label} aria-busy={phase === 'leaving' || undefined}>
       <svg className="mode-switch__mask" viewBox="0 0 48 40" aria-hidden="true">
         <path className="mode-switch__paper" d="M3 5 23 10 45 3 41 26 25 37 7 28Z" />
@@ -64,7 +65,7 @@ export function ModeSwitch({ mode, hidden = false, navigate = (url: string) => w
         <path className="mode-switch__eye-dark" d="m8 15 12 2-4 6-6-2Z" />
         <path className="mode-switch__eye-light" d="m28 17 12-4-3 8-6 2Z" />
       </svg>
-      <span>{label}</span><span className="mode-switch__arrow" aria-hidden="true">↗</span>
+      <span>{label}</span><span className="mode-switch__arrow" aria-hidden="true"><ArrowIcon /></span>
     </a>}
     {phase !== 'idle' && createPortal(
       <div className="mode-transition" data-phase={phase} data-mode={mode} role="status" aria-live="polite">

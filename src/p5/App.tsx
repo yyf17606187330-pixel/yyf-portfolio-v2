@@ -1,3 +1,4 @@
+import { ArrowIcon } from '../features/navigation/ArrowIcon';
 import { useRef, useState } from 'react';
 import { aboutContent } from './content/about';
 import { aiVideoCapabilityItems } from './content/aiVideoCapability';
@@ -105,7 +106,7 @@ export default function App() {
       </main>
       <footer className="p5-footer">
         <div><p>CONTENT / CRAFT / IMPACT</p><strong>故事还在继续。</strong></div>
-        <a href="#works">再看作品 <span aria-hidden="true">↗</span></a>
+        <a href="#works">再看作品 <span aria-hidden="true"><ArrowIcon /></span></a>
         <div className="p5-footer__base"><span>求职 · 杭州 / 广州</span><a href="mailto:yyf17606187330@gmail.com">yyf17606187330@gmail.com</a><a href="#top">返回开场 ↑</a></div>
       </footer>
       <PlayerOverlay project={activeProject} opener={openerRef.current} onClose={() => setActiveProject(null)} />

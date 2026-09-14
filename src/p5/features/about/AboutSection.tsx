@@ -1,3 +1,4 @@
+import { ArrowIcon } from '../../../features/navigation/ArrowIcon';
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import type { AboutContent } from '../../content/about';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
@@ -46,7 +47,6 @@ export function AboutSection({ content, paused = false }: AboutSectionProps) {
     && !reducedMotion
     && failedPortraitSource !== portraitSource;
   const showPortraitHoverVideo = showPortraitVideo
-    && hoverCapable
     && Boolean(portraitHoverSource)
     && failedPortraitHoverSource !== portraitHoverSource;
   portraitPrimaryCanPlayRef.current = portraitInViewport
@@ -122,14 +122,14 @@ export function AboutSection({ content, paused = false }: AboutSectionProps) {
     animatePortraitHover(targetRadius, 1000);
   };
 
-  const handlePortraitPointerEnter = (event: ReactPointerEvent<HTMLDivElement>) => {
+  const activatePortrait = (clientX: number, clientY: number, fromTap = false) => {
     const frame = portraitFrameRef.current;
     const video = portraitHoverVideoRef.current;
-    if (!frame || !video || paused || !showPortraitHoverVideo || event.pointerType === 'touch') return;
+    if (!frame || !video || paused || !showPortraitHoverVideo) return;
 
     const bounds = frame.getBoundingClientRect();
-    const x = Math.min(bounds.width, Math.max(0, event.clientX - bounds.left));
-    const y = Math.min(bounds.height, Math.max(0, event.clientY - bounds.top));
+    const x = Math.min(bounds.width, Math.max(0, clientX - bounds.left));
+    const y = Math.min(bounds.height, Math.max(0, clientY - bounds.top));
     portraitHoverOriginRef.current = { x, y };
     frame.style.setProperty('--about-portrait-reveal-x', `${x}px`);
     frame.style.setProperty('--about-portrait-reveal-y', `${y}px`);
@@ -142,11 +142,26 @@ export function AboutSection({ content, paused = false }: AboutSectionProps) {
       startPortraitHover();
     } else {
       portraitHoverPendingRef.current = true;
+      // Unlock iOS playback within the tap, while keeping the poster until canplay.
+      if (fromTap) {
+        const attempt = video.play();
+        if (attempt) void attempt.catch(() => {
+          portraitHoverActiveRef.current = false;
+          portraitHoverPendingRef.current = false;
+          setPortraitHoverActive(false);
+          setPortraitHoverRadius(0);
+          resumePrimaryPortrait();
+        });
+      }
     }
   };
 
-  const handlePortraitPointerLeave = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (event.pointerType === 'touch') return;
+  const handlePortraitPointerEnter = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!hoverCapable || event.pointerType === 'touch') return;
+    activatePortrait(event.clientX, event.clientY);
+  };
+
+  const deactivatePortrait = () => {
     portraitHoverActiveRef.current = false;
     portraitHoverPendingRef.current = false;
     setPortraitHoverActive(false);
@@ -157,6 +172,15 @@ export function AboutSection({ content, paused = false }: AboutSectionProps) {
       portraitHoverRetractingRef.current = false;
       resumePrimaryPortrait();
     });
+  };
+
+  const handlePortraitPointerLeave = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (hoverCapable && event.pointerType !== 'touch') deactivatePortrait();
+  };
+  const togglePortrait = () => {
+    if (portraitHoverActiveRef.current) { deactivatePortrait(); return; }
+    const bounds = portraitFrameRef.current?.getBoundingClientRect();
+    if (bounds) activatePortrait(bounds.left + bounds.width / 2, bounds.top + bounds.height / 2, true);
   };
 
   useEffect(() => {
@@ -343,6 +367,11 @@ export function AboutSection({ content, paused = false }: AboutSectionProps) {
                     <strong>{content.portraitPlaceholder}</strong>
                   </div>
                 ) : null}
+                {showPortraitHoverVideo && !hoverCapable ? <button type="button" className="about-section__portrait-toggle"
+                  aria-label={portraitHoverActive ? '返回人物画面' : '切换人物视频'} aria-pressed={portraitHoverActive}
+                  disabled={paused} onClick={togglePortrait}>
+                  <span>{portraitHoverActive ? '点击返回人物画面' : '点击切换人物视频'}</span>
+                </button> : null}
               </div>
               <figcaption>PORTRAIT / WORKING IMAGE</figcaption>
             </figure>
@@ -397,7 +426,7 @@ export function AboutSection({ content, paused = false }: AboutSectionProps) {
           </div>
           <a href={content.worksLink.href}>
             {content.worksLink.label}
-            <span aria-hidden="true">↘</span>
+            <span aria-hidden="true"><ArrowIcon direction="down-right" /></span>
           </a>
         </footer>
       </div>

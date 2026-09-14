@@ -1,3 +1,4 @@
+import { ArrowIcon } from '../navigation/ArrowIcon';
 import { jobProfile } from '../../content/jobProfile';
 import './ContactSection.css';
 
@@ -16,7 +17,7 @@ export function ContactSection() {
             {jobProfile.roles.map((role) => <li key={role}>{role}</li>)}
           </ul>
           <a className="contact-section__email" href={jobProfile.emailHref}>
-            <span>{jobProfile.email}</span><span aria-hidden="true">↗</span>
+            <span>{jobProfile.email}</span><span aria-hidden="true"><ArrowIcon /></span>
           </a>
           <p className="contact-section__note">欢迎通过邮箱交流岗位与作品。</p>
         </div>

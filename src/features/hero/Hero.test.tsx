@@ -595,3 +595,34 @@ describe('Hero', () => {
     expect(screen.getByText('800万+')).toBeVisible();
   });
 });
+
+
+it('loads inline mobile motion without pinning and keeps reduced-motion visitors on the poster', async () => {
+  vi.stubGlobal('IntersectionObserver', undefined);
+  let reduce = false;
+  vi.stubGlobal('matchMedia', vi.fn((query: string) => ({
+    matches: query.includes('max-width: 1023px') || (reduce && query.includes('prefers-reduced-motion')),
+    addEventListener: vi.fn(), removeEventListener: vi.fn(),
+  })));
+  vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
+  vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+  useScrollVideoMock.mockReturnValue({ motionEligible: false, motionEnabled: false, videoProps: {} });
+  const props = { portrait: { objectPosition: '64% 44%', scale: 1, src: '/portrait.webp', tone: 'light' as const },
+    scrollVideo: { poster: '/poster.webp', source: '/motion.mp4' } };
+  const { container, unmount } = render(<Hero {...props} />);
+  await act(async () => {});
+  const video = container.querySelector('video')!;
+  expect(video).toHaveAttribute('src', '/motion.mp4');
+  expect(video).toHaveAttribute('playsinline');
+  expect(video).toHaveAttribute('loop');
+  expect(video.muted).toBe(true);
+  expect(container.querySelector('.hero--scroll-story')).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: '暂停人物动画' })).toBeInTheDocument();
+  unmount();
+  reduce = true;
+  const reduced = render(<Hero {...props} />);
+  expect(reduced.container.querySelector('video')).not.toHaveAttribute('src');
+  expect(screen.queryByRole('button', { name: /人物动画/ })).not.toBeInTheDocument();
+  reduced.unmount();
+  vi.restoreAllMocks(); vi.unstubAllGlobals();
+});

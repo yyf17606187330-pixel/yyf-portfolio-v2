@@ -88,7 +88,7 @@ describe('ImageGallery', () => {
     expect(scale).toBeGreaterThan(1);
     expect(imageWidth * scale).toBeLessThanOrEqual(1000 * 0.94);
     expect(imageHeight * scale).toBeLessThanOrEqual(600 * 0.94);
-    expect(screen.getByRole('slider')).toBeDisabled();
+    expect(screen.getByRole('slider')).toBeEnabled();
     fireEvent.wheel(track, { deltaY: 80 });
     expect(screen.getByRole('slider')).toHaveValue(String(position + 1));
     fireEvent.keyDown(document, { key: 'Escape' });
@@ -102,6 +102,26 @@ describe('ImageGallery', () => {
     expect(screen.getByRole('dialog')).toHaveAttribute('data-zoomed', 'false');
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(close).toHaveBeenCalledOnce();
+  });
+
+  it('changes photos in full-frame mode with buttons, slider and a touch swipe without turning a swipe into a click', () => {
+    renderGallery();
+    fireEvent.click(screen.getByRole('button', { name: '放大：第一张' }));
+    fireEvent.click(screen.getByRole('button', { name: '下一张' }));
+    expect(screen.getByRole('button', { name: '缩小：第二张' })).toBeInTheDocument();
+    fireEvent.change(screen.getByRole('slider'), { target: { value: '1' } });
+    const track = screen.getByLabelText('横向照片轮播');
+    fireEvent.touchStart(track, { touches: [{ clientX: 300, clientY: 100 }] });
+    fireEvent.touchEnd(track, { changedTouches: [{ clientX: 120, clientY: 105 }] });
+    expect(screen.getByRole('slider')).toHaveValue('2');
+    fireEvent.click(screen.getByRole('button', { name: '缩小：第二张' }));
+    expect(screen.getByRole('dialog')).toHaveAttribute('data-zoomed', 'true');
+    act(() => vi.advanceTimersByTime(500));
+    fireEvent.touchStart(track, { touches: [{ clientX: 300, clientY: 100 }, { clientX: 350, clientY: 100 }] });
+    fireEvent.touchEnd(track, { changedTouches: [{ clientX: 100, clientY: 100 }] });
+    expect(screen.getByRole('slider')).toHaveValue('2');
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'ArrowRight' });
+    expect(screen.getByRole('button', { name: '缩小：宽幅图片' })).toBeInTheDocument();
   });
 
   it('restores the opener, body styles and reading position on unmount', () => {

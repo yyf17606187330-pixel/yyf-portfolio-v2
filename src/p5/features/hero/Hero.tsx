@@ -1,3 +1,4 @@
+import { ArrowIcon } from '../../../features/navigation/ArrowIcon';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { usePageVisibility } from '../../hooks/usePageVisibility';
@@ -88,7 +89,7 @@ export function Hero({ portrait, scrollVideo, worksHref = '#works', paused = fal
           <p className="p5-hero__statement"><span>让内容</span><strong>发生作用。</strong></p>
           <p className="p5-hero__positioning">新媒体内容运营 × 影像创作者</p>
           <p className="p5-hero__bio">懂运营，也能把内容从脚本拍到成片。<br />用影像组织表达，用结果验证内容。</p>
-          <a className="p5-hero__cta" href={worksHref}>查看作品 <span aria-hidden="true">↗</span></a>
+          <a className="p5-hero__cta" href={worksHref}>查看作品 <span aria-hidden="true"><ArrowIcon /></span></a>
         </div>
         <div className="p5-hero__side-note" aria-hidden="true">IDEAS<br />STORIES<br />IMPACT</div>
         <div className="p5-hero__bottomline">

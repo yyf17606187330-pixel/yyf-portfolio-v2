@@ -1,3 +1,4 @@
+import { ArrowIcon } from '../navigation/ArrowIcon';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
@@ -92,7 +93,7 @@ export function CollageIntro({ heroPoster, heroVideoReady = true, onReveal, onCo
       <div className="collage-intro__topline">
         <span>YANG YUFENG / PORTFOLIO</span>
         <button className="collage-intro__skip" onClick={finish} type="button">
-          跳过片头 <span aria-hidden="true">↗</span>
+          跳过片头 <span aria-hidden="true"><ArrowIcon /></span>
         </button>
       </div>
       {(['top', 'bottom'] as const).map((edge) => (

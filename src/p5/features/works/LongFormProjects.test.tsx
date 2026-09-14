@@ -50,17 +50,18 @@ describe('Direct film selection', () => {
     expect(screen.getByText('以 MacBook 为主体的 22 秒自主产品短片。')).toBeInTheDocument();
   });
 
-  it('keeps every color grade selectable and never opens its preview as a full film', () => {
+  it('opens every short color grade in the player with an honest excerpt label', () => {
     const onOpenProject = vi.fn();
     render(<LongFormProjects playerOpen={false} onOpenProject={onOpenProject} />);
     for (const item of colorGradingWorkGroup.items) {
       fireEvent.click(screen.getByRole('button', { name: '选择' + item.title }));
       expect(screen.getByRole('heading', { name: item.title })).toBeVisible();
-      const unavailable = screen.getByRole('button', { name: item.title + '完整视频暂不可用' });
-      expect(unavailable).toBeDisabled();
+      const unavailable = screen.getByRole('button', { name: '放大观看' + item.title + '调色片段' });
+      expect(unavailable).toBeEnabled();
       fireEvent.click(unavailable);
+      expect(onOpenProject).toHaveBeenLastCalledWith(expect.objectContaining({ fullSrc: item.previewSrc }), unavailable);
     }
-    expect(onOpenProject).not.toHaveBeenCalled();
+    expect(onOpenProject).toHaveBeenCalledTimes(colorGradingWorkGroup.items.length);
   });
 
   it('supports arrow keys, wrapping, Home and End while retaining focus on the selection', () => {

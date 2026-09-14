@@ -1,3 +1,4 @@
+import { ArrowIcon } from '../../../features/navigation/ArrowIcon';
 import { useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { colorGradingWorkGroup } from '../../content/colorGradingWorks';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
@@ -15,6 +16,7 @@ interface LongFilmRecord {
   chapter: string;
   formatLabel: string;
   durationLabel: string;
+  excerpt?: boolean;
   summary: readonly string[];
 }
 
@@ -117,13 +119,14 @@ const colorGradingFilms: readonly LongFilmRecord[] = colorGradingWorkGroup.items
     order: index + 1,
     poster: item.poster,
     previewSrc: item.previewSrc,
-    fullSrc: '',
+    fullSrc: item.previewSrc,
     aspectRatio: item.aspectRatio,
   },
   chapter: `${colorGradingWorkGroup.chapter} / COLOR GRADING`,
   formatLabel: `16 : 9 / ${item.categoryLabel}`,
   durationLabel: item.durationLabel,
   summary: [item.description],
+  excerpt: true,
 }));
 
 
@@ -161,16 +164,16 @@ function LongFilmDeck({ films, deckId, label, playerOpen, onOpenProject }: LongF
         <div className="film-console__topline"><span>{label}</span><span>0{activeIndex + 1} / 0{films.length}</span></div>
         <div className="film-console__screen" data-film-card={film.project.slug}>
           <button className="film-console__play" type="button" disabled={!hasFullMedia}
-            aria-label={hasFullMedia ? '播放' + film.project.title + '完整作品' : film.project.title + '完整视频暂不可用'}
+            aria-label={film.excerpt ? '放大观看' + film.project.title + '调色片段' : hasFullMedia ? '播放' + film.project.title + '完整作品' : film.project.title + '完整视频暂不可用'}
             onClick={(event) => onOpenProject(film.project, event.currentTarget)}>
             <LazyPreview key={film.project.slug} project={film.project} revealAfterFirstFrame
               enabled={!playerOpen && !previewPaused && !reducedMotion}
               preload={playerOpen && !previewPaused && !reducedMotion} />
-            <span className="film-console__play-label" aria-hidden="true">{hasFullMedia ? '播放正片 ↗' : '调色片段 / 静音预览'}</span>
+            <span className="film-console__play-label" aria-hidden="true">{film.excerpt ? '放大观看 · 调色片段' : '播放正片'} <ArrowIcon /></span>
           </button>
         </div>
         <div className="film-console__preview-bar">
-          <span>{reducedMotion ? '静态封面' : hasFullMedia ? '8 秒静音预览' : '静音预览 · 完整视频暂未提供'}</span>
+          <span>{reducedMotion ? '静态封面' : film.excerpt ? '调色片段 · 可放大观看' : hasFullMedia ? '8 秒静音预览' : '静音预览 · 完整视频暂未提供'}</span>
           {!reducedMotion && film.project.previewSrc ? (
             <button type="button" aria-pressed={previewPaused} onClick={() => setPreviewPaused(!previewPaused)}>
               {previewPaused ? '继续预览' : '暂停预览'}
@@ -194,7 +197,7 @@ function LongFilmDeck({ films, deckId, label, playerOpen, onOpenProject }: LongF
                 ref={(button) => { buttonsRef.current[index] = button; }}>
                 <span className="film-console__number">0{index + 1}</span>
                 <span><strong>{item.project.title}</strong><small>{item.formatLabel}</small></span>
-                <span className="film-console__arrow" aria-hidden="true">↗</span>
+                <span className="film-console__arrow" aria-hidden="true"><ArrowIcon /></span>
               </button>
             </li>
           ))}
