@@ -236,7 +236,7 @@ describe('useTextReveal', () => {
     expect(animation.paused()).toBe(false);
   });
 
-  it('pauses active reveals when the browser window blurs even if the document stays visible', () => {
+  it('keeps visible copy revealing when focus moves to a side panel or another application', () => {
     const { container } = render(<Harness />);
     const group = container.querySelector<HTMLElement>('[data-text-reveal-group="intro"]')!;
     const heading = group.querySelector<HTMLElement>('h2')!;
@@ -244,7 +244,7 @@ describe('useTextReveal', () => {
     const animation = gsap.getTweensOf(heading)[0];
 
     fireEvent.blur(window);
-    expect(animation.paused()).toBe(true);
+    expect(animation.paused()).toBe(false);
 
     fireEvent.focus(window);
     expect(animation.paused()).toBe(false);

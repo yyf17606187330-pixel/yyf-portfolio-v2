@@ -70,8 +70,7 @@
   align-items: start;
   display: grid;
   gap: var(--space-content-column);
-  /* Widths follow (16/9) : (9/16), keeping both uncropped frames the same height. */
-  grid-template-columns: minmax(0, 3.160493827fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   margin-top: var(--space-content-heading);
 }
 
@@ -101,8 +100,9 @@
 }
 
 .ai-video-capability__card--supporting {
-  display: flex;
-  flex-direction: column;
+  grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-content-column);
 }
 
 .ai-video-capability__card--featured .ai-video-capability__practice-result dd {

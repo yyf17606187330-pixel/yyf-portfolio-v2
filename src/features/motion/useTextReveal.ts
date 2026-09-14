@@ -78,11 +78,10 @@ function createTextRevealController(
   const observed = new Set<HTMLElement>();
   let destroyed = false;
   let optionPaused = initialPaused;
-  let windowFocused = true;
 
   root.dataset.textRevealController = 'active';
 
-  const isPaused = () => optionPaused || !windowFocused || document.visibilityState !== 'visible';
+  const isPaused = () => optionPaused || document.visibilityState !== 'visible';
 
   const rememberStyle = (target: HTMLElement) => {
     if (snapshots.has(target)) return;
@@ -324,14 +323,6 @@ function createTextRevealController(
   };
 
   const handleVisibilityChange = () => syncPausedState();
-  const handleWindowBlur = () => {
-    windowFocused = false;
-    syncPausedState();
-  };
-  const handleWindowFocus = () => {
-    windowFocused = true;
-    syncPausedState();
-  };
   const handleHashChange = () => {
     refreshTargets();
     revealHashTarget();
@@ -342,8 +333,6 @@ function createTextRevealController(
 
   root.addEventListener('focusin', handleFocusIn);
   document.addEventListener('visibilitychange', handleVisibilityChange);
-  window.addEventListener('blur', handleWindowBlur);
-  window.addEventListener('focus', handleWindowFocus);
   window.addEventListener('hashchange', handleHashChange);
   mutationObserver?.observe(root, {
     attributeFilter: ['data-text-reveal', 'hidden', 'open'],
@@ -366,8 +355,6 @@ function createTextRevealController(
       mutationObserver?.disconnect();
       root.removeEventListener('focusin', handleFocusIn);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('blur', handleWindowBlur);
-      window.removeEventListener('focus', handleWindowFocus);
       window.removeEventListener('hashchange', handleHashChange);
       for (const unit of units.values()) {
         unit.animation?.kill();

@@ -18,13 +18,14 @@ interface HeroProps {
   worksHref?: string;
   portrait: HeroPortrait;
   paused?: boolean;
+  onReady?: () => void;
   scrollVideo?: {
     poster: string;
     source: string;
   };
 }
 
-export function Hero({ headerRef, portrait, scrollVideo, worksHref = '#top', paused = false }: HeroProps) {
+export function Hero({ headerRef, portrait, scrollVideo, worksHref = '#top', paused = false, onReady }: HeroProps) {
   const heroRef = useRef<HTMLElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
   const mediaRef = useRef<HTMLDivElement>(null);
@@ -162,6 +163,7 @@ export function Hero({ headerRef, portrait, scrollVideo, worksHref = '#top', pau
           primaryLines,
           {
             autoAlpha: 0,
+            filter: 'blur(5px)',
             duration: 0.16,
             ease: 'power1.out',
             stagger: 0.02,
@@ -171,9 +173,10 @@ export function Hero({ headerRef, portrait, scrollVideo, worksHref = '#top', pau
         );
         timeline.fromTo(
           secondary,
-          { autoAlpha: 0, y: 28 },
+          { autoAlpha: 0, y: 28, filter: 'blur(10px)' },
           {
             autoAlpha: 1,
+            filter: 'blur(0px)',
             duration: 0.18,
             ease: 'power1.out',
             y: 0,
@@ -200,6 +203,11 @@ export function Hero({ headerRef, portrait, scrollVideo, worksHref = '#top', pau
     triggerRef: heroRef,
     videoRef,
   });
+
+  useEffect(() => {
+    // Reuse the mounted Hero video: the opening never starts a second download.
+    if (!motionEligible || (videoProps.src && (videoRef.current?.readyState ?? 0) >= 2)) onReady?.();
+  }, [motionEligible, onReady, videoProps.src]);
 
   useLayoutEffect(() => {
     const hashTarget = document.getElementById(window.location.hash.slice(1));
@@ -295,6 +303,8 @@ export function Hero({ headerRef, portrait, scrollVideo, worksHref = '#top', pau
             {...videoProps}
             aria-hidden="true"
             className="hero__scroll-video"
+            onLoadedData={onReady}
+            onError={(event) => { videoProps.onError?.(event); onReady?.(); }}
             ref={videoRef}
             tabIndex={-1}
           />
@@ -302,17 +312,17 @@ export function Hero({ headerRef, portrait, scrollVideo, worksHref = '#top', pau
       </div>
       <div className="hero__inner" ref={innerRef}>
         <div className="hero__copy">
-          <div className="hero__story-panel hero__story-panel--primary" ref={primaryStoryRef}>
-            <h1 className="hero__story-line" id="hero-title">杨玉峰</h1>
+          <div className="hero__story-panel hero__story-panel--primary" ref={primaryStoryRef} data-text-reveal-group>
+            <h1 className="hero__story-line" id="hero-title"><span className="hero__text-reveal" data-text-reveal>杨玉峰</span></h1>
             <p className="hero__positioning hero__story-line">
-              {jobProfile.positioning}
-              <span className="hero__availability">求职 · {jobProfile.cities} · {jobProfile.focus}</span>
+              <span className="hero__text-reveal" data-text-reveal>{jobProfile.positioning}</span>
+              <span className="hero__availability" data-text-reveal>求职 · {jobProfile.cities} · {jobProfile.focus}</span>
             </p>
-            <p className="hero__emphasis hero__story-line">懂运营，也能把内容从脚本拍到成片。</p>
+            <p className="hero__emphasis hero__story-line"><span className="hero__text-reveal" data-text-reveal>懂运营，也能把内容从脚本拍到成片。</span></p>
             <p className="hero__bio hero__story-line">
-              负责内容策划、拍摄剪辑与调色，也制作 AI 影像。商业项目中，我把内容制作、发布投放和数据复盘连起来。
+              <span className="hero__text-reveal" data-text-reveal>负责内容策划、拍摄剪辑与调色，也制作 AI 影像。商业项目中，我把内容制作、发布投放和数据复盘连起来。</span>
             </p>
-            <a className="hero__cta" href={worksHref} ref={ctaRef}>查看作品</a>
+            <a className="hero__cta" href={worksHref} ref={ctaRef}><span className="paper-control__label">查看作品</span></a>
           </div>
           <div className="hero__story-panel hero__story-panel--secondary" ref={secondaryStoryRef}>
             <h2 className="hero__proof-heading">经验与成果</h2>

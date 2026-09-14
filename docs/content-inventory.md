@@ -68,12 +68,12 @@ Hero 已确认数字为 7 年内容／电商／直播运营经验、项目年 GM
 
 ## AI 创作与内容生产
 
-数据源：`src/content/aiVideoCapability.ts`。AI 项目使用 `id` 字段；有媒体时由 `AiVideoCapabilitySection.tsx` 生成播放器 slug `ai-video-preview-<id>`。源数组顺序为时间线、拼贴、运动 TVC，页面将带 `featured` 的运动场景样片优先展示。
+数据源：`src/content/aiVideoCapability.ts`。AI 项目使用 `id` 字段；源数组保留时间线、拼贴、运动 TVC 三项归属。拼贴标记 `placement: intro`，由开场使用；其余由 `AiVideoCapabilitySection.tsx` 生成播放器 slug `ai-video-preview-<id>`，运动场景样片优先展示。
 
 | 内容 ID | 项目与完成范围 | 当前媒体路径 | 接入状态／管理 |
 | --- | --- | --- | --- |
 | `ai-video-landscape` | 时间线：剧情阶段样片；当前已接入片段约 32.879 秒 | `ai-video/landscape-poster.webp`；`ai-video/landscape-preview-h264.mp4`；`ai-video/landscape-full-h264.mp4` | 海报为普通 Git，两个 MP4 为 Git LFS；16:9；播放器 slug 为 `ai-video-preview-ai-video-landscape` |
-| `ai-video-portrait` | 复古拼贴影像：约 25.8 秒竖屏视觉实验 | `ai-video/collage-poster.webp`；`ai-video/collage-preview-h264.mp4`；`ai-video/collage-full-h264.mp4` | 已接入；9:16；海报为普通 Git，两个 MP4 为 Git LFS；播放器 slug 为 `ai-video-preview-ai-video-portrait` |
+| `ai-video-portrait` | 复古拼贴影像：约 25.8 秒竖屏视觉实验 | `ai-video/collage-poster.webp`；`ai-video/collage-preview-h264.mp4`；`ai-video/collage-full-h264.mp4` | 开场使用海报与6秒短预览，完整9:16；原正片保留但不再出现在AI作品区；海报普通Git，MP4为Git LFS |
 | `ai-video-sports-tvc` | 产品 TVC：规划滑雪、骑行、攀岩及产品主镜头，目前仅完成约 30.1 秒滑雪场景样片 | `ai-video/ski-poster.webp`；`ai-video/ski-preview-h264.mp4`；`ai-video/ski-full-h264.mp4` | 已接入；1472:632，约 2.33:1；海报为普通 Git，两个 MP4 为 Git LFS；播放器 slug 为 `ai-video-preview-ai-video-sports-tvc` |
 
 时间线媒体只能关联时间线项目，不能复用给滑雪或拼贴。三项实践不等于三支完整商业广告；`fullSrc` 表示播放器展示文件，不改变“阶段样片”的作品状态。

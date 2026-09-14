@@ -17,9 +17,10 @@ describe('AiVideoCapabilitySection', () => {
     const section = screen.getByRole('region', { name: 'AI 创作与内容生产' });
     expect(section).toHaveAttribute('id', 'ai-video');
     expect(within(section).getByRole('heading', { name: 'AI 创作与内容生产' })).toBeInTheDocument();
-    expect(section.querySelectorAll('[data-ai-video-card]')).toHaveLength(3);
+    expect(section.querySelectorAll('[data-ai-video-card]')).toHaveLength(2);
+    expect(within(section).queryByRole('heading', { name: '复古拼贴影像' })).not.toBeInTheDocument();
     expect(within(section).getByRole('heading', { name: '图片制作与资料交付' })).toBeInTheDocument();
-    expect(within(section).getAllByRole('button')).toHaveLength(3);
+    expect(within(section).getAllByRole('button')).toHaveLength(2);
     const sports = within(section).getByRole('article', { name: '产品 TVC｜运动场景样片' });
     expect(sports).toHaveTextContent('滑雪、骑行、攀岩');
     expect(sports.querySelector('img')).toHaveAttribute('src', '/media/ai-video/ski-poster.webp');
@@ -38,7 +39,7 @@ describe('AiVideoCapabilitySection', () => {
     );
     expect(screen.getByRole('region', { name: 'AI 创作与内容生产' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: '产品 TVC｜运动场景样片' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: '复古拼贴影像' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: '复古拼贴影像' })).not.toBeInTheDocument();
     for (const card of container.querySelectorAll('[data-ai-video-card]')) {
       expect(card.querySelector('img, video, button')).toBeNull();
     }

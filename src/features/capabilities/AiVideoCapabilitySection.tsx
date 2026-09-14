@@ -122,8 +122,9 @@ export function AiVideoCapabilitySection({
 }: AiVideoCapabilitySectionProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
-  const featuredItem = items.find((item) => item.featured);
-  const supportingItems = items.filter((item) => item !== featuredItem);
+  const galleryItems = items.filter((item) => item.placement !== 'intro');
+  const featuredItem = galleryItems.find((item) => item.featured);
+  const supportingItems = galleryItems.filter((item) => item !== featuredItem);
 
   const openFullscreen = (
     item: AiVideoCapabilityItem,

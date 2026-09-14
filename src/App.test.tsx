@@ -2,12 +2,14 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testi
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
 import { aboutContent } from './content/about';
+import { INTRO_SESSION_KEY } from './features/intro/introSession';
 
 const useScrollVideoMock = vi.hoisted(() => vi.fn());
 vi.mock('./hooks/useScrollVideo', () => ({ useScrollVideo: useScrollVideoMock }));
 
 describe('App', () => {
   beforeEach(() => {
+    sessionStorage.setItem(INTRO_SESSION_KEY, '1');
     vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
     vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined);
     vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
@@ -35,6 +37,23 @@ describe('App', () => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
     vi.unstubAllEnvs();
+    sessionStorage.clear();
+    vi.useRealTimers();
+  });
+
+  it('opens the collage intro on the first visit and releases the page when skipped', async () => {
+    sessionStorage.removeItem(INTRO_SESSION_KEY);
+    vi.useFakeTimers();
+    const { container } = render(<App />);
+    expect(screen.getByRole('dialog', { name: '让想法成为画面。' })).toBeInTheDocument();
+    expect(container.querySelector('.site-shell')).toHaveAttribute('inert');
+    expect(document.body.style.overflow).toBe('hidden');
+    fireEvent.click(screen.getByRole('button', { name: '跳过片头' }));
+    await act(async () => { vi.advanceTimersByTime(450); });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(container.querySelector('.site-shell')).not.toHaveAttribute('inert');
+    expect(document.body.style.overflow).toBe('');
+    expect(sessionStorage.getItem(INTRO_SESSION_KEY)).toBe('1');
   });
 
   it('connects the Hero works link to the real sample without exposing the placeholder index', () => {
@@ -47,6 +66,25 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: '净水器' })).toBeInTheDocument();
     expect(screen.queryByText('待补充影像项目 01')).not.toBeInTheDocument();
     expect(container.querySelectorAll('main > section')).toHaveLength(6);
+  });
+
+  it('prepares the mounted Hero behind the intro and enters after its first frame is ready', async () => {
+    sessionStorage.removeItem(INTRO_SESSION_KEY);
+    vi.useFakeTimers();
+    const poster = document.createElement('img');
+    vi.stubGlobal('Image', vi.fn(function () { return poster; }));
+    const { container } = render(<App />);
+    const heroVideo = container.querySelector<HTMLVideoElement>('.hero__scroll-video')!;
+    expect(heroVideo).toHaveAttribute('src', '/media/hero/hero-scroll.mp4');
+    fireEvent.load(poster);
+    fireEvent.canPlay(document.querySelector('.collage-intro video')!);
+    await act(async () => { vi.advanceTimersByTime(2400); });
+    expect(screen.getByRole('status')).toHaveTextContent('LOADING');
+    fireEvent.loadedData(heroVideo);
+    await act(async () => { vi.advanceTimersByTime(420); });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(container.querySelector('.hero__scroll-video')).toBe(heroVideo);
+    expect(container.querySelector('.site-shell')).not.toHaveAttribute('inert');
   });
 
   it('connects the navigation and confirmed email to the job contact section', () => {

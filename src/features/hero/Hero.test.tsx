@@ -108,7 +108,7 @@ describe('Hero', () => {
     const bio = screen.getByText(
       '负责内容策划、拍摄剪辑与调色，也制作 AI 影像。商业项目中，我把内容制作、发布投放和数据复盘连起来。',
     );
-    const cta = screen.getByText('查看作品');
+    const cta = screen.getByText('查看作品').closest('a')!;
 
     expect(bio.compareDocumentPosition(cta) & Node.DOCUMENT_POSITION_FOLLOWING)
       .toBe(Node.DOCUMENT_POSITION_FOLLOWING);
@@ -183,8 +183,8 @@ describe('Hero', () => {
     const primary = container.querySelector('.hero__story-panel--primary') as HTMLElement;
     const secondary = container.querySelector('.hero__story-panel--secondary') as HTMLElement;
     const heading = screen.getByRole('heading', { name: '杨玉峰' });
-    const emphasis = screen.getByText('懂运营，也能把内容从脚本拍到成片。');
-    const cta = screen.getByText('查看作品');
+    const emphasis = screen.getByText('懂运营，也能把内容从脚本拍到成片。').closest('p')!;
+    const cta = screen.getByText('查看作品').closest('a')!;
     const options = useScrollVideoMock.mock.calls.at(-1)?.[0] as {
       onProgress?: (progress: number | null) => void;
     };
@@ -329,7 +329,7 @@ describe('Hero', () => {
     );
     const header = container.querySelector('.site-header') as HTMLElement;
     const marker = screen.getByLabelText('邮箱联系标识');
-    const cta = screen.getByText('查看作品');
+    const cta = screen.getByText('查看作品').closest('a')!;
     const chrome = [header, marker];
     const controls = [header, marker, cta];
     const options = useScrollVideoMock.mock.calls.at(-1)?.[0] as {
@@ -417,7 +417,7 @@ describe('Hero', () => {
     const controls = [
       container.querySelector('.site-header') as HTMLElement,
       screen.getByLabelText('邮箱联系标识'),
-      screen.getByText('查看作品'),
+      screen.getByText('查看作品').closest('a')!,
     ];
     for (const control of controls) {
       expect(control).toHaveStyle({ opacity: '0', visibility: 'hidden' });
@@ -559,7 +559,7 @@ describe('Hero', () => {
     );
     const hero = container.querySelector('.hero') as HTMLElement;
     const heading = screen.getByRole('heading', { name: '杨玉峰' });
-    const emphasis = screen.getByText('懂运营，也能把内容从脚本拍到成片。');
+    const emphasis = screen.getByText('懂运营，也能把内容从脚本拍到成片。').closest('p')!;
     const options = useScrollVideoMock.mock.calls.at(-1)?.[0] as {
       onProgress?: (progress: number | null) => void;
     };
