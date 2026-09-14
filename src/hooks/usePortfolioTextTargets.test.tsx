@@ -1,6 +1,7 @@
 import { act, render, screen } from '@testing-library/react';
 import { useRef } from 'react';
 import { describe, expect, it } from 'vitest';
+import { ModeSwitch } from '../features/mode/ModeSwitch';
 import { usePortfolioTextTargets } from './usePortfolioTextTargets';
 
 function Page({ expanded = false }: { expanded?: boolean }) {
@@ -9,6 +10,7 @@ function Page({ expanded = false }: { expanded?: boolean }) {
   return <div ref={ref}>
     <header><h2>工作方式</h2><p>从策划到成片</p></header>
     <nav><span>导航</span></nav>
+    <ModeSwitch mode="minimal" />
     <div className="hero"><p style={{ transform: 'translateY(10px)' }}>首屏自有动效</p></div>
     <p>项目说明 <a href="#work">查看作品</a></p>
     <div><button><span>打开项目</span></button><img alt="作品图" src="/image.webp" /></div>
@@ -29,6 +31,7 @@ describe('usePortfolioTextTargets', () => {
     expect(link.parentElement).toHaveAttribute('data-text-reveal');
     expect(link).toHaveAttribute('href', '#work');
     expect(screen.getByText('导航')).not.toHaveAttribute('data-text-reveal');
+    expect(screen.getByText('解锁隐藏模式')).not.toHaveAttribute('data-text-reveal');
     expect(screen.getByText('首屏自有动效')).not.toHaveAttribute('data-text-reveal');
     expect(screen.getByText('已有动画')).not.toHaveAttribute('data-text-reveal');
     expect(screen.getByRole('button').parentElement).not.toHaveAttribute('data-text-reveal');

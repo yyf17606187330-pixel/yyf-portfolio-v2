@@ -1,0 +1,66 @@
+.long-form-projects { margin-inline: auto; max-width: var(--content-width); padding-block: 64px 24px; }
+.long-form-projects__heading { align-items: center; border-bottom: 2px solid #111; display: flex; font-size: 11px; font-weight: 800; justify-content: space-between; letter-spacing: 0.08em; padding-bottom: 14px; }
+.long-form-projects__intro { align-items: end; display: grid; gap: 32px; grid-template-columns: 1.2fr 1fr; margin-block: 36px 52px; }
+.long-form-projects__intro > div > p { font-family: Impact, 'Arial Black', sans-serif; font-size: clamp(62px, 7.6vw, 112px); font-weight: 900; letter-spacing: -0.03em; line-height: 0.88; }
+.long-form-projects__intro em { color: #e6002b; font-style: normal; }
+.long-form-projects__intro h2 { font-size: 19px; font-weight: 900; margin-top: 22px; }
+.long-form-projects__intro > p { font-size: 14px; line-height: 1.8; max-width: 360px; }
+.long-form-projects__consoles { display: grid; gap: 64px; }
+.film-console { align-items: start; display: grid; gap: 0; grid-template-columns: minmax(0, 1.9fr) minmax(250px, 0.9fr); min-width: 0; }
+.film-console__screen-column { min-width: 0; }
+.film-console__topline { align-items: center; background: #111; color: #fff; display: flex; font-size: 11px; font-weight: 800; justify-content: space-between; min-height: 42px; padding: 10px 18px; }
+.film-console__screen { background: #111; border: 5px solid #111; position: relative; }
+.film-console__play { background: #111; border: 0; color: #111; cursor: pointer; display: block; min-height: 44px; padding: 0; position: relative; width: 100%; }
+.film-console__play:disabled { cursor: default; opacity: 1; }
+.film-console .lazy-preview { aspect-ratio: 16 / 9 !important; border: 0; pointer-events: none; }
+.film-console .lazy-preview img, .film-console .lazy-preview video { object-fit: contain; }
+.film-console .lazy-preview video[data-preview-ready='false'] { opacity: 0; }
+.film-console__play-label { align-items: center; background: #fff; border: 2px solid #111; bottom: 18px; box-shadow: 4px 4px 0 #e6002b; display: flex; font-size: 14px; font-weight: 900; min-height: 44px; padding: 8px 18px; position: absolute; right: 18px; z-index: 3; }
+.film-console__play:hover:not(:disabled) .film-console__play-label { background: #e6002b; box-shadow: 4px 4px 0 #fff; color: #fff; }
+.film-console__play:focus-visible { outline: 4px solid #e6002b; outline-offset: -4px; }
+.film-console__preview-bar { align-items: center; border-bottom: 1px solid #bcbcb8; display: flex; font-size: 10px; justify-content: space-between; min-height: 44px; padding-inline: 12px; }
+.film-console__preview-bar button { background: none; border: 0; cursor: pointer; font-size: 11px; font-weight: 800; min-height: 44px; padding: 0 8px; text-decoration: underline; text-underline-offset: 4px; }
+.film-console__copy { display: grid; gap: 24px; grid-template-columns: 0.9fr 1.4fr; padding: 24px 24px 0 0; }
+.film-console__copy p { color: #444; font-size: 13px; line-height: 1.8; }
+.film-console__copy > div:first-child p { color: #bc0025; font-size: 10px; font-weight: 800; }
+.film-console__copy h3 { font-size: 26px; font-weight: 900; line-height: 1.3; margin: 8px 0 0; }
+.film-console__copy .film-console__roles { color: #111; font-size: 11px; font-weight: 800; margin-bottom: 8px; }
+.film-console__menu { background: #111; color: #fff; min-height: 100%; padding: 24px 0 25px; }
+.film-console__menu-title { align-items: center; display: flex; font-size: 10px; font-weight: 850; justify-content: space-between; letter-spacing: 0.08em; padding: 0 24px 22px; }
+.film-console__menu ol { list-style: none; margin: 0; padding: 0; }
+.film-console__menu button { align-items: center; background: none; border: 0; border-top: 1px solid #444; color: #fff; cursor: pointer; display: grid; gap: 12px; grid-template-columns: 34px minmax(0, 1fr) 16px; min-height: 89px; padding: 18px 22px; position: relative; text-align: left; transition: background 120ms ease; width: 100%; }
+.film-console__menu button[aria-pressed='true'] { background: #e6002b; box-shadow: -8px 0 0 #e6002b; }
+.film-console__menu button:hover:not([aria-pressed='true']) { background: #333; }
+.film-console__menu button:focus-visible { outline-color: #fff; outline-offset: -5px; }
+.film-console__number { font-family: Impact, sans-serif; font-size: 32px; }
+.film-console__menu strong { display: block; font-size: 17px; line-height: 1.4; }
+.film-console__menu small { color: #ccc; display: block; font-size: 9px; line-height: 1.5; margin-top: 6px; }
+.film-console__menu button[aria-pressed='true'] small { color: #fff; }
+.film-console__arrow { font-size: 22px; }
+.film-console__menu-note { color: #aaa; font-size: 11px; line-height: 1.8; padding: 24px 24px 0; }
+@media (max-width: 900px) {
+  .film-console { grid-template-columns: minmax(0, 1.6fr) minmax(230px, 1fr); }
+  .film-console__menu button { min-height: 78px; padding: 16px; }
+  .film-console__copy { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+}
+@media (max-width: 640px) {
+  .long-form-projects { padding-top: 40px; }
+  .long-form-projects__heading { font-size: 9px; gap: 12px; }
+  .long-form-projects__heading > span { max-width: 120px; text-align: right; }
+  .long-form-projects__intro { grid-template-columns: 1fr; gap: 20px; margin-block: 28px 32px; }
+  .long-form-projects__intro > div > p { font-size: clamp(66px, 16vw, 92px); }
+  .film-console { display: flex; flex-direction: column; }
+  .film-console__menu { min-height: 0; order: -1; padding: 16px 0 0; width: 100%; }
+  .film-console__menu-title { padding: 0 16px 16px; }
+  .film-console__menu ol { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .film-console__menu button { gap: 8px; grid-template-columns: 25px minmax(0, 1fr); min-height: 75px; padding: 11px; }
+  .film-console__menu button[aria-pressed='true'] { box-shadow: none; }
+  .film-console__number { font-size: 26px; }
+  .film-console__menu strong { font-size: 14px; }
+  .film-console__menu small { font-size: 8px; }
+  .film-console__arrow, .film-console__menu-note { display: none; }
+  .film-console__screen-column { width: 100%; }
+  .film-console__copy { padding: 22px 0 0; }
+  .film-console__play-label { bottom: 12px; font-size: 12px; right: 12px; }
+}
+@media (prefers-reduced-motion: reduce) { .film-console__menu button { transition: none; } }

@@ -1,3 +1,4 @@
+import { useTouchVideo } from '../../hooks/useTouchVideo';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { CSSProperties, RefObject } from 'react';
 import { createPortal } from 'react-dom';
@@ -36,6 +37,8 @@ export function Hero({ headerRef, portrait, scrollVideo, worksHref = '#top', pau
   const videoRef = useRef<HTMLVideoElement>(null);
   const [fitsViewport, setFitsViewport] = useState(true);
   const [failedPoster, setFailedPoster] = useState<string | null>(null);
+  const touchLayout = useMediaQuery('(max-width: 1023px), (pointer: coarse)');
+  const [failedTouchVideo, setFailedTouchVideo] = useState(false);
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const poster = scrollVideo?.poster && failedPoster !== scrollVideo.poster
     ? scrollVideo.poster
@@ -196,13 +199,16 @@ export function Hero({ headerRef, portrait, scrollVideo, worksHref = '#top', pau
   useEffect(() => clearStoryAnimation, [clearStoryAnimation]);
 
   const { motionEligible, motionEnabled, videoProps } = useScrollVideo({
-    enabled: fitsViewport,
+    enabled: fitsViewport && !touchLayout,
     onProgress: updateStoryProgress,
     poster,
     source: scrollVideo?.source ?? null,
     triggerRef: heroRef,
     videoRef,
   });
+
+  const touchMotion = touchLayout && !reducedMotion && Boolean(scrollVideo) && !failedTouchVideo;
+  const { playing: touchPlaying, toggle: toggleTouchVideo } = useTouchVideo(videoRef, touchMotion, paused);
 
   useEffect(() => {
     // Reuse the mounted Hero video: the opening never starts a second download.
@@ -300,11 +306,14 @@ export function Hero({ headerRef, portrait, scrollVideo, worksHref = '#top', pau
         )}
         {scrollVideo ? (
           <video
-            {...videoProps}
+            {...(touchLayout ? {
+              muted: true, playsInline: true, loop: true, preload: touchMotion ? 'auto' : 'none',
+              poster, src: touchMotion ? scrollVideo.source : undefined,
+            } : videoProps)}
             aria-hidden="true"
             className="hero__scroll-video"
             onLoadedData={onReady}
-            onError={(event) => { videoProps.onError?.(event); onReady?.(); }}
+            onError={(event) => { if (touchLayout) setFailedTouchVideo(true); else videoProps.onError?.(event); onReady?.(); }}
             ref={videoRef}
             tabIndex={-1}
           />
@@ -350,6 +359,8 @@ export function Hero({ headerRef, portrait, scrollVideo, worksHref = '#top', pau
           </div>
         </div>
       </div>
+      {touchMotion && !paused ? <button className="hero__motion-toggle" type="button" onClick={toggleTouchVideo}
+        aria-label={touchPlaying ? '暂停人物动画' : '播放人物动画'}>{touchPlaying ? '暂停人物动画' : '播放人物动画'}</button> : null}
       {createPortal(
         <div aria-label="邮箱联系标识" className="hero__marker" hidden={paused} ref={markerRef}>
           <a aria-label="回到开场" className="hero__marker-initial" href="#top">Y.</a>

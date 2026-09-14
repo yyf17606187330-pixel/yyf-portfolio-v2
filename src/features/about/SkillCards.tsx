@@ -1,3 +1,4 @@
+import { ArrowIcon } from '../navigation/ArrowIcon';
 import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import gsap from 'gsap';
 import type { AboutContent } from '../../content/about';
@@ -125,7 +126,7 @@ export function SkillCards({ groups, paused = false, children }: SkillCardsProps
                 </ul>
                 {group.evidence ? (
                   <a aria-label={group.evidence.label + '：' + group.title} className="skill-detail__evidence" href={group.evidence.href}>
-                    {group.evidence.label}<span aria-hidden="true">↗</span>
+                    {group.evidence.label}<span aria-hidden="true"><ArrowIcon /></span>
                   </a>
                 ) : null}
               </div>

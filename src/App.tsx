@@ -27,6 +27,7 @@ import { CommercialProjectCase } from './features/works/CommercialProjectCase';
 import { ProjectShowcase } from './features/works/ProjectShowcase';
 import { resolveMediaUrl } from './lib/media';
 import { usePortfolioTextTargets } from './hooks/usePortfolioTextTargets';
+import { ModeSwitch } from './features/mode/ModeSwitch';
 import type { Project } from './types/portfolio';
 
 export default function App() {
@@ -62,6 +63,7 @@ export default function App() {
     <div className="site-shell" ref={pageRef} inert={pagePaused ? true : undefined}>
       {introOpen ? <CollageIntro heroPoster={heroPoster} heroVideoReady={heroVideoReady} onReveal={revealIntro} onComplete={completeIntro} /> : null}
       <SiteHeader headerRef={headerRef} />
+      <ModeSwitch mode="minimal" hidden={pagePaused} />
       <main id="top">
         <Hero
           headerRef={headerRef}

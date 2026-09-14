@@ -266,8 +266,8 @@ describe('LongFormProjects card deck', () => {
     expect(gradingFeature).toHaveTextContent('00:05');
     expect(gradingFeature).toHaveTextContent('调色');
     expect(within(gradingFeature as HTMLElement).getByRole('button', {
-      name: '滑板工坊完整视频暂不可用',
-    })).toBeDisabled();
+      name: '放大观看滑板工坊调色片段',
+    })).toBeEnabled();
     expect(gradingFeature?.querySelector('img')).toHaveAttribute(
       'src',
       '/media/projects/long-form/grading-skate-workshop/poster-card.webp',
@@ -739,4 +739,15 @@ describe('LongFormProjects card deck', () => {
     enterObservedPreviews();
     expect(container.querySelector('.long-form-projects__card video')).not.toBeInTheDocument();
   });
+});
+
+
+it('opens the short color-grading excerpt from the active card', () => {
+  const onOpenProject = vi.fn();
+  render(<LongFormProjects playerOpen={false} onOpenProject={onOpenProject} />);
+  const open = screen.getByRole('button', { name: '放大观看滑板工坊调色片段' });
+  fireEvent.click(open);
+  expect(onOpenProject).toHaveBeenCalledWith(expect.objectContaining({
+    fullSrc: 'projects/long-form/grading-skate-workshop/preview-h264.mp4',
+  }), open);
 });

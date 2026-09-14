@@ -25,6 +25,7 @@ interface LongFilmRecord {
   chapter: string;
   formatLabel: string;
   durationLabel: string;
+  excerpt?: boolean;
   summary: readonly string[];
 }
 
@@ -127,13 +128,14 @@ const colorGradingFilms: readonly LongFilmRecord[] = colorGradingWorkGroup.items
     order: index + 1,
     poster: item.poster,
     previewSrc: item.previewSrc,
-    fullSrc: '',
+    fullSrc: item.previewSrc,
     aspectRatio: item.aspectRatio,
   },
   chapter: `${colorGradingWorkGroup.chapter} / COLOR GRADING`,
   formatLabel: `16 : 9 / ${item.categoryLabel}`,
   durationLabel: item.durationLabel,
   summary: [item.description],
+  excerpt: true,
 }));
 
 type CardStyle = CSSProperties & {
@@ -170,7 +172,7 @@ function LongFilmCard({
   onOpenProject: LongFormProjectsProps['onOpenProject'];
 }) {
   const hasFullMedia = Boolean(film.project.fullSrc);
-  const playLabel = hasFullMedia
+  const playLabel = film.excerpt ? `放大观看${film.project.title}调色片段` : hasFullMedia
     ? `播放${film.project.title}完整作品`
     : `${film.project.title}完整视频暂不可用`;
 
@@ -205,7 +207,7 @@ function LongFilmCard({
           revealAfterFirstFrame
         />
         <span className="long-form-projects__play-label" aria-hidden="true">
-          {hasFullMedia ? '播放正片' : '暂不可播放'}
+          {film.excerpt ? '放大观看 · 调色片段' : hasFullMedia ? '播放正片' : '暂不可播放'}
         </span>
       </button>
     </article>

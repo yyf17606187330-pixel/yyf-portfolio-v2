@@ -1,3 +1,4 @@
+import { ArrowIcon } from '../navigation/ArrowIcon';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
@@ -29,12 +30,13 @@ export function ImageGallery({ images, title, initialIndex, opener, onClose }: I
   const trackRef = useRef<HTMLDivElement>(null);
   const settleRef = useRef<number | undefined>(undefined);
   const alignedRef = useRef(false);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const suppressClickUntil = useRef(0);
   const wasZoomedRef = useRef(false);
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const item = images[index];
   const select = useCallback((next: number) => {
     setIndex(Math.max(0, Math.min(next, images.length - 1)));
-    setZoomed(false);
   }, [images.length]);
   useScrollLock(true);
   useFocusTrap(dialogRef, true, () => zoomed ? setZoomed(false) : onClose(), undefined, opener);
@@ -43,8 +45,8 @@ export function ImageGallery({ images, title, initialIndex, opener, onClose }: I
     const track = trackRef.current;
     const slide = track?.children[index] as HTMLElement | undefined;
     if (!track) { alignedRef.current = false; return; }
-    if (!zoomed && track && slide && track.clientWidth) {
-      track.scrollTo({ left: slide.offsetLeft - (track.clientWidth - slide.offsetWidth) / 2, behavior: reducedMotion || !alignedRef.current ? 'instant' : 'smooth' });
+    if (track && slide && track.clientWidth) {
+      track.scrollTo({ left: slide.offsetLeft - (track.clientWidth - slide.offsetWidth) / 2, behavior: zoomed || reducedMotion || !alignedRef.current ? 'instant' : 'smooth' });
       alignedRef.current = true;
     }
     return () => window.clearTimeout(settleRef.current);
@@ -124,9 +126,9 @@ export function ImageGallery({ images, title, initialIndex, opener, onClose }: I
   };
 
   return createPortal(
-    <div className="image-gallery" data-zoomed={zoomed} ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="image-gallery-title" tabIndex={-1}
+    <div className="image-gallery" data-text-reveal-skip data-zoomed={zoomed} ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="image-gallery-title" tabIndex={-1}
       onKeyDown={(event) => {
-        if (event.target instanceof HTMLInputElement || zoomed) return;
+        if (event.target instanceof HTMLInputElement) return;
         const next = event.key === 'ArrowRight' ? index + 1 : event.key === 'ArrowLeft' ? index - 1 : event.key === 'Home' ? 0 : event.key === 'End' ? images.length - 1 : null;
         if (next !== null) { event.preventDefault(); select(next); }
       }}>
@@ -134,29 +136,45 @@ export function ImageGallery({ images, title, initialIndex, opener, onClose }: I
         <div><p>IMAGE COLLECTION / {images.length} PHOTOGRAPHS</p><h2 id="image-gallery-title">{title}</h2></div>
         <button className="image-gallery__control" type="button" onClick={onClose} aria-label="关闭相册">关闭 ×</button>
       </header>
-        <div className="image-gallery__track" ref={trackRef} onScroll={settleScroll} aria-label="横向照片轮播">
+        <div className="image-gallery__track" ref={trackRef} onScroll={settleScroll}
+          onTouchStart={(event) => {
+            const touch = event.touches[0];
+            touchStartRef.current = event.touches.length === 1 ? { x: touch.clientX, y: touch.clientY } : null;
+          }}
+          onTouchMove={(event) => { if (event.touches.length !== 1) touchStartRef.current = null; }}
+          onTouchCancel={() => { touchStartRef.current = null; }}
+          onTouchEnd={(event) => {
+            const start = touchStartRef.current;
+            touchStartRef.current = null;
+            const touch = event.changedTouches[0];
+            if (!start || !touch) return;
+            const dx = touch.clientX - start.x;
+            const dy = touch.clientY - start.y;
+            if (Math.hypot(dx, dy) > 12) suppressClickUntil.current = Date.now() + 400;
+            if (zoomed && Math.abs(dx) >= 40 && Math.abs(dx) > Math.abs(dy) * 1.2) select(index + (dx < 0 ? 1 : -1));
+          }} aria-label="横向照片轮播">
           {images.map((image, position) => (
             <button key={image.id} type="button" className="image-gallery__slide" data-active={position === index}
               data-side={position < index ? 'left' : position > index ? 'right' : 'center'}
               aria-hidden={zoomed && position !== index ? true : undefined}
               aria-label={position === index ? `${zoomed ? '缩小' : '放大'}：${image.title}` : `切换到第${position + 1}张：${image.title}`}
               tabIndex={position === index ? 0 : -1}
-              onClick={() => position === index ? setZoomed((current) => !current) : select(position)}>
+              onClick={() => { if (Date.now() < suppressClickUntil.current) return; if (position === index) setZoomed((current) => !current); else select(position); }}>
               {Math.abs(position - index) <= 2 ? <img src={resolveMediaUrl(image.src) ?? undefined} alt={image.title} width={image.width} height={image.height} draggable={false} decoding="async" /> : null}
-              <span className="image-gallery__enlarge" aria-hidden="true">查看大图 ↗</span>
+              <span className="image-gallery__enlarge" aria-hidden="true">查看大图 <ArrowIcon /></span>
             </button>
           ))}
         </div>
       <footer className="image-gallery__footer">
         <div className="image-gallery__navigation">
-          <button className="image-gallery__control" type="button" disabled={zoomed || index === 0} onClick={() => select(index - 1)} aria-label="上一张">←</button>
+          <button className="image-gallery__control" type="button" disabled={index === 0} onClick={() => select(index - 1)} aria-label="上一张">←</button>
           <div className="image-gallery__caption" role="status"><span>{String(index + 1).padStart(2, '0')} / {images.length}</span><p>{item.title}</p></div>
-          <button className="image-gallery__control" type="button" disabled={zoomed || index === images.length - 1} onClick={() => select(index + 1)} aria-label="下一张">→</button>
+          <button className="image-gallery__control" type="button" disabled={index === images.length - 1} onClick={() => select(index + 1)} aria-label="下一张">→</button>
         </div>
-        <input className="image-gallery__scrubber" type="range" disabled={zoomed} min={1} max={images.length} value={index + 1} aria-label="选择照片" aria-valuetext={`第${index + 1}张，共${images.length}张：${item.title}`} onChange={(event) => select(Number(event.target.value) - 1)} />
-        <div className="image-gallery__help"><span>{zoomed ? '完整画幅 · 点击照片或 Esc 缩回' : '滚轮切换 · 左右滑动 · 点击大图'}</span>
-          {zoomed ? <button type="button" onClick={() => setZoomed(false)}>返回轮播 ↙</button> : null}
-          <a href={resolveMediaUrl(item.src) ?? undefined} target="_blank" rel="noreferrer">打开图片 ↗</a>
+        <input className="image-gallery__scrubber" type="range" min={1} max={images.length} value={index + 1} aria-label="选择照片" aria-valuetext={`第${index + 1}张，共${images.length}张：${item.title}`} onChange={(event) => select(Number(event.target.value) - 1)} />
+        <div className="image-gallery__help"><span>{zoomed ? '完整画幅 · 左右滑动换图 · 点击缩回' : '滚轮切换 · 左右滑动 · 点击大图'}</span>
+          {zoomed ? <button type="button" onClick={() => setZoomed(false)}>返回轮播 <ArrowIcon direction="down-left" /></button> : null}
+          <a href={resolveMediaUrl(item.src) ?? undefined} target="_blank" rel="noreferrer">打开图片 <ArrowIcon /></a>
         </div>
       </footer>
     </div>, document.body,

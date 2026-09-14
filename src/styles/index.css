@@ -724,3 +724,19 @@ input:focus-visible,
     text-align: right;
   }
 }
+
+.hero__motion-toggle {
+  position: absolute;
+  z-index: 3;
+  top: max(6rem, calc(env(safe-area-inset-top) + 4rem));
+  right: 1rem;
+  min-height: 44px;
+  padding: .6rem .9rem;
+  border: 1px solid #30332f;
+  background: #f5efdf;
+  color: #30332f;
+  font: inherit;
+  font-size: .75rem;
+  cursor: pointer;
+}
+.hero__motion-toggle:focus-visible { outline: 2px solid #a4472c; outline-offset: 4px; }

@@ -1,3 +1,4 @@
+import { ArrowIcon } from '../navigation/ArrowIcon';
 import { aiImageCase } from '../../content/aiImageCase';
 import { resolveMediaUrl } from '../../lib/media';
 import './AiImageCase.css';
@@ -15,7 +16,7 @@ function ImageWork({ item, index, onOpenImages }: AiImageCaseProps & { item: (ty
           onOpenImages(index, event.currentTarget);
         }}>
         <img src={url} alt={item.title} width={item.width} height={item.height} loading="lazy" decoding="async" />
-        <span className="ai-image-case__cue" aria-hidden="true">进入相册 ↗</span>
+        <span className="ai-image-case__cue" aria-hidden="true">进入相册 <ArrowIcon /></span>
       </a>
       <figcaption>{item.title}</figcaption>
     </figure>
@@ -41,7 +42,7 @@ export function AiImageCase({ onOpenImages }: AiImageCaseProps) {
       </header>
       <div className="ai-image-case__entry">
         <button className="ai-image-case__open" type="button" onClick={(event) => onOpenImages?.(0, event.currentTarget)}>
-          进入轮播相册 · {aiImageCase.images.length} 张 <span aria-hidden="true">↗</span>
+          进入轮播相册 · {aiImageCase.images.length} 张 <span aria-hidden="true"><ArrowIcon /></span>
         </button>
         <p>进入后滚轮切换 · 点击照片放大</p>
       </div>
