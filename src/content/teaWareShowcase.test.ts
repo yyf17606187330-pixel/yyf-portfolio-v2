@@ -23,7 +23,7 @@ describe('teaWareShowcase', () => {
 
   it('keeps the later six-month result separate from process details and employment dates', () => {
     expect(teaWareCopy.results.map((item) => item.body)).toEqual([
-      '其中一条公道杯素材后续半年累计千川消耗 80 万元，投产比 1:7。',
+      '一条未公开的公道杯千川投放素材，后续半年累计消耗 80 万元，投产比 1:7。下方选用哲品同项目作品示例，展示制作能力；展示片与该条投放素材不同。',
     ]);
     expect(teaWareCopy.process.map((item) => item.body).join(' '))
       .not.toMatch(/80 万元|1:7|半年/);

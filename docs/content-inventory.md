@@ -1,16 +1,16 @@
 # 当前内容与媒体交接清单
 
-核对日期：2026-09-08。事实以 [PROJECT.md](../PROJECT.md) 为准；媒体关联以当前内容数据、实际文件和 Git 跟踪记录为准。本清单记录现有页面及尚未接入的真实项目素材。
+核对日期：2026-09-14。事实以 [PROJECT.md](../PROJECT.md) 为准；媒体关联以当前内容数据、实际文件和 Git 跟踪记录为准。本清单记录现有页面及尚未接入的真实项目素材。
 
-当前页面顺序：Hero → 关于我 → 两组共 8 张影像卡 → AI 创作与内容生产 → 网站与交互 → 商业成果 → 工作经历。商业卡组归在各自工作经历内。
+当前页面顺序：Hero → 关于我 → 两组共 8 张影像卡 → AI 创作与内容生产（视频与图片）→ 网站与交互 → 商业成果 → 工作经历 → 求职联系。商业卡组归在各自工作经历内。
 
 ## 路径与版本管理
 
 - 下文媒体路径均相对于 `public/media/`，例如 `hero/hero-scroll.mp4` 对应 `public/media/hero/hero-scroll.mp4`。文件名大小写必须与数据源完全一致。
 - `src/lib/media.ts` 的 `resolveMediaUrl` 默认使用 `/media/`；配置 `VITE_MEDIA_BASE_URL` 后使用经校验的媒体根地址或站内路径。该配置不改变 Git 跟踪状态，也不表示已经部署。
 - `public/assets/` 下的 Hero 备用静态图、微信图标和 About 拼贴背景使用直接的 `/assets/...` 地址，不经过媒体根地址配置。
-- 本次清点：`public/media/` 已跟踪 62 个媒体文件，其中 40 个 MP4 由 Git LFS 管理，22 个 WebP 由普通 Git 管理，另有本目录 README。实际文件列表与 Git 跟踪列表一致，包含本轮新加入暂存区的 6 个 AI 媒体文件。
-- `.gitattributes` 对 `public/media/**/*.mp4` 设置 `filter=lfs`；`.gitignore` 默认限制新增媒体，显式放行时间线、拼贴和滑雪的网页衍生文件。忽略规则不会取消既有文件的跟踪。
+- 本次清点：`public/media/` 包含 80 个网页媒体文件，其中 40 个 MP4 由 Git LFS 管理，40 个 WebP 由普通 Git 管理，另有本目录 README。本轮新增18张AI图片，视频及既有媒体保持。
+- `.gitattributes` 对 `public/media/**/*.mp4` 设置 `filter=lfs`；`.gitignore` 默认限制新增媒体，显式放行时间线、拼贴、滑雪及咖啡烘焙AI图片的网页衍生文件。忽略规则不会取消既有文件的跟踪。
 - 原始拍摄文件、去重别名及其哈希记录不等于网页运行时资源。`source.fileName` 中的日期也不用于推导任职或拍摄时间。
 
 ## Hero 与关于我
@@ -22,7 +22,7 @@ Hero 的媒体入口在 `src/App.tsx`，展示与成果文字在 `src/features/h
 | Hero（无项目 slug） | 滚动视频 | `hero/hero-scroll.mp4` | 已接入；Git LFS |
 | Hero | 首帧海报 | `hero/hero-poster.webp` | 已接入；普通 Git |
 | Hero | 备用静态肖像 | `public/assets/hero/hero-candidate-03.webp` | 已接入；普通 Git；地址为 `/assets/hero/hero-candidate-03.webp` |
-| Hero | 微信标识图标 | `public/assets/icons/wechat.svg` | 已接入；普通 Git；只是图标，不是二维码或联系面板 |
+| Hero | 联系标识 | `Hero.tsx` 内联邮箱 SVG | 跳转 `#contact`；原微信图标文件保留但不再作为联系入口 |
 | About `#about` | 主肖像视频 | `about/about-portrait.mp4` | 已接入；Git LFS；展示框为 2:3 |
 | About `#about` | 肖像海报 | `about/about-portrait-poster.webp` | 已接入；普通 Git |
 | About `#about` | 鼠标悬停交互视频 | `about/about-portrait-hover.mp4` | 已接入；Git LFS；数据配置从 0.25 秒开始 |
@@ -30,7 +30,7 @@ Hero 的媒体入口在 `src/App.tsx`，展示与成果文字在 `src/features/h
 
 Hero 已确认数字为 7 年内容／电商／直播运营经验、项目年 GMV 800 万+、参与 100+ 拍摄项目、个人 IP 与电商账号从 0 到 1。不得扩写为独立创造全部 GMV 或主导全部拍摄项目。About 的商业数据、旅拍后期素材数见下文口径表。
 
-旧收尾静帧叠化已停用，不属于当前媒体依赖。肖像已经接入；数据中的肖像占位文字仅供缺少肖像时使用。旧邮箱／微信联系面板已移除，当前不展示未经确认的邮箱、联系方式或二维码。
+旧收尾静帧叠化已停用，不属于当前媒体依赖。肖像已经接入；数据中的肖像占位文字仅供缺少肖像时使用。已确认求职邮箱 `yyf17606187330@gmail.com` 和目标城市杭州／广州，由 `jobProfile.ts` 供首屏和页尾引用；不展示未提供的微信二维码。
 
 ## 第一组影像：4 张独立作品卡
 
@@ -46,8 +46,8 @@ Hero 已确认数字为 7 年内容／电商／直播运营经验、项目年 GM
 | --- | --- | --- | --- | --- | --- |
 | 1 | `travel-vlog` | 旅拍 Vlog | `travel` | 2:1／04:20 | 800+ 段素材的筛选、剪辑、调色、配乐与人声处理；未参与拍摄 |
 | 2 | `narrative-film` | 剧情短片 | `narrative` | 16:9／03:24 | 主导编导、制片、拍摄、剪辑、调色与输出 |
-| 3 | `dark-room` | MacBook 短片 | `dark-room` | 16:9／00:22 | 自主作品，非品牌委托；未填写额外职责、客户或年份 |
-| 4 | `film-2025-06-15` | 棋局短片 | `film-2025-06-15` | 16:9／01:23 | 室内人物与棋局场景；未填写额外职责、客户或年份 |
+| 3 | `dark-room` | MacBook 短片 | `dark-room` | 16:9／00:22 | 2026年自主作品，非品牌委托；额外职责未确认 |
+| 4 | `film-2025-06-15` | 棋局短片 | `film-2025-06-15` | 16:9／01:23 | 2025年室内人物与棋局短片；额外职责未确认 |
 
 表中时长是页面数据标签，不是本轮重新测得的解码时长。保留现有 HEVC 正片和独立 H.264 预览，不将预览冒充正片，也不新增转码。
 
@@ -68,19 +68,28 @@ Hero 已确认数字为 7 年内容／电商／直播运营经验、项目年 GM
 
 ## AI 创作与内容生产
 
-数据源：`src/content/aiVideoCapability.ts`。AI 项目使用 `id` 字段；有媒体时由 `AiVideoCapabilitySection.tsx` 生成播放器 slug `ai-video-preview-<id>`。源数组顺序为时间线、拼贴、运动 TVC，页面将带 `featured` 的运动场景样片优先展示。
+数据源：`src/content/aiVideoCapability.ts`。AI 项目使用 `id` 字段；源数组保留时间线、拼贴、运动 TVC 三项归属。拼贴标记 `placement: intro`，由开场使用；其余由 `AiVideoCapabilitySection.tsx` 生成播放器 slug `ai-video-preview-<id>`，运动场景样片优先展示。
 
 | 内容 ID | 项目与完成范围 | 当前媒体路径 | 接入状态／管理 |
 | --- | --- | --- | --- |
 | `ai-video-landscape` | 时间线：剧情阶段样片；当前已接入片段约 32.879 秒 | `ai-video/landscape-poster.webp`；`ai-video/landscape-preview-h264.mp4`；`ai-video/landscape-full-h264.mp4` | 海报为普通 Git，两个 MP4 为 Git LFS；16:9；播放器 slug 为 `ai-video-preview-ai-video-landscape` |
-| `ai-video-portrait` | 复古拼贴影像：约 25.8 秒竖屏视觉实验 | `ai-video/collage-poster.webp`；`ai-video/collage-preview-h264.mp4`；`ai-video/collage-full-h264.mp4` | 已接入；9:16；海报为普通 Git，两个 MP4 为 Git LFS；播放器 slug 为 `ai-video-preview-ai-video-portrait` |
+| `ai-video-portrait` | 复古拼贴影像：约 25.8 秒竖屏视觉实验 | `ai-video/collage-poster.webp`；`ai-video/collage-preview-h264.mp4`；`ai-video/collage-full-h264.mp4` | 开场使用海报与6秒短预览，完整9:16；原正片保留但不再出现在AI作品区；海报普通Git，MP4为Git LFS |
 | `ai-video-sports-tvc` | 产品 TVC：规划滑雪、骑行、攀岩及产品主镜头，目前仅完成约 30.1 秒滑雪场景样片 | `ai-video/ski-poster.webp`；`ai-video/ski-preview-h264.mp4`；`ai-video/ski-full-h264.mp4` | 已接入；1472:632，约 2.33:1；海报为普通 Git，两个 MP4 为 Git LFS；播放器 slug 为 `ai-video-preview-ai-video-sports-tvc` |
 
 时间线媒体只能关联时间线项目，不能复用给滑雪或拼贴。三项实践不等于三支完整商业广告；`fullSrc` 表示播放器展示文件，不改变“阶段样片”的作品状态。
 
 拼贴原片为用户提供的 `a0662df4ef5a2493f2a37bf994c6192e_raw.mp4`（1080×1920，HEVC／AAC，25.813 秒），保留原片，新增同尺寸 H.264 网页播放副本；短预览为第 6 秒起的 6 秒片段，540×960，海报取第 8 秒。滑雪原片为 `暴风雪滑雪极限运动.mp4`（1472×632，H.264／AAC，30.083 秒），播放器文件仅无损重封装以支持渐进加载；短预览为第 16 秒起的 6 秒片段，1104×474，海报取第 19 秒。两项均保持原生画幅，预览与正片不互相替代。
 
-`aiProductionContent.delivery` 记录兴海集团的图片制作与资料交付：图像生成 API、AI 超分、PDF 项目资料及 HTML 展示页面。约一周缩短至 3 天只对应图片类交付，不能扩为视频、PDF 或网站整体交付周期。当前该实践是文字案例，未设置图片案例、PDF 下载或 HTML 项目链接。GPT 操作 Blender 属于未来方向，不列为已完成交付。
+`aiProductionContent.delivery` 记录兴海集团的图片制作与资料交付：图像生成 API、AI 超分、PDF 项目资料及 HTML 展示页面。约一周缩短至 3 天只对应图片类交付，不能扩为视频、PDF 或网站整体交付周期。该实践仍为独立文字案例，不与下方咖啡烘焙案例的工时混用。GPT 操作 Blender 属于未来方向。
+
+### 咖啡与烘焙 AI 产品视觉
+
+数据源：`src/content/aiImageCase.ts`；组件 `AiImageCase.tsx`，锚点 `#ai-image`。用户提供19个PNG，其中尾号119与120的文件SHA-256相同，去重为18张。原文件保留，网页副本位于 `ai-image/subtitles/`，各项 `sourceFile` 记录来源文件名。
+
+- 17张方图保留1254×1254，套餐插画保留2172×724；WebP质量88，总约1.71 MiB。无裁切、无调色、无重新生成。
+- 精选6张为暖色单品海报3张、日光场景2张、柠檬饮与巴斯克组合1张；其余12张原生折叠展开，全部按需加载，点击可在新标签页看大图。
+- 工时为用户对此组作品的自述：以往拍摄加修图最快2天且需多人配合，现在一人一上午出图。没有原始实拍对照、统一人时统计或收益数据，不把不同成品当作前后对照，不计算通用提效倍数。
+- SUBTITLES为图片中已有标识；未确认委托关系，不扩写为品牌客户或已投放广告。
 
 ## 网站与交互
 
@@ -129,7 +138,7 @@ Hero 已确认数字为 7 年内容／电商／直播运营经验、项目年 GM
 | 2 | `titanium-tea-pour` | `tea-ware-titanium-tea-pour` | 18.946 秒 |
 | 3 | `titanium-set-breakdown` | `tea-ware-titanium-set-breakdown` | 31.670 秒 |
 
-`source.aliases` 记录原始素材的去重关系，别名不增加卡片数，也不新增网页路径。当前数据没有把公道杯的 80 万元成果绑定到某一条播放器 slug，不能据卡片邻近位置推断哪条片子取得该结果。
+`source.aliases` 记录原始素材的去重关系，别名不增加卡片数，也不新增网页路径。用户确认80万元成果来自未公开的公道杯千川素材；页面选择现有哲品影片为同项目制作示例，并明确展示片与该条投放素材不同，不绑定80万元成果到任一现有播放器slug。
 
 ## 已确认数字与归属
 
@@ -145,7 +154,7 @@ Hero 已确认数字为 7 年内容／电商／直播运营经验、项目年 GM
 
 ## 后续接续与检查
 
-尚未接入的内容为酒店展示素材与公开地址，以及未确认的真实联系信息。调色组当前仅配置短预览，不为填满清单创建正片、占位图片或虚构项目。
+酒店展示素材与公开地址按用户要求暂缓。邮箱与求职城市已接入；2022年以前经历不展开。视频预览起止秒数等待用户提供，本轮不改视频；调色组当前仅配置短预览，不为填满清单创建正片、占位图片或虚构项目。
 
 素材以后接入时，先确认所属项目、完成范围、媒体角色与实际画幅，再更新对应数据源和本清单；不要仅按文件名、邻近卡片或标题推断归属。已有作品媒体与本次新素材的原片均保持。
 

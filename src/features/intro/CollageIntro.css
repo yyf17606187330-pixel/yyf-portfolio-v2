@@ -1,0 +1,110 @@
+.collage-intro {
+  --intro-ink: var(--paper-control-ink);
+  --intro-paper: var(--color-content-paper);
+  --intro-wine: #754758;
+  --intro-mustard: #d6b457;
+  background: var(--intro-paper);
+  color: var(--intro-ink);
+  height: 100dvh;
+  inset: 0;
+  isolation: isolate;
+  overflow: hidden;
+  padding: clamp(1.25rem, 3vw, 3rem);
+  position: fixed;
+  z-index: var(--layer-intro);
+}
+/* Keep the approved opaque curtain lift and the text handoff timing. */
+.collage-intro[data-closing='true'] {
+  animation: paper-intro-lift 850ms cubic-bezier(0.76, 0, 0.24, 1) 200ms both;
+  will-change: transform;
+}
+.collage-intro__topline { align-items: center; display: flex; gap: 1rem; justify-content: space-between; position: relative; z-index: 2; }
+.collage-intro__topline > span { font-size: 0.65rem; letter-spacing: 0.12em; }
+.collage-intro__skip { cursor: pointer; font-size: 0.8rem; min-height: 44px; padding: 0.75rem 1.2rem; }
+.collage-intro__ribbon {
+  height: clamp(2.5rem, 7vh, 5.125rem);
+  left: -3%;
+  overflow: hidden;
+  pointer-events: none;
+  position: absolute;
+  width: 106%;
+}
+.collage-intro__ribbon--top { top: 15%; rotate: 2deg; animation: paper-ribbon-enter-left 750ms cubic-bezier(0.76, 0, 0.24, 1) both; }
+.collage-intro__ribbon--bottom { bottom: 14%; rotate: -3deg; animation: paper-ribbon-enter-right 750ms cubic-bezier(0.76, 0, 0.24, 1) 80ms both; }
+.collage-intro__ribbon-track {
+  animation: paper-ribbon-flow 7s linear infinite;
+  background: repeating-linear-gradient(90deg, var(--intro-wine) 0 48px, var(--intro-paper) 48px 90px, var(--intro-mustard) 90px 138px, var(--intro-paper) 138px 180px, var(--intro-ink) 180px 228px, var(--intro-paper) 228px 270px);
+  width: calc(100% + 270px);
+  height: 100%;
+}
+.collage-intro__ribbon--bottom .collage-intro__ribbon-track { animation-direction: reverse; }
+.collage-intro__filters { position: absolute; width: 0; height: 0; overflow: hidden; pointer-events: none; }
+.collage-intro__stage {
+  display: grid;
+  inset: 27% 4%;
+  place-items: center;
+  position: absolute;
+  animation: paper-stage-arrive 750ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.collage-intro__hello {
+  /* Adapted from Lucas Bebber's Squiggly Text (MIT): /third-party-notices.txt. */
+  animation: hello-pencil-boil 650ms steps(1, end) infinite;
+  display: flex;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: min(22vw, 36dvh, 25rem);
+  font-weight: 900;
+  letter-spacing: -0.07em;
+  line-height: 1;
+  margin: 0;
+  padding-right: 0.07em;
+  text-shadow: 0.018em 0.025em 0 var(--intro-mustard);
+}
+.collage-intro__hello span {
+  animation: hello-letter-sway 1950ms steps(8, end) infinite;
+  display: block;
+  transform-origin: 50% 75%;
+}
+.collage-intro__hello span:nth-child(2) { animation-delay: -340ms; transform-origin: 50% 30%; }
+.collage-intro__hello span:nth-child(3) { animation-delay: -720ms; }
+.collage-intro__hello span:nth-child(4) { animation-delay: -1080ms; transform-origin: 50% 25%; }
+.collage-intro__hello span:nth-child(5) { animation-delay: -1460ms; }
+.collage-intro[data-paused='true'] .collage-intro__hello,
+.collage-intro[data-paused='true'] .collage-intro__hello span,
+.collage-intro[data-paused='true'] .collage-intro__ribbon-track { animation-play-state: paused; }
+.collage-intro__status { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@keyframes paper-intro-lift { from { transform: translateY(0); } to { transform: translateY(-100%); } }
+@keyframes paper-ribbon-enter-left { from { transform: translateX(-105%); } to { transform: translateX(0); } }
+@keyframes paper-ribbon-enter-right { from { transform: translateX(105%); } to { transform: translateX(0); } }
+@keyframes paper-ribbon-flow { to { transform: translateX(-270px); } }
+@keyframes paper-stage-arrive { from { opacity: 0; transform: translateY(18px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes hello-letter-sway {
+  0%, 100% { transform: translateY(0.015em) rotate(-3deg) skewX(-2deg) scale(1.025, 0.97); }
+  28% { transform: translateY(-0.025em) rotate(2deg) skewX(2deg) scale(0.975, 1.035); }
+  56% { transform: translateY(0.01em) rotate(-2deg) skewX(-1deg) scale(1.035, 0.975); }
+  78% { transform: translateY(-0.018em) rotate(3deg) skewX(2.5deg) scale(0.985, 1.025); }
+}
+@keyframes hello-pencil-boil {
+  0%, 100% { filter: url('#intro-pencil-0'); }
+  20% { filter: url('#intro-pencil-1'); }
+  40% { filter: url('#intro-pencil-2'); }
+  60% { filter: url('#intro-pencil-3'); }
+  80% { filter: url('#intro-pencil-4'); }
+}
+@media (max-width: 600px) {
+  .collage-intro__topline > span { font-size: 0.5rem; letter-spacing: 0.07em; }
+  .collage-intro__skip { font-size: 0.7rem; padding-inline: 0.8rem; }
+  .collage-intro__ribbon { height: 3.5rem; }
+  .collage-intro__ribbon--top { top: 20%; }
+  .collage-intro__ribbon--bottom { bottom: 20%; }
+}
+@media (max-height: 520px) {
+  .collage-intro__ribbon--top { top: 23%; }
+  .collage-intro__ribbon--bottom { bottom: 12%; }
+  .collage-intro__ribbon { height: 1.8rem; }
+  .collage-intro__stage { inset-block: 34% 24%; }
+  .collage-intro__hello { font-size: min(22vw, 27dvh); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .collage-intro[data-closing='true'], .collage-intro__stage, .collage-intro__ribbon, .collage-intro__ribbon-track, .collage-intro__hello, .collage-intro__hello span { animation: none; }
+  .collage-intro__hello { filter: none; }
+}

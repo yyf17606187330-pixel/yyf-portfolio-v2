@@ -11,6 +11,7 @@ export interface AiVideoCapabilityItem {
   previewSrc: string | null;
   fullSrc: string | null;
   featured?: boolean;
+  placement?: 'gallery' | 'intro';
   result?: { value: string; label: string };
 }
 
@@ -40,6 +41,7 @@ export const aiVideoCapabilityItems: readonly AiVideoCapabilityItem[] = [
   },
   {
     id: 'ai-video-portrait',
+    placement: 'intro',
     label: 'AI 影像 · 复古拼贴',
     title: '复古拼贴影像',
     description: '以人物剪影、撕纸边缘与纸张层叠组织画面，完成一段复古拼贴影像。',

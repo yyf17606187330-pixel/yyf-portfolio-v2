@@ -156,7 +156,7 @@ describe('CommercialProjectCase', () => {
 
     expect(projectCase).toHaveTextContent('2025.07—2025.11');
     expect(results).toHaveTextContent(
-      '其中一条公道杯素材后续半年累计千川消耗 80 万元，投产比 1:7',
+      '一条未公开的公道杯千川投放素材，后续半年累计消耗 80 万元，投产比 1:7',
     );
     expect(process).not.toHaveTextContent(/80 万元|1:7/);
     expect(projectCase).not.toHaveTextContent(/销售额|利润|45 万元|1:5|BPM|UV 价值/);

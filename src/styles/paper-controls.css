@@ -1,0 +1,108 @@
+:root {
+  --paper-control-surface: #f5efdf;
+  --paper-control-ink: #30332f;
+  --paper-control-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.68' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' opacity='.08' filter='url(%23g)'/%3E%3C/svg%3E");
+  --paper-control-edge: polygon(3% 8%, 18% 5%, 30% 7%, 45% 2%, 59% 5%, 75% 3%, 96% 7%, 97% 20%, 100% 29%, 98% 45%, 100% 64%, 97% 77%, 96% 92%, 78% 95%, 63% 93%, 48% 98%, 30% 95%, 17% 98%, 3% 93%, 2% 79%, 0 69%, 2% 49%, 0 32%, 2% 22%);
+}
+.site-shell span[data-text-reveal] { display: inline-block; }
+.site-shell .hero__text-reveal { display: block; }
+.paper-control__label { display: inline-block; transition: rotate 300ms ease, scale 300ms ease; }
+.hero__cta:is(:hover, :focus-visible) .paper-control__label { rotate: 3deg; scale: 1.05; }
+
+/* Paper is drawn behind each control so keyboard outlines stay outside its edge. */
+.site-shell :is(.hero__cta, .site-header__identity, .site-header__nav,
+  .long-form-projects__controls button, .project-media-deck__buttons button,
+  .long-form-projects__play-label, .project-media-deck__play-label,
+  .ai-video-capability__preview-toggle span, .ai-image-case__more summary,
+  .contact-section__email),
+.collage-intro__skip {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  color: var(--paper-control-ink);
+  isolation: isolate;
+  transition: color 240ms ease, translate 300ms ease;
+}
+.site-shell :is(.site-header__identity, .site-header__nav, .long-form-projects__controls button,
+  .project-media-deck__buttons button, .ai-image-case__more summary, .contact-section__email),
+.hero__cta, .collage-intro__skip { position: relative; }
+
+.site-shell :is(.hero__cta, .site-header__identity, .site-header__nav,
+  .long-form-projects__controls button, .project-media-deck__buttons button,
+  .long-form-projects__play-label, .project-media-deck__play-label,
+  .ai-video-capability__preview-toggle span, .ai-image-case__more summary,
+  .contact-section__email)::before,
+.collage-intro__skip::before {
+  background-color: var(--paper-control-surface);
+  background-image: var(--paper-control-grain);
+  clip-path: var(--paper-control-edge);
+  content: '';
+  inset: -1px;
+  pointer-events: none;
+  position: absolute;
+  transition: background-color 240ms ease, rotate 300ms ease, scale 300ms ease;
+  z-index: -1;
+}
+.site-shell :is(.hero__cta, .site-header__identity, .site-header__nav,
+  .long-form-projects__controls button, .project-media-deck__buttons button),
+.collage-intro__skip {
+  filter: drop-shadow(1px 3px 2px rgb(36 30 23 / 15%));
+}
+.site-shell :is(.site-header__identity, .site-header__nav) { backdrop-filter: none; }
+.site-shell .site-header__nav a { position: relative; }
+.site-shell .site-header__nav a::after {
+  background: currentColor;
+  bottom: 0.55rem;
+  content: '';
+  height: 1px;
+  left: 15%;
+  position: absolute;
+  scale: 0 1;
+  transition: scale 240ms ease;
+  width: 70%;
+}
+.site-shell .site-header__nav a:is(:hover, :focus-visible)::after { scale: 1; }
+.site-shell .ai-image-case__more summary { padding: 0.85rem 1.2rem; width: fit-content; }
+.site-shell .contact-section__email { padding: 1rem 1.4rem; }
+.hero__marker {
+  background: var(--paper-control-ink);
+  background-image: var(--paper-control-grain);
+  color: var(--paper-control-surface);
+}
+.hero__marker a:hover { color: #dbc792; }
+
+.site-shell :is(.hero__cta, .long-form-projects__controls button, .project-media-deck__buttons button,
+  .ai-image-case__more summary, .contact-section__email):is(:hover, :focus-visible):not(:disabled),
+.site-shell .long-form-projects__play:is(:hover, :focus-visible) .long-form-projects__play-label,
+.site-shell .project-media-deck__play:is(:hover, :focus-visible) + .project-media-deck__play-label,
+.site-shell .ai-video-capability__preview-toggle:is(:hover, :focus-visible) span,
+.collage-intro__skip:is(:hover, :focus-visible) { background: transparent; color: var(--paper-control-surface); }
+
+.site-shell :is(.hero__cta, .long-form-projects__controls button, .project-media-deck__buttons button,
+  .ai-image-case__more summary, .contact-section__email):is(:hover, :focus-visible):not(:disabled)::before,
+.site-shell .long-form-projects__play:is(:hover, :focus-visible) .long-form-projects__play-label::before,
+.site-shell .project-media-deck__play:is(:hover, :focus-visible) + .project-media-deck__play-label::before,
+.site-shell .ai-video-capability__preview-toggle:is(:hover, :focus-visible) span::before,
+.collage-intro__skip:is(:hover, :focus-visible)::before { background-color: var(--paper-control-ink); rotate: -2deg; scale: 1.04 1.08; }
+
+.site-shell :is(.hero__cta, .long-form-projects__controls button,
+  .project-media-deck__buttons button, .ai-image-case__more summary,
+  .contact-section__email):focus-visible,
+.collage-intro__skip:focus-visible { outline: 2px solid var(--paper-control-ink); outline-offset: 4px; }
+
+@media (hover: hover) and (pointer: fine) {
+  .site-shell :is(.hero__cta, .long-form-projects__controls button,
+    .project-media-deck__buttons button, .ai-image-case__more summary):hover:not(:disabled),
+  .collage-intro__skip:hover { translate: 0 -2px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .paper-control__label { transition: none; }
+  .hero__cta:is(:hover, :focus-visible) .paper-control__label { rotate: none; scale: none; }
+  .site-shell :is(.hero__cta, .site-header__identity, .site-header__nav,
+    .long-form-projects__controls button, .project-media-deck__buttons button,
+    .long-form-projects__play-label, .project-media-deck__play-label,
+    .ai-video-capability__preview-toggle span, .ai-image-case__more summary,
+    .contact-section__email), .collage-intro__skip { transition: none; translate: none; }
+  .site-shell :is(a, button, summary, span, nav)::before,
+  .site-shell .site-header__nav a::after, .collage-intro__skip::before { transition: none; rotate: none; scale: 1; }
+}

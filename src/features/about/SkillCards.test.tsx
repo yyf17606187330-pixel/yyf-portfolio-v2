@@ -16,8 +16,8 @@ describe('SkillCards', () => {
     for (const group of aboutContent.capabilityGroups) {
       const button = screen.getByRole('button', { name: group.title });
       fireEvent.click(button);
-      expect(button).toHaveAttribute('aria-pressed', 'true');
-      expect(screen.getAllByRole('button', { pressed: true })).toHaveLength(1);
+      expect(button).toHaveAttribute('aria-expanded', 'true');
+      expect(screen.getAllByRole('button', { expanded: true })).toHaveLength(1);
       const tags = screen.getByRole('list', { name: group.title + '技能' });
       expect(within(tags).getAllByRole('listitem').map((tag) => tag.textContent)).toEqual(group.tags);
       expect(screen.getByRole('link', { name: group.evidence!.label + '：' + group.title }))
@@ -33,7 +33,7 @@ describe('SkillCards', () => {
     buttons[0].focus();
     fireEvent.keyDown(buttons[0], { key: 'ArrowLeft' });
     expect(buttons[5]).toHaveFocus();
-    expect(buttons[5]).toHaveAttribute('aria-pressed', 'true');
+    expect(buttons[5]).toHaveAttribute('aria-expanded', 'true');
     fireEvent.keyDown(buttons[5], { key: 'Home' });
     expect(buttons[0]).toHaveFocus();
     fireEvent.keyDown(buttons[0], { key: 'End' });
@@ -41,6 +41,20 @@ describe('SkillCards', () => {
     fireEvent.keyDown(buttons[5], { key: 'ArrowRight' });
     expect(buttons[0]).toHaveFocus();
     expect(screen.getByRole('region', { name: '内容策划' })).toBeInTheDocument();
+  });
+
+  it('expands the selected paper in place and removes its link from keyboard access when collapsed', () => {
+    render(<SkillCards groups={aboutContent.capabilityGroups} />);
+    const button = screen.getByRole('button', { name: '内容策划' });
+    expect(screen.queryByRole('region', { name: '内容策划' })).not.toBeInTheDocument();
+    fireEvent.click(button);
+    const panel = screen.getByRole('region', { name: '内容策划' });
+    expect(button.parentElement).toContainElement(panel);
+    expect(within(panel).getByRole('link')).toHaveAttribute('href', '#experience-kuwo');
+    fireEvent.click(button);
+    expect(button).toHaveAttribute('aria-expanded', 'false');
+    expect(panel).not.toBeVisible();
+    expect(screen.queryByRole('link', { name: '查看商业实践：内容策划' })).not.toBeInTheDocument();
   });
 
   it('runs the paper entrance once and pauses when offscreen or behind the player', () => {

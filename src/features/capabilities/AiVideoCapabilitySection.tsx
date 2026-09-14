@@ -3,12 +3,14 @@ import { aiProductionContent, type AiVideoCapabilityItem } from '../../content/a
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { resolveMediaUrl } from '../../lib/media';
 import type { Project } from '../../types/portfolio';
+import { AiImageCase } from './AiImageCase';
 import './AiVideoCapabilitySection.css';
 
 export interface AiVideoCapabilitySectionProps {
   items: readonly AiVideoCapabilityItem[];
   onOpenProject: (project: Project, opener: HTMLElement) => void;
   paused?: boolean;
+  onOpenImages?: (index: number, opener: HTMLElement) => void;
 }
 
 interface AiVideoMediaProps {
@@ -118,11 +120,13 @@ export function AiVideoCapabilitySection({
   items,
   onOpenProject,
   paused = false,
+  onOpenImages,
 }: AiVideoCapabilitySectionProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
-  const featuredItem = items.find((item) => item.featured);
-  const supportingItems = items.filter((item) => item !== featuredItem);
+  const galleryItems = items.filter((item) => item.placement !== 'intro');
+  const featuredItem = galleryItems.find((item) => item.featured);
+  const supportingItems = galleryItems.filter((item) => item !== featuredItem);
 
   const openFullscreen = (
     item: AiVideoCapabilityItem,
@@ -235,6 +239,7 @@ export function AiVideoCapabilitySection({
             {supportingItems.map(renderProjectCard)}
           </div>
         ) : null}
+        <AiImageCase onOpenImages={onOpenImages} />
       </div>
     </section>
   );

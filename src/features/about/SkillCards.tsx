@@ -11,8 +11,7 @@ interface SkillCardsProps {
 }
 
 export function SkillCards({ groups, paused = false, children }: SkillCardsProps) {
-  const [selectedId, setSelectedId] = useState(groups[0]?.id);
-  const selected = groups.find((group) => group.id === selectedId) ?? groups[0];
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const buttonsRef = useRef<(HTMLButtonElement | null)[]>([]);
   const animationRef = useRef<gsap.core.Tween | null>(null);
@@ -22,7 +21,6 @@ export function SkillCards({ groups, paused = false, children }: SkillCardsProps
   pausedRef.current = paused;
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const panelId = useId();
-  const headingId = useId();
 
   useLayoutEffect(() => {
     const root = rootRef.current;
@@ -80,7 +78,7 @@ export function SkillCards({ groups, paused = false, children }: SkillCardsProps
     buttonsRef.current[next]?.focus();
   };
 
-  if (!selected) return null;
+  if (!groups.length) return null;
 
   return (
     <div className="skill-collage" ref={rootRef}>
@@ -98,41 +96,42 @@ export function SkillCards({ groups, paused = false, children }: SkillCardsProps
         {children ? <div className="skill-collage__portrait">{children}</div> : null}
         <ol aria-label="能力范围" className="skill-cards">
           {groups.map((group, index) => (
-            <li className="skill-card" data-skill-card={group.id} key={group.id}>
+            <li className="skill-card" data-skill-card={group.id} data-open={selectedId === group.id} key={group.id}>
               <button
-                aria-controls={panelId}
+                aria-controls={panelId + group.id}
                 aria-label={group.title}
-                aria-pressed={selected.id === group.id}
+                aria-expanded={selectedId === group.id}
                 className="skill-card__select"
-                onClick={() => setSelectedId(group.id)}
+                id={panelId + group.id + '-trigger'}
+                onClick={() => setSelectedId((current) => current === group.id ? null : group.id)}
                 onKeyDown={(event) => handleKeyDown(event, index)}
                 ref={(button) => { buttonsRef.current[index] = button; }}
                 type="button"
               >
                 <span aria-hidden="true" className="skill-card__index">{String(index + 1).padStart(2, '0')}</span>
                 <span className="skill-card__title">{group.title}</span>
-                <span aria-hidden="true" className="skill-card__mark">{selected.id === group.id ? '−' : '+'}</span>
+                <span aria-hidden="true" className="skill-card__mark">{selectedId === group.id ? '−' : '+'}</span>
               </button>
+              <div
+                aria-labelledby={panelId + group.id + '-trigger'}
+                className="skill-detail"
+                hidden={selectedId !== group.id}
+                id={panelId + group.id}
+                role="region"
+              >
+                <p>{group.description}</p>
+                <ul aria-label={group.title + '技能'} className="skill-detail__tags">
+                  {group.tags.map((tag) => <li key={tag}>{tag}</li>)}
+                </ul>
+                {group.evidence ? (
+                  <a aria-label={group.evidence.label + '：' + group.title} className="skill-detail__evidence" href={group.evidence.href}>
+                    {group.evidence.label}<span aria-hidden="true">↗</span>
+                  </a>
+                ) : null}
+              </div>
             </li>
           ))}
         </ol>
-      </div>
-      <div aria-atomic="true" aria-labelledby={headingId} aria-live="polite" className="skill-detail" id={panelId} role="region">
-        <div className="skill-detail__heading">
-          <p>SKILL NOTES / {String(groups.indexOf(selected) + 1).padStart(2, '0')}</p>
-          <h4 id={headingId}>{selected.title}</h4>
-        </div>
-        <div className="skill-detail__body">
-          <p>{selected.description}</p>
-          <ul aria-label={selected.title + '技能'} className="skill-detail__tags">
-            {selected.tags.map((tag) => <li key={tag}>{tag}</li>)}
-          </ul>
-        </div>
-        {selected.evidence ? (
-          <a aria-label={selected.evidence.label + '：' + selected.title} className="skill-detail__evidence" href={selected.evidence.href}>
-            {selected.evidence.label}<span aria-hidden="true">↗</span>
-          </a>
-        ) : null}
       </div>
     </div>
   );

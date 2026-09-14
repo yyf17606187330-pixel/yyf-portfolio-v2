@@ -14,6 +14,7 @@ export function SiteHeader({ headerRef }: SiteHeaderProps = {}) {
       <nav className="site-header__nav" aria-label="主导航">
         <a href="#works">WORK</a>
         <a href="#about">ABOUT</a>
+        <a href="#contact">CONTACT</a>
       </nav>
     </header>
   );

@@ -1,0 +1,3 @@
+[data-text-reveal-controller='active'] [data-text-reveal-state='animating'] {
+  will-change: filter, opacity, transform;
+}
