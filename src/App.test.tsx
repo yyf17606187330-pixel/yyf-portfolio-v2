@@ -62,7 +62,8 @@ describe('App', () => {
     expect(container.querySelector('.site-shell')).not.toHaveAttribute('inert');
     expect(document.body.style.overflow).toBe('');
     expect(sessionStorage.getItem(INTRO_SESSION_KEY)).toBe('1');
-  });
+  // Full-page text discovery is CPU-heavy on CI; virtual 400/650ms timing stays asserted above.
+  }, 15000);
 
   it('opens image collections above an inert page and releases the page when closed', () => {
     const { container } = render(<App />);
