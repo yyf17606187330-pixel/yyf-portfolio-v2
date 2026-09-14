@@ -27,3 +27,8 @@ public/media/ai-image/*
 !public/media/ai-image/subtitles/
 public/media/ai-image/subtitles/*
 !public/media/ai-image/subtitles/*.webp
+!public/media/p5/
+public/media/p5/*
+!public/media/p5/hero/
+public/media/p5/hero/*
+!public/media/p5/hero/hero-scroll.mp4

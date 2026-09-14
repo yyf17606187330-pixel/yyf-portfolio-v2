@@ -1,0 +1,92 @@
+.player-overlay {
+  --player-media-height: min(62svh, 44rem);
+}
+
+.player-overlay .player-overlay__topline {
+  background: var(--color-overlay);
+  padding-left: max(var(--page-gutter), env(safe-area-inset-left));
+  padding-right: max(var(--page-gutter), env(safe-area-inset-right));
+  position: sticky;
+  top: 0;
+  z-index: 4;
+}
+
+.player-overlay .player-overlay__body {
+  gap: 0.5rem;
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  margin-inline: auto;
+  max-width: 90rem;
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.player-overlay .player-overlay__stage {
+  aspect-ratio: var(--player-aspect);
+  border: 0;
+  max-height: none;
+  max-width: 100%;
+  position: relative;
+  width: min(100%, calc(var(--player-media-height) * var(--player-aspect)));
+}
+
+.player-overlay .player-overlay__stage video {
+  height: 100%;
+  max-height: none;
+  object-fit: contain;
+  width: 100%;
+}
+
+.player-overlay .player-overlay__meta {
+  gap: 0.75rem 2rem;
+  margin-top: 0.75rem;
+}
+
+.player-overlay .player-overlay__meta p { font-size: 0.8125rem; }
+
+.player-overlay__feedback {
+  background: var(--color-overlay-translucent);
+  bottom: 1rem;
+  color: var(--color-inverse);
+  font-size: 0.875rem;
+  left: 0.75rem;
+  line-height: 1.7;
+  padding: 0.75rem;
+  position: absolute;
+  right: 0.75rem;
+  text-align: center;
+}
+
+.player-overlay__feedback button {
+  background: var(--color-inverse);
+  border: 0;
+  color: var(--color-ink);
+  cursor: pointer;
+  margin-top: 0.5rem;
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+}
+
+.player-overlay .player-overlay__controls button {
+  font-size: 0.875rem;
+  min-width: 44px;
+}
+
+.player-overlay .player-overlay__controls button:disabled { cursor: default; opacity: 0.5; }
+.player-overlay .player-overlay__time { font-size: 0.75rem; }
+
+@media (max-width: 767px) {
+  .player-overlay { --player-media-height: 52svh; }
+
+  .player-overlay .player-overlay__controls {
+    gap: 0.5rem 1rem;
+    grid-template-areas: 'elapsed progress duration' 'play mute fullscreen';
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    padding-top: 0.25rem;
+  }
+
+  .player-overlay .player-overlay__controls input[type='range'] { grid-area: progress; min-width: 0; }
+  .player-overlay .player-overlay__controls .player-overlay__time.player-overlay__time--elapsed { grid-area: elapsed; }
+  .player-overlay .player-overlay__controls .player-overlay__time.player-overlay__time--duration { grid-area: duration; }
+  .player-overlay .player-overlay__play-control { grid-area: play; }
+  .player-overlay .player-overlay__mute-control { grid-area: mute; justify-self: center; }
+  .player-overlay .player-overlay__fullscreen-control { grid-area: fullscreen; }
+}

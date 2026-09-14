@@ -1,6 +1,5 @@
-import { useCallback, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { aboutContent } from './content/about';
-import { aiImageCase } from './content/aiImageCase';
 import { aiVideoCapabilityItems } from './content/aiVideoCapability';
 import { experienceContent } from './content/experience';
 import { waterPurifierCopy, waterPurifierProject } from './content/showcase';
@@ -12,13 +11,8 @@ import {
 } from './content/teaWareShowcase';
 import { AboutSection } from './features/about/AboutSection';
 import { AiVideoCapabilitySection } from './features/capabilities/AiVideoCapabilitySection';
-import { ImageGallery } from './features/capabilities/ImageGallery';
-import { ContactSection } from './features/contact/ContactSection';
 import { ExperienceSection } from './features/experience/ExperienceSection';
 import { Hero } from './features/hero/Hero';
-import { CollageIntro } from './features/intro/CollageIntro';
-import { shouldShowIntro } from './features/intro/introSession';
-import { useTextReveal } from './features/motion/useTextReveal';
 import { SiteHeader } from './features/navigation/SiteHeader';
 import { InformationMarquee } from './features/navigation/InformationMarquee';
 import { PlayerOverlay } from './features/player/PlayerOverlay';
@@ -26,26 +20,14 @@ import { WebsiteProjectSection } from './features/web/WebsiteProjectSection';
 import { CommercialProjectCase } from './features/works/CommercialProjectCase';
 import { ProjectShowcase } from './features/works/ProjectShowcase';
 import { resolveMediaUrl } from './lib/media';
-import { usePortfolioTextTargets } from './hooks/usePortfolioTextTargets';
-import { ModeSwitch } from './features/mode/ModeSwitch';
 import type { Project } from './types/portfolio';
+import { ModeSwitch } from '../features/mode/ModeSwitch';
 
 export default function App() {
-  const pageRef = useRef<HTMLDivElement>(null);
-  usePortfolioTextTargets(pageRef);
   const headerRef = useRef<HTMLElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
   const [activeProject, setActiveProject] = useState<Project | null>(null);
-  const [imageIndex, setImageIndex] = useState<number | null>(null);
-  const [introOpen, setIntroOpen] = useState(shouldShowIntro);
-  const [introRevealing, setIntroRevealing] = useState(false);
-  const revealIntro = useCallback(() => setIntroRevealing(true), []);
-  const [heroVideoReady, setHeroVideoReady] = useState(false);
-  const markHeroReady = useCallback(() => setHeroVideoReady(true), []);
-  const completeIntro = useCallback(() => setIntroOpen(false), []);
-  const overlayOpen = activeProject !== null || imageIndex !== null;
-  const pagePaused = overlayOpen || introOpen;
-  useTextReveal(pageRef, { enabled: !introOpen || introRevealing, paused: overlayOpen });
+  const overlayOpen = activeProject !== null;
   const heroPoster = resolveMediaUrl('hero/hero-poster.webp') ?? '/media/hero/hero-poster.webp';
   const heroScrollVideo = resolveMediaUrl('hero/hero-scroll.mp4') ?? '/media/hero/hero-scroll.mp4';
   const heroPortrait = {
@@ -60,17 +42,14 @@ export default function App() {
   };
 
   return (
-    <div className="site-shell" ref={pageRef} inert={pagePaused ? true : undefined}>
-      {introOpen ? <CollageIntro heroPoster={heroPoster} heroVideoReady={heroVideoReady} onReveal={revealIntro} onComplete={completeIntro} /> : null}
+    <div className="site-shell" inert={overlayOpen ? true : undefined}>
       <SiteHeader headerRef={headerRef} />
-      <ModeSwitch mode="minimal" hidden={pagePaused} />
+      <ModeSwitch mode="p5" hidden={overlayOpen} />
       <main id="top">
         <Hero
-          headerRef={headerRef}
           worksHref="#works"
           portrait={heroPortrait}
-          paused={pagePaused}
-          onReady={markHeroReady}
+          paused={overlayOpen}
           scrollVideo={{
             poster: heroPoster,
             source: heroScrollVideo,
@@ -79,26 +58,22 @@ export default function App() {
         <InformationMarquee
           items={['YANG YUFENG', '内容策略', '编导拍摄', '剪辑调色', '运营投放', 'AI 与协作']}
           label="个人能力导览"
-          paused={pagePaused}
+          paused={overlayOpen}
         />
-        <AboutSection content={aboutContent} paused={pagePaused} />
+        <AboutSection content={aboutContent} paused={overlayOpen} />
         <ProjectShowcase
-          playerOpen={pagePaused}
+          playerOpen={overlayOpen}
           onOpenProject={openProject}
         />
         <AiVideoCapabilitySection
           items={aiVideoCapabilityItems}
           onOpenProject={openProject}
-          paused={pagePaused}
-          onOpenImages={(index, opener) => {
-            openerRef.current = opener;
-            setImageIndex(index);
-          }}
+          paused={overlayOpen}
         />
         <WebsiteProjectSection />
         <ExperienceSection
           content={experienceContent}
-          paused={pagePaused}
+          paused={overlayOpen}
           renderProject={(entry) => {
             if (entry.id === 'kuwo') {
               return (
@@ -128,9 +103,12 @@ export default function App() {
           }}
         />
       </main>
-      <ContactSection />
+      <footer className="p5-footer">
+        <div><p>CONTENT / CRAFT / IMPACT</p><strong>故事还在继续。</strong></div>
+        <a href="#works">再看作品 <span aria-hidden="true">↗</span></a>
+        <div className="p5-footer__base"><span>求职 · 杭州 / 广州</span><a href="mailto:yyf17606187330@gmail.com">yyf17606187330@gmail.com</a><a href="#top">返回开场 ↑</a></div>
+      </footer>
       <PlayerOverlay project={activeProject} opener={openerRef.current} onClose={() => setActiveProject(null)} />
-      {imageIndex !== null ? <ImageGallery images={aiImageCase.images} title={aiImageCase.title} initialIndex={imageIndex} opener={openerRef.current} onClose={() => setImageIndex(null)} /> : null}
     </div>
   );
 }
