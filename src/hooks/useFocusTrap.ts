@@ -70,6 +70,14 @@ export function useFocusTrap(
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
       const activeElement = document.activeElement;
+      const activeElementIsFocusable = activeElement instanceof HTMLElement
+        && focusable.includes(activeElement);
+
+      if (container.contains(activeElement) && !activeElementIsFocusable) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+        return;
+      }
 
       if (event.shiftKey && (activeElement === first || !container.contains(activeElement))) {
         event.preventDefault();

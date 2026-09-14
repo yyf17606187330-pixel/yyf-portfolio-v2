@@ -9,6 +9,7 @@ export type PlayerEvent =
   | { type: 'close' }
   | { type: 'playing' }
   | { type: 'paused' }
+  | { type: 'set-muted'; muted: boolean }
   | { type: 'toggle-muted' };
 
 export const initialPlayerState: PlayerState = {
@@ -27,6 +28,8 @@ export function playerReducer(state: PlayerState, event: PlayerEvent): PlayerSta
       return state.activeSlug ? { ...state, isPlaying: true } : state;
     case 'paused':
       return state.activeSlug ? { ...state, isPlaying: false } : state;
+    case 'set-muted':
+      return state.activeSlug ? { ...state, isMuted: event.muted } : state;
     case 'toggle-muted':
       return state.activeSlug ? { ...state, isMuted: !state.isMuted } : state;
   }

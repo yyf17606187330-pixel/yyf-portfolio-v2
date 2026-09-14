@@ -1,4 +1,5 @@
 import { useCallback, useLayoutEffect, useReducer, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import gsap from 'gsap';
 import { getCategoryLabel } from '../../content/categories';
@@ -8,6 +9,7 @@ import { useScrollLock } from '../../hooks/useScrollLock';
 import { resolveMediaUrl } from '../../lib/media';
 import type { Project } from '../../types/portfolio';
 import { initialPlayerState, playerReducer } from './playerState';
+import './PlayerOverlay.css';
 
 interface PlayerOverlayProps {
   project: Project | null;
@@ -34,15 +36,30 @@ export function PlayerOverlay({ project, opener, onClose }: PlayerOverlayProps) 
   const closeRef = useRef<HTMLButtonElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const playbackGenerationRef = useRef(0);
+  const fullscreenRequestRef = useRef(0);
   const activeSlugRef = useRef<string | null>(null);
+  const playbackSessionRef = useRef<string | null>(null);
+  const mutedPreferenceRef = useRef(false);
   const [playerState, dispatch] = useReducer(playerReducer, initialPlayerState);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [fallbackSlug, setFallbackSlug] = useState<string | null>(null);
+  const [playbackIssue, setPlaybackIssue] = useState<'blocked' | 'error' | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [fullscreenUnavailable, setFullscreenUnavailable] = useState(false);
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
-  const mediaUrl = resolveMediaUrl(project?.fullSrc ?? '');
+  const primaryUrl = resolveMediaUrl(project?.fullSrc ?? '');
+  const fallbackUrl = resolveMediaUrl(project?.fallbackSrc ?? '');
+  const usingFallback = Boolean(project && fallbackSlug === project.slug && fallbackUrl);
+  const mediaUrl = usingFallback ? fallbackUrl : primaryUrl;
   const posterUrl = resolveMediaUrl(project?.poster ?? '');
   const open = project !== null;
-  const handleClose = useCallback(() => onClose(), [onClose]);
+  const handleClose = useCallback(() => {
+    if (document.fullscreenElement && dialogRef.current?.contains(document.fullscreenElement)) {
+      void document.exitFullscreen?.().catch(() => undefined);
+    }
+    onClose();
+  }, [onClose]);
   const isPlaying = playerState.isPlaying;
   const isMuted = playerState.isMuted;
 
@@ -54,6 +71,8 @@ export function PlayerOverlay({ project, opener, onClose }: PlayerOverlayProps) 
     const settle = (type: 'playing' | 'paused') => {
       if (playbackGenerationRef.current === generation && isCurrentVideo(video, slug)) {
         dispatch({ type });
+        setLoading(false);
+        setPlaybackIssue(type === 'playing' ? null : 'blocked');
       }
     };
 
@@ -76,7 +95,17 @@ export function PlayerOverlay({ project, opener, onClose }: PlayerOverlayProps) 
     activeSlugRef.current = slug;
     setCurrentTime(0);
     setDuration(0);
-    dispatch(slug ? { type: 'open', slug } : { type: 'close' });
+    setPlaybackIssue(null);
+    setLoading(Boolean(slug && mediaUrl));
+    setFullscreenUnavailable(false);
+    if (!slug) setFallbackSlug(null);
+    if (playbackSessionRef.current !== slug) {
+      playbackSessionRef.current = slug;
+      mutedPreferenceRef.current = false;
+      dispatch(slug ? { type: 'open', slug } : { type: 'close' });
+    } else {
+      dispatch({ type: 'paused' });
+    }
 
     const video = videoRef.current;
 
@@ -87,7 +116,7 @@ export function PlayerOverlay({ project, opener, onClose }: PlayerOverlayProps) 
       };
     }
 
-    video.muted = false;
+    video.muted = mutedPreferenceRef.current;
     attemptPlayback(video, slug, generation);
 
     return () => {
@@ -108,7 +137,7 @@ export function PlayerOverlay({ project, opener, onClose }: PlayerOverlayProps) 
       const timeline = gsap.timeline({ defaults: { ease: 'power3.out' } });
 
       timeline
-        .fromTo(dialog, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.34 }, 0)
+        .fromTo(dialog, { opacity: 0 }, { opacity: 1, duration: 0.34 }, 0)
         .fromTo(
           '.player-overlay__stage',
           { scale: 0.965, y: 22 },
@@ -156,8 +185,9 @@ export function PlayerOverlay({ project, opener, onClose }: PlayerOverlayProps) 
     }
 
     const nextMuted = !isMuted;
+    mutedPreferenceRef.current = nextMuted;
     video.muted = nextMuted;
-    dispatch({ type: 'toggle-muted' });
+    dispatch({ type: 'set-muted', muted: nextMuted });
   };
 
   const seek = (value: number) => {
@@ -178,13 +208,40 @@ export function PlayerOverlay({ project, opener, onClose }: PlayerOverlayProps) 
       return;
     }
 
-    if (video.requestFullscreen) {
-      void video.requestFullscreen().catch(() => undefined);
+    const request = ++fullscreenRequestRef.current;
+    const reportUnavailable = () => {
+      if (fullscreenRequestRef.current === request && isCurrentVideo(video, project.slug)) {
+        setFullscreenUnavailable(true);
+      }
+    };
+    setFullscreenUnavailable(false);
+
+    const fullscreenTarget = dialogRef.current?.requestFullscreen ? dialogRef.current : video;
+    if (fullscreenTarget.requestFullscreen) {
+      void fullscreenTarget.requestFullscreen().catch(reportUnavailable);
       return;
     }
 
-    video.webkitEnterFullscreen?.();
+    try {
+      if (video.webkitEnterFullscreen) video.webkitEnterFullscreen();
+      else reportUnavailable();
+    } catch {
+      reportUnavailable();
+    }
   };
+
+  const retryPlayback = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    setPlaybackIssue(null);
+    setLoading(true);
+    setCurrentTime(0);
+    video.load();
+    attemptPlayback(video, project.slug, ++playbackGenerationRef.current);
+  };
+
+  const [width, height] = project.aspectRatio.split('/').map(Number);
+  const aspect = width > 0 && height > 0 ? width / height : 16 / 9;
 
   return createPortal(
     <div
@@ -194,6 +251,7 @@ export function PlayerOverlay({ project, opener, onClose }: PlayerOverlayProps) 
       data-lenis-prevent
       ref={dialogRef}
       role="dialog"
+      style={{ '--player-aspect': aspect } as CSSProperties}
       tabIndex={-1}
     >
       <div className="player-overlay__topline">
@@ -207,12 +265,26 @@ export function PlayerOverlay({ project, opener, onClose }: PlayerOverlayProps) 
         <div className="player-overlay__stage">
           {mediaUrl ? (
             <video
-              key={project.slug}
+              key={`${project.slug}:${mediaUrl}`}
               ref={videoRef}
               playsInline
               poster={posterUrl ?? undefined}
               preload="metadata"
               src={mediaUrl}
+              onCanPlay={(event) => {
+                if (isCurrentVideo(event.currentTarget, project.slug)) setLoading(false);
+              }}
+              onError={(event) => {
+                if (!isCurrentVideo(event.currentTarget, project.slug)) return;
+                playbackGenerationRef.current += 1;
+                dispatch({ type: 'paused' });
+                setLoading(false);
+                if (fallbackUrl && fallbackUrl !== mediaUrl && !usingFallback) {
+                  setFallbackSlug(project.slug);
+                } else {
+                  setPlaybackIssue('error');
+                }
+              }}
               onDurationChange={(event) => {
                 if (isCurrentVideo(event.currentTarget, project.slug)) {
                   setDuration(Number.isFinite(event.currentTarget.duration) ? event.currentTarget.duration : 0);
@@ -238,9 +310,24 @@ export function PlayerOverlay({ project, opener, onClose }: PlayerOverlayProps) 
                   dispatch({ type: 'playing' });
                 }
               }}
+              onPlaying={(event) => {
+                if (isCurrentVideo(event.currentTarget, project.slug)) {
+                  setLoading(false);
+                  setPlaybackIssue(null);
+                }
+              }}
+              onWaiting={(event) => {
+                if (isCurrentVideo(event.currentTarget, project.slug)) setLoading(true);
+              }}
               onTimeUpdate={(event) => {
                 if (isCurrentVideo(event.currentTarget, project.slug)) {
                   setCurrentTime(event.currentTarget.currentTime);
+                }
+              }}
+              onVolumeChange={(event) => {
+                if (isCurrentVideo(event.currentTarget, project.slug)) {
+                  mutedPreferenceRef.current = event.currentTarget.muted;
+                  dispatch({ type: 'set-muted', muted: event.currentTarget.muted });
                 }
               }}
             />
@@ -251,6 +338,17 @@ export function PlayerOverlay({ project, opener, onClose }: PlayerOverlayProps) 
               <span>VIDEO SOURCE PLACEHOLDER</span>
             </div>
           )}
+          {mediaUrl && playbackIssue === 'error' ? (
+            <div className="player-overlay__feedback" role="alert">
+              <p>视频暂时无法播放，请检查网络后重试。</p>
+              <button type="button" onClick={retryPlayback}>重试播放</button>
+            </div>
+          ) : null}
+          {mediaUrl && (playbackIssue === 'blocked' || (loading && !playbackIssue)) ? (
+            <p className="player-overlay__feedback" role="status">
+              {playbackIssue === 'blocked' ? '点击下方“播放”，开始观看完整作品。' : '正在加载视频…'}
+            </p>
+          ) : null}
         </div>
 
         <div className="player-overlay__meta">
@@ -259,18 +357,21 @@ export function PlayerOverlay({ project, opener, onClose }: PlayerOverlayProps) 
             <h2>{project.title}</h2>
           </div>
           <div>
-            <p>{project.client}</p>
+            {project.client ? <p>{project.client}</p> : null}
             <p>{project.roles.join(' · ')}</p>
-            <p>{project.year}</p>
+            {project.year ? <p>{project.year}</p> : null}
+            {usingFallback ? <p>已切换兼容播放 · H.264 / Rec.709</p> : null}
+            {fullscreenUnavailable ? <p role="status">当前环境无法进入全屏，可继续在窗口内观看。</p> : null}
           </div>
         </div>
 
         {mediaUrl ? (
           <div className="player-overlay__controls" aria-label="视频控制">
-            <button type="button" onClick={togglePlayback}>{isPlaying ? '暂停' : '播放'}</button>
-            <span className="player-overlay__time">{formatTime(currentTime)}</span>
+            <button className="player-overlay__play-control" type="button" disabled={playbackIssue === 'error'} onClick={togglePlayback}>{isPlaying ? '暂停' : '播放'}</button>
+            <span className="player-overlay__time player-overlay__time--elapsed">{formatTime(currentTime)}</span>
             <input
               aria-label="播放进度"
+              disabled={!duration || playbackIssue === 'error'}
               max={duration || 1}
               min="0"
               step="0.1"
@@ -278,9 +379,9 @@ export function PlayerOverlay({ project, opener, onClose }: PlayerOverlayProps) 
               value={Math.min(currentTime, duration || 1)}
               onChange={(event) => seek(Number(event.currentTarget.value))}
             />
-            <span className="player-overlay__time">{formatTime(duration)}</span>
-            <button type="button" onClick={toggleMuted}>{isMuted ? '取消静音' : '静音'}</button>
-            <button type="button" onClick={enterFullscreen}>全屏</button>
+            <span className="player-overlay__time player-overlay__time--duration">{formatTime(duration)}</span>
+            <button className="player-overlay__mute-control" type="button" onClick={toggleMuted}>{isMuted ? '取消静音' : '静音'}</button>
+            <button className="player-overlay__fullscreen-control" type="button" onClick={enterFullscreen}>全屏</button>
           </div>
         ) : null}
       </div>

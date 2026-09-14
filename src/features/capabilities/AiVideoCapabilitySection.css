@@ -1,0 +1,337 @@
+.ai-video-capability {
+  --ai-video-accent: var(--color-content-accent);
+  background: var(--color-content-paper);
+  color: var(--color-content-ink);
+  font-family: var(--font-body);
+  padding: 0 var(--content-gutter) var(--space-content-subsection);
+  scroll-margin-top: calc(var(--header-height) + 2rem);
+}
+
+.ai-video-capability__inner {
+  border-top: 1px solid var(--color-content-line);
+  margin-inline: auto;
+  max-width: var(--content-width);
+  padding-top: var(--space-content-heading);
+}
+
+.ai-video-capability__chapter {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.ai-video-capability__chapter span,
+.ai-video-capability__chapter p,
+.ai-video-capability__meta-topline {
+  font-size: var(--type-content-label);
+  letter-spacing: 0.08em;
+  line-height: var(--leading-content-body);
+  margin: 0;
+}
+
+.ai-video-capability__chapter span,
+.ai-video-capability__meta-topline p {
+  color: var(--ai-video-accent);
+}
+
+.ai-video-capability__chapter i {
+  background: var(--color-content-line);
+  height: 1px;
+  width: 3rem;
+}
+
+.ai-video-capability__heading-grid {
+  align-items: end;
+  display: grid;
+  gap: var(--space-content-column);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  margin-top: var(--space-content-heading);
+}
+
+.ai-video-capability__heading-grid h2 {
+  font-size: var(--type-content-subsection);
+  font-weight: var(--weight-content-heading);
+  letter-spacing: -0.04em;
+  line-height: var(--leading-content-title);
+  margin: 0;
+}
+
+.ai-video-capability__heading-grid > p {
+  color: var(--color-content-body);
+  font-size: var(--type-content-body);
+  font-weight: var(--weight-content-body);
+  line-height: var(--leading-content-body);
+  margin: 0;
+  max-width: 30rem;
+}
+
+.ai-video-capability__media-grid {
+  align-items: start;
+  display: grid;
+  gap: var(--space-content-column);
+  /* Widths follow (16/9) : (9/16), keeping both uncropped frames the same height. */
+  grid-template-columns: minmax(0, 3.160493827fr) minmax(0, 1fr);
+  margin-top: var(--space-content-heading);
+}
+
+.ai-video-capability__card {
+  align-items: start;
+  border-top: 1px solid var(--color-content-line);
+  display: grid;
+  gap: var(--space-content-card);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  min-width: 0;
+  padding-top: var(--space-content-card);
+}
+
+.ai-video-capability__card--text {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.ai-video-capability__card--featured {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  justify-content: space-between;
+}
+
+.ai-video-capability__card--featured > .ai-video-capability__media {
+  margin-bottom: 1.5rem;
+}
+
+.ai-video-capability__card--supporting {
+  display: flex;
+  flex-direction: column;
+}
+
+.ai-video-capability__card--featured .ai-video-capability__practice-result dd {
+  color: var(--color-content-body);
+  font-size: var(--type-content-strapline);
+}
+
+.ai-video-capability__card--supporting .ai-video-capability__meta h3 {
+  font-size: var(--type-content-subtitle);
+}
+
+.ai-video-capability__media {
+  aspect-ratio: 16 / 9;
+  background: #191817;
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+
+.ai-video-capability__media img,
+.ai-video-capability__media video {
+  height: 100%;
+  inset: 0;
+  object-fit: contain;
+  position: absolute;
+  width: 100%;
+}
+
+.ai-video-capability__media video {
+  pointer-events: none;
+  z-index: 1;
+}
+
+.ai-video-capability__ratio,
+.ai-video-capability__placeholder,
+.ai-video-capability__status {
+  background: var(--color-content-paper);
+  color: var(--color-content-ink);
+  font-size: var(--type-content-label);
+  left: 1rem;
+  padding: 0.4rem 0.65rem;
+  position: absolute;
+  top: 1rem;
+  z-index: 2;
+}
+
+.ai-video-capability__preview-toggle {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  inset: 0;
+  min-height: 44px;
+  position: absolute;
+  width: 100%;
+  z-index: 3;
+}
+
+.ai-video-capability__preview-toggle span {
+  background: var(--color-content-paper);
+  border-radius: 999px;
+  bottom: 1rem;
+  color: var(--color-content-ink);
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--type-content-note);
+  min-height: 44px;
+  padding: 0.5rem 1.25rem;
+  position: absolute;
+  right: 1rem;
+}
+
+.ai-video-capability__preview-toggle:hover span {
+  background: var(--color-content-ink);
+  color: #fff;
+}
+
+.ai-video-capability__preview-toggle:focus-visible {
+  box-shadow: inset 0 0 0 9px var(--color-content-accent);
+  outline: 3px solid var(--color-content-paper);
+  outline-offset: -6px;
+}
+
+.ai-video-capability__meta {
+  min-width: 0;
+}
+
+.ai-video-capability__meta-topline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.ai-video-capability__meta-topline p {
+  margin: 0;
+}
+
+.ai-video-capability__meta h3 {
+  font-size: var(--type-content-subtitle);
+  font-weight: var(--weight-content-heading);
+  letter-spacing: -0.03em;
+  line-height: var(--leading-content-title);
+  margin: 1rem 0 0;
+}
+
+.ai-video-capability__meta > p:last-child {
+  color: var(--color-content-body);
+  font-size: var(--type-content-body);
+  font-weight: var(--weight-content-body);
+  line-height: var(--leading-content-body);
+  margin: var(--space-content-paragraph) 0 0;
+}
+
+.ai-video-capability__practice-grid {
+  display: grid;
+  gap: var(--space-content-column);
+  grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+  margin-top: var(--space-content-heading);
+}
+
+.ai-video-capability__practice {
+  border-top: 1px solid var(--color-content-line);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+  padding-top: var(--space-content-card);
+}
+
+.ai-video-capability__practice-label {
+  color: var(--ai-video-accent);
+  font-size: var(--type-content-label);
+  letter-spacing: 0.06em;
+  line-height: var(--leading-content-body);
+  margin: 0;
+}
+
+.ai-video-capability__practice h3,
+.ai-video-capability__card--featured .ai-video-capability__meta h3 {
+  font-size: var(--type-content-subtitle);
+  font-weight: var(--weight-content-heading);
+  line-height: var(--leading-content-title);
+  margin: 0.75rem 0 0;
+}
+
+.ai-video-capability__practice-description {
+  color: var(--color-content-body);
+  font-size: var(--type-content-body);
+  font-weight: var(--weight-content-body);
+  line-height: var(--leading-content-body);
+  margin: var(--space-content-paragraph) 0 0;
+}
+
+.ai-video-capability__practice-result {
+  margin: 1.75rem 0 0;
+}
+
+.ai-video-capability__practice-result dt {
+  color: var(--color-content-muted);
+  font-size: var(--type-content-note);
+  line-height: var(--leading-content-body);
+}
+
+.ai-video-capability__practice-result dd {
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  font-weight: 550;
+  line-height: 1.4;
+  margin: 0.35rem 0 0;
+}
+
+.ai-video-capability__practice-grid > :only-child {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 900px) {
+  .ai-video-capability__media-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ai-video-capability__card--supporting[data-orientation='portrait']:not(.ai-video-capability__card--text) {
+    align-items: center;
+    display: grid;
+    gap: clamp(1rem, 4vw, 2rem);
+    grid-template-columns: minmax(0, min(38%, 12rem)) minmax(0, 1fr);
+  }
+
+  .ai-video-capability__card--supporting[data-orientation='portrait'] .ai-video-capability__ratio {
+    left: 0.6rem;
+    padding: 0.3rem 0.45rem;
+    top: 0.6rem;
+  }
+
+  .ai-video-capability__card--supporting[data-orientation='portrait'] .ai-video-capability__preview-toggle span {
+    bottom: 0.6rem;
+    font-size: 0.75rem;
+    padding: 0.4rem 0.65rem;
+    right: 0.6rem;
+  }
+}
+
+@media (max-width: 760px) {
+  .ai-video-capability__heading-grid,
+  .ai-video-capability__card,
+  .ai-video-capability__media-grid,
+  .ai-video-capability__practice-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ai-video-capability__heading-grid {
+    gap: var(--space-content-heading);
+  }
+
+  .ai-video-capability__chapter i {
+    width: 1.5rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .ai-video-capability {
+    padding-inline: 1rem;
+  }
+
+  .ai-video-capability__chapter {
+    gap: 0.6rem;
+  }
+
+  .ai-video-capability__chapter span,
+  .ai-video-capability__chapter p {
+    font-size: var(--type-content-label);
+  }
+}

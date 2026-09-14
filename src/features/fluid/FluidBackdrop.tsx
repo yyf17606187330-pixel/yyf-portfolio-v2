@@ -9,7 +9,7 @@ import {
   type CSSProperties,
   type ReactNode,
 } from 'react';
-import { fluidEffectConfig } from '../../content/profile';
+import { fluidEffectConfig } from '../../content/fluidConfig';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { usePageVisibility } from '../../hooks/usePageVisibility';
 import type { FluidEffectConfig } from '../../types/portfolio';

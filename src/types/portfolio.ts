@@ -12,17 +12,8 @@ export interface Project {
   poster: string;
   previewSrc: string;
   fullSrc: string;
+  fallbackSrc?: string;
   aspectRatio: `${number}/${number}`;
-}
-
-export interface SiteProfile {
-  name: string;
-  latinName: string;
-  positioning: string;
-  bio: string;
-  portrait: string;
-  email: string;
-  wechatQr: string;
 }
 
 export interface FluidEffectConfig {
