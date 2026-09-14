@@ -11,6 +11,7 @@ import {
 } from './content/teaWareShowcase';
 import { AboutSection } from './features/about/AboutSection';
 import { AiVideoCapabilitySection } from './features/capabilities/AiVideoCapabilitySection';
+import { ContactSection } from './features/contact/ContactSection';
 import { ExperienceSection } from './features/experience/ExperienceSection';
 import { Hero } from './features/hero/Hero';
 import { SiteHeader } from './features/navigation/SiteHeader';
@@ -102,6 +103,7 @@ export default function App() {
           }}
         />
       </main>
+      <ContactSection />
       <PlayerOverlay project={activeProject} opener={openerRef.current} onClose={() => setActiveProject(null)} />
     </div>
   );

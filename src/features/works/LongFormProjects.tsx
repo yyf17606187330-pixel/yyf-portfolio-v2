@@ -78,7 +78,7 @@ const selectedFilms: readonly LongFilmRecord[] = [
       slug: 'dark-room',
       title: 'MacBook 短片',
       category: 'film',
-      year: '',
+      year: '2026',
       client: '',
       roles: [],
       featured: true,
@@ -98,7 +98,7 @@ const selectedFilms: readonly LongFilmRecord[] = [
       slug: 'film-2025-06-15',
       title: '棋局短片',
       category: 'film',
-      year: '',
+      year: '2025',
       client: '',
       roles: [],
       featured: true,
@@ -236,7 +236,7 @@ function LongFilmCopy({
       <div className="long-form-projects__title-row">
         <h3>{film.project.title}</h3>
       </div>
-      <p className="long-form-projects__format">{film.formatLabel}</p>
+      <p className="long-form-projects__format">{film.project.year ? `${film.project.year} · ` : ''}{film.formatLabel}</p>
       {film.project.roles.length > 0 ? (
         <p className="long-form-projects__roles">
           {film.project.roles.join(' · ')}

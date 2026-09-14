@@ -3,6 +3,7 @@ import { aiProductionContent, type AiVideoCapabilityItem } from '../../content/a
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { resolveMediaUrl } from '../../lib/media';
 import type { Project } from '../../types/portfolio';
+import { AiImageCase } from './AiImageCase';
 import './AiVideoCapabilitySection.css';
 
 export interface AiVideoCapabilitySectionProps {
@@ -235,6 +236,7 @@ export function AiVideoCapabilitySection({
             {supportingItems.map(renderProjectCard)}
           </div>
         ) : null}
+        <AiImageCase />
       </div>
     </section>
   );

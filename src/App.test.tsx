@@ -49,16 +49,20 @@ describe('App', () => {
     expect(container.querySelectorAll('main > section')).toHaveLength(6);
   });
 
-  it('keeps only live navigation links after retiring the placeholder contact panel', () => {
+  it('connects the navigation and confirmed email to the job contact section', () => {
     const { container } = render(<App />);
     const nav = container.querySelector<HTMLElement>('nav[aria-label="主导航"]')!;
     const links = within(nav).getAllByRole('link', { hidden: true });
 
-    expect(links.map((link) => link.textContent)).toEqual(['WORK', 'ABOUT']);
+    expect(links.map((link) => link.textContent)).toEqual(['WORK', 'ABOUT', 'CONTACT']);
     for (const link of links) {
       expect(container.querySelector(link.getAttribute('href')!)).toBeInTheDocument();
     }
     expect(within(nav).queryByRole('button')).not.toBeInTheDocument();
+    const contact = container.querySelector<HTMLElement>('#contact')!;
+    expect(contact).toHaveTextContent('杭州 / 广州');
+    expect(within(contact).getByRole('link', { name: /yyf17606187330@gmail.com/ }))
+      .toHaveAttribute('href', 'mailto:yyf17606187330@gmail.com');
     expect(screen.queryByRole('dialog', { name: '全站导航' })).not.toBeInTheDocument();
     expect(screen.queryByText(/待补充邮箱|待补充个人简介|微信二维码待替换/))
       .not.toBeInTheDocument();

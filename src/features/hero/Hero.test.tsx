@@ -42,7 +42,7 @@ describe('Hero', () => {
     vi.unstubAllGlobals();
   });
 
-  it('renders the approved portfolio identity, narrative, and WeChat marker', () => {
+  it('renders the job positioning, narrative, and functional contact marker', () => {
     render(
       <Hero
         portrait={{
@@ -55,7 +55,7 @@ describe('Hero', () => {
     );
 
     expect(screen.getByRole('heading', { name: '杨玉峰' })).toBeInTheDocument();
-    expect(screen.getByText('新媒体内容运营 × 影像创作者')).toBeInTheDocument();
+    expect(screen.getByText('短视频编导 × 内容运营')).toBeInTheDocument();
     expect(screen.getByText('懂运营，也能把内容从脚本拍到成片。')).toBeInTheDocument();
     expect(
       screen.getByText(
@@ -63,11 +63,11 @@ describe('Hero', () => {
       ),
     ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '查看作品' })).toHaveAttribute('href', '#top');
-    expect(screen.getByLabelText('微信联系标识')).toBeInTheDocument();
+    expect(screen.getByLabelText('邮箱联系标识')).toBeInTheDocument();
     expect(screen.getByText('Y.')).toBeInTheDocument();
-    expect(screen.getByAltText('微信')).toHaveAttribute(
-      'src',
-      '/assets/icons/wechat.svg',
+    expect(screen.getByLabelText('查看邮箱与求职信息')).toHaveAttribute(
+      'href',
+      '#contact',
     );
     expect(screen.queryByText('PORTFOLIO 2026')).not.toBeInTheDocument();
     expect(screen.queryByText(/nominee/i)).not.toBeInTheDocument();
@@ -91,7 +91,7 @@ describe('Hero', () => {
 
     expect(screen.getByText('肖像待替换')).toBeInTheDocument();
     expect(screen.queryByRole('img', { name: '杨玉峰个人肖像' })).not.toBeInTheDocument();
-    expect(screen.getByAltText('微信')).toBeInTheDocument();
+    expect(screen.getByLabelText('查看邮箱与求职信息')).toBeInTheDocument();
   });
 
   it('keeps the complete static narrative before the call to action', () => {
@@ -328,7 +328,7 @@ describe('Hero', () => {
       </>,
     );
     const header = container.querySelector('.site-header') as HTMLElement;
-    const marker = screen.getByLabelText('微信联系标识');
+    const marker = screen.getByLabelText('邮箱联系标识');
     const cta = screen.getByText('查看作品');
     const chrome = [header, marker];
     const controls = [header, marker, cta];
@@ -416,7 +416,7 @@ describe('Hero', () => {
     const { container, rerender, unmount } = render(<Page />);
     const controls = [
       container.querySelector('.site-header') as HTMLElement,
-      screen.getByLabelText('微信联系标识'),
+      screen.getByLabelText('邮箱联系标识'),
       screen.getByText('查看作品'),
     ];
     for (const control of controls) {
@@ -428,7 +428,7 @@ describe('Hero', () => {
     rerender(<Page />);
     expect(screen.getByRole('link', { name: '查看作品' })).toBeVisible();
     expect(screen.getByRole('link', { name: '返回页面顶部' })).toBeVisible();
-    expect(screen.getByLabelText('微信联系标识')).not.toBeVisible();
+    expect(screen.getByLabelText('邮箱联系标识')).not.toBeVisible();
 
     unmount();
     for (const control of controls) {
@@ -449,7 +449,7 @@ describe('Hero', () => {
     vi.stubGlobal('cancelAnimationFrame', (id: number) => frames.delete(id));
     const portrait = { objectPosition: '64% 43%', scale: 1, src: '/portrait.webp', tone: 'light' as const };
     const { container, rerender, unmount } = render(<Hero portrait={portrait} />);
-    const marker = screen.getByLabelText('微信联系标识');
+    const marker = screen.getByLabelText('邮箱联系标识');
     expect(container.querySelector('.hero')).not.toContainElement(marker);
     expect(marker.parentElement).toBe(document.body);
     expect(marker).not.toBeVisible();
@@ -500,7 +500,7 @@ describe('Hero', () => {
     );
 
     expect(container.querySelector('.site-header')).toBeVisible();
-    expect(screen.getByLabelText('微信联系标识')).toBeVisible();
+    expect(screen.getByLabelText('邮箱联系标识')).toBeVisible();
     expect(screen.getByRole('link', { name: '查看作品' })).toBeVisible();
 
     unmount();
