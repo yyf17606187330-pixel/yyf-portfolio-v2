@@ -28,11 +28,10 @@ describe('CollageIntro', () => {
     const complete = vi.fn();
     const { unmount } = render(<StrictMode><CollageIntro heroPoster="/missing.webp" onComplete={complete} /></StrictMode>);
     expect(document.body.style.position).toBe('fixed');
-    const video = document.querySelector('video')!;
-    expect(video).toHaveAttribute('src', '/media/ai-video/collage-preview-h264.mp4');
-    expect(video).toHaveAttribute('loop');
+    expect(document.querySelector('.collage-intro video')).toBeNull();
+    expect(screen.getByRole('heading', { name: 'HELLO' })).toBeInTheDocument();
     await act(async () => { vi.advanceTimersByTime(5000); });
-    await act(async () => { vi.advanceTimersByTime(420); });
+    await act(async () => { vi.advanceTimersByTime(1050); });
     expect(complete).toHaveBeenCalledOnce();
     unmount();
     expect(document.body.style.position).toBe('');
@@ -46,12 +45,11 @@ describe('CollageIntro', () => {
     const complete = vi.fn();
     render(<CollageIntro heroPoster="/hero.webp" onComplete={complete} />);
     fireEvent.error(poster);
-    fireEvent.canPlay(document.querySelector('video')!);
     await act(async () => { vi.advanceTimersByTime(2399); });
-    expect(screen.getByRole('status')).toHaveTextContent('LOADING');
+    expect(screen.getByRole('status')).toHaveTextContent('正在准备首页');
     await act(async () => { vi.advanceTimersByTime(1); });
-    expect(screen.getByRole('status')).toHaveTextContent('READY');
-    await act(async () => { vi.advanceTimersByTime(420); });
+    expect(screen.getByRole('status')).toHaveTextContent('开始浏览');
+    await act(async () => { vi.advanceTimersByTime(1050); });
     expect(complete).toHaveBeenCalledOnce();
   });
 
@@ -63,7 +61,7 @@ describe('CollageIntro', () => {
     fireEvent.keyDown(document, { key: 'Tab' });
     expect(skip).toHaveFocus();
     fireEvent.keyDown(document, { key: 'Escape' });
-    await act(async () => { vi.advanceTimersByTime(420); });
+    await act(async () => { vi.advanceTimersByTime(1050); });
     expect(complete).toHaveBeenCalledOnce();
     unmount();
     expect(document.body.style.overflow).toBe('');
@@ -77,13 +75,29 @@ describe('CollageIntro', () => {
     const complete = vi.fn();
     const { rerender } = render(<CollageIntro heroPoster="/hero.webp" heroVideoReady={false} onComplete={complete} />);
     fireEvent.load(poster);
-    fireEvent.canPlay(document.querySelector('video')!);
     await act(async () => { vi.advanceTimersByTime(2400); });
-    expect(screen.getByRole('status')).toHaveTextContent('LOADING');
+    expect(screen.getByRole('status')).toHaveTextContent('正在准备首页');
     expect(complete).not.toHaveBeenCalled();
     rerender(<CollageIntro heroPoster="/hero.webp" heroVideoReady onComplete={complete} />);
-    await act(async () => { vi.advanceTimersByTime(420); });
+    await act(async () => { vi.advanceTimersByTime(1050); });
     expect(complete).toHaveBeenCalledOnce();
+  });
+
+  it('hands off text during the lift while keeping scroll lock until completion', async () => {
+    const reveal = vi.fn();
+    const complete = vi.fn();
+    const { unmount } = render(<CollageIntro heroPoster="/hero.webp" onReveal={reveal} onComplete={complete} />);
+    fireEvent.click(screen.getByRole('button', { name: '跳过片头' }));
+    await act(async () => { vi.advanceTimersByTime(399); });
+    expect(reveal).not.toHaveBeenCalled();
+    await act(async () => { vi.advanceTimersByTime(1); });
+    expect(reveal).toHaveBeenCalledOnce();
+    expect(complete).not.toHaveBeenCalled();
+    expect(document.body.style.position).toBe('fixed');
+    await act(async () => { vi.advanceTimersByTime(650); });
+    expect(complete).toHaveBeenCalledOnce();
+    unmount();
+    expect(document.body.style.position).toBe('');
   });
 
   it('cancels the completion callback when unmounted before the exit finishes', async () => {
@@ -93,16 +107,6 @@ describe('CollageIntro', () => {
     unmount();
     await act(async () => { vi.advanceTimersByTime(10000); });
     expect(complete).not.toHaveBeenCalled();
-  });
-
-  it('pauses the decorative video while the document is hidden', () => {
-    let visible = 'visible';
-    vi.spyOn(document, 'visibilityState', 'get').mockImplementation(() => visible as DocumentVisibilityState);
-    render(<CollageIntro heroPoster="/hero.webp" onComplete={vi.fn()} />);
-    const pause = vi.mocked(HTMLMediaElement.prototype.pause);
-    visible = 'hidden';
-    fireEvent(document, new Event('visibilitychange'));
-    expect(pause).toHaveBeenCalled();
   });
 
   it('skips repeat visits, deep links and reduced motion, with an explicit replay URL', () => {

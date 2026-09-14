@@ -10,6 +10,7 @@ export interface AiVideoCapabilitySectionProps {
   items: readonly AiVideoCapabilityItem[];
   onOpenProject: (project: Project, opener: HTMLElement) => void;
   paused?: boolean;
+  onOpenImages?: (index: number, opener: HTMLElement) => void;
 }
 
 interface AiVideoMediaProps {
@@ -119,6 +120,7 @@ export function AiVideoCapabilitySection({
   items,
   onOpenProject,
   paused = false,
+  onOpenImages,
 }: AiVideoCapabilitySectionProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
@@ -237,7 +239,7 @@ export function AiVideoCapabilitySection({
             {supportingItems.map(renderProjectCard)}
           </div>
         ) : null}
-        <AiImageCase />
+        <AiImageCase onOpenImages={onOpenImages} />
       </div>
     </section>
   );

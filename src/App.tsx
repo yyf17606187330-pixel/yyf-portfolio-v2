@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import { aboutContent } from './content/about';
+import { aiImageCase } from './content/aiImageCase';
 import { aiVideoCapabilityItems } from './content/aiVideoCapability';
 import { experienceContent } from './content/experience';
 import { waterPurifierCopy, waterPurifierProject } from './content/showcase';
@@ -11,6 +12,7 @@ import {
 } from './content/teaWareShowcase';
 import { AboutSection } from './features/about/AboutSection';
 import { AiVideoCapabilitySection } from './features/capabilities/AiVideoCapabilitySection';
+import { ImageGallery } from './features/capabilities/ImageGallery';
 import { ContactSection } from './features/contact/ContactSection';
 import { ExperienceSection } from './features/experience/ExperienceSection';
 import { Hero } from './features/hero/Hero';
@@ -33,13 +35,16 @@ export default function App() {
   const headerRef = useRef<HTMLElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
   const [activeProject, setActiveProject] = useState<Project | null>(null);
+  const [imageIndex, setImageIndex] = useState<number | null>(null);
   const [introOpen, setIntroOpen] = useState(shouldShowIntro);
+  const [introRevealing, setIntroRevealing] = useState(false);
+  const revealIntro = useCallback(() => setIntroRevealing(true), []);
   const [heroVideoReady, setHeroVideoReady] = useState(false);
   const markHeroReady = useCallback(() => setHeroVideoReady(true), []);
   const completeIntro = useCallback(() => setIntroOpen(false), []);
-  const overlayOpen = activeProject !== null;
+  const overlayOpen = activeProject !== null || imageIndex !== null;
   const pagePaused = overlayOpen || introOpen;
-  useTextReveal(pageRef, { enabled: !introOpen, paused: overlayOpen });
+  useTextReveal(pageRef, { enabled: !introOpen || introRevealing, paused: overlayOpen });
   const heroPoster = resolveMediaUrl('hero/hero-poster.webp') ?? '/media/hero/hero-poster.webp';
   const heroScrollVideo = resolveMediaUrl('hero/hero-scroll.mp4') ?? '/media/hero/hero-scroll.mp4';
   const heroPortrait = {
@@ -55,7 +60,7 @@ export default function App() {
 
   return (
     <div className="site-shell" ref={pageRef} inert={pagePaused ? true : undefined}>
-      {introOpen ? <CollageIntro heroPoster={heroPoster} heroVideoReady={heroVideoReady} onComplete={completeIntro} /> : null}
+      {introOpen ? <CollageIntro heroPoster={heroPoster} heroVideoReady={heroVideoReady} onReveal={revealIntro} onComplete={completeIntro} /> : null}
       <SiteHeader headerRef={headerRef} />
       <main id="top">
         <Hero
@@ -83,6 +88,10 @@ export default function App() {
           items={aiVideoCapabilityItems}
           onOpenProject={openProject}
           paused={pagePaused}
+          onOpenImages={(index, opener) => {
+            openerRef.current = opener;
+            setImageIndex(index);
+          }}
         />
         <WebsiteProjectSection />
         <ExperienceSection
@@ -119,6 +128,7 @@ export default function App() {
       </main>
       <ContactSection />
       <PlayerOverlay project={activeProject} opener={openerRef.current} onClose={() => setActiveProject(null)} />
+      {imageIndex !== null ? <ImageGallery images={aiImageCase.images} title={aiImageCase.title} initialIndex={imageIndex} opener={openerRef.current} onClose={() => setImageIndex(null)} /> : null}
     </div>
   );
 }
